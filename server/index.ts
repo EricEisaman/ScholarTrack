@@ -467,6 +467,12 @@ if (process.env['NODE_ENV'] === 'production') {
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   })
   
+  // Explicitly serve icons with cache headers
+  app.use('/icons', (req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    next();
+  }, express.static(path.join(__dirname, '../../client/dist/icons')));
+  
   // Serve static files (CSS, JS, images, fonts) - this is CRITICAL for Vuetify icons
   app.use(express.static(path.join(__dirname, '../../client/dist'), {
     setHeaders: (res, path) => {
