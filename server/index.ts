@@ -8,6 +8,7 @@ import { Database } from 'sqlite3'
 import { v4 as uuidv4 } from 'uuid'
 import PDFDocument from 'pdfkit'
 import moment from 'moment'
+import { promises as fs } from 'fs'
 
 const app = express()
 const PORT = process.env['PORT'] || 5000
@@ -21,6 +22,34 @@ app.use(express.json())
 
 // Database setup
 const db = new Database('scholartrack.db')
+
+// Icon validation function
+const validateIcon = async (filePath: string): Promise<void> => {
+  try {
+    const stats = await fs.stat(filePath)
+    if (stats.size === 0) {
+      throw new Error(`Empty icon file: ${filePath}`)
+    }
+    console.log(`✅ Icon validated: ${filePath} (${stats.size} bytes)`)
+  } catch (error) {
+    console.error(`❌ Icon validation failed: ${filePath}`, error)
+    throw error
+  }
+}
+
+// Validate PWA icons
+const validatePWAIcons = async (): Promise<void> => {
+  if (process.env['NODE_ENV'] === 'production') {
+    const iconPath = path.join(__dirname, '../../client/dist/icons')
+    const requiredIcons = ['icon-192x192.png', 'icon-512x512.png']
+    
+    console.log('🔍 Validating PWA icons...')
+    for (const icon of requiredIcons) {
+      await validateIcon(path.join(iconPath, icon))
+    }
+    console.log('✅ All PWA icons validated successfully')
+  }
+}
 
 // Initialize database tables
 const initDatabase = (): void => {
@@ -467,9 +496,12 @@ if (process.env['NODE_ENV'] === 'production') {
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   })
   
-  // Explicitly serve icons with cache headers
+  // Explicitly serve icons with cache headers and proper MIME types
   app.use('/icons', (req, res, next) => {
     res.setHeader('Cache-Control', 'public, max-age=31536000');
+    if (req.path.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    }
     next();
   }, express.static(path.join(__dirname, '../../client/dist/icons')));
   
@@ -489,9 +521,19 @@ if (process.env['NODE_ENV'] === 'production') {
 }
 
 // Initialize database and start server
-initDatabase()
+const startServer = async (): Promise<void> => {
+  try {
+    initDatabase()
+    await validatePWAIcons()
+    
+    app.listen(PORT, () => {
+      console.log(`ScholarTrack server running on port ${PORT}`)
+      console.log(`Environment: ${process.env['NODE_ENV'] || 'development'}`)
+    })
+  } catch (error) {
+    console.error('❌ Server startup failed:', error)
+    process.exit(1)
+  }
+}
 
-app.listen(PORT, () => {
-  console.log(`ScholarTrack server running on port ${PORT}`)
-  console.log(`Environment: ${process.env['NODE_ENV'] || 'development'}`)
-})
+startServer()

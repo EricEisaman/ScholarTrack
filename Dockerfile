@@ -22,6 +22,10 @@ RUN mkdir -p dist/server
 RUN npm run build:server
 RUN cd client && npm run build
 
+# Ensure proper file permissions for static assets
+RUN chmod -R 755 client/dist/icons/
+RUN chmod -R 755 client/dist/
+
 # Expose port
 EXPOSE 10000
 
