@@ -86,6 +86,21 @@ This will start:
 - Client: http://localhost:3000 (Vite dev server)
 - Server: http://localhost:5000 (Express API server)
 
+### Test Locally (Without Docker)
+```bash
+# Test the application locally without Docker
+npm run test:local
+```
+
+This will start:
+- Client: http://localhost:3000 (Vite dev server)
+- Server: http://localhost:5000 (Express API server with tsx)
+
+**Perfect for:**
+- Quick local testing
+- Development without Docker
+- Testing before deployment
+
 ### Development Scripts
 ```bash
 # Start only the client
@@ -93,6 +108,9 @@ npm run client:dev
 
 # Start only the server
 npm run server:dev
+
+# Test locally (client + server without Docker)
+npm run test:local
 
 # Type checking (after installing dependencies)
 npm run type-check
