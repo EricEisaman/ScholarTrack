@@ -333,7 +333,7 @@ app.post('/api/sync', (req, res) => {
 
 // Serve static files in production
 if (process.env['NODE_ENV'] === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')))
+  app.use(express.static(path.join(__dirname, '../../client/dist')))
   
   // Health check endpoint
   app.get('/health', (_req, res) => {
@@ -341,7 +341,7 @@ if (process.env['NODE_ENV'] === 'production') {
   })
   
   app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'))
+    res.sendFile(path.join(__dirname, '../../client/dist/index.html'))
   })
 }
 
