@@ -467,13 +467,16 @@ if (process.env['NODE_ENV'] === 'production') {
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   })
   
+  // Serve static files (CSS, JS, images, fonts) - this is CRITICAL for Vuetify icons
+  app.use(express.static(path.join(__dirname, '../../client/dist')))
+  
   // Serve manifest with correct MIME type
   app.get('/manifest.webmanifest', (_req, res) => {
     res.setHeader('Content-Type', 'application/manifest+json')
     res.sendFile(path.join(__dirname, '../../client/dist/manifest.webmanifest'))
   })
   
-  // Only serve API routes and SPA fallback - let Render.com handle static files
+  // SPA fallback - must be last
   app.get('*', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/dist/index.html'))
   })

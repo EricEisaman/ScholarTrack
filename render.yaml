@@ -1,10 +1,9 @@
 services:
   - type: web
     name: scholartrack
-    env: node
+    env: docker
     plan: starter
-    buildCommand: npm run install-all
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
