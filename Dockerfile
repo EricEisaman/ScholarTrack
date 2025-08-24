@@ -15,9 +15,6 @@ RUN cd client && npm install
 # Copy source code
 COPY . .
 
-# Copy icons to root for easier serving
-RUN cp -r client/public/icons ./icons
-
 # Create dist directory
 RUN mkdir -p dist/server
 
