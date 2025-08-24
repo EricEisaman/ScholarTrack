@@ -274,7 +274,7 @@ app.post('/api/reports', (req, res) => {
   }
 
   // Use data from frontend IndexedDB instead of SQLite
-  const { students = [], classes = [], transactions = [] } = data || {}
+  const { transactions = [] } = data || {}
   
   // Filter transactions by date range and class
   let filteredTransactions = transactions.filter((t: any) => {
@@ -315,7 +315,7 @@ app.post('/api/reports', (req, res) => {
       if (filteredTransactions.length === 0) {
       doc.text('No data found for the selected period.')
     } else {
-      filteredTransactions.forEach((row: any, index) => {
+      filteredTransactions.forEach((row: any, index: number) => {
         // Use the stored studentIdentifier directly
         const studentIdentifier = row.studentIdentifier || row.studentLabel
         
@@ -414,7 +414,7 @@ app.post('/api/sync', (req, res) => {
 })
 
 // Get all data for initial load
-app.get('/api/data', (req, res) => {
+app.get('/api/data', (_req, res) => {
   db.serialize(() => {
     db.all('SELECT * FROM students', (err, students) => {
       if (err) {
