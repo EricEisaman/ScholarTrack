@@ -20,9 +20,17 @@ export default defineConfig({
       output: {
         manualChunks: undefined
       }
+    },
+    commonjsOptions: {
+      include: [/node_modules/]
     }
   },
   optimizeDeps: {
-    include: ['vue', 'vuetify', 'pinia']
+    include: ['vue', 'vuetify', 'pinia', 'axios', 'idb']
+  },
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
   }
 })

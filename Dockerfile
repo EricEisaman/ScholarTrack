@@ -1,5 +1,5 @@
-# Use Node.js 24 Alpine for smaller image size
-FROM node:24-alpine
+# Use Node.js 24 for better compatibility
+FROM node:24
 
 # Set working directory
 WORKDIR /app
