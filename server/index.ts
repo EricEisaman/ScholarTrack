@@ -454,7 +454,7 @@ app.get('/api/data', (_req, res) => {
 // Serve static files in production
 if (process.env['NODE_ENV'] === 'production') {
   // Add CSP headers for PWA
-  app.use((req, res, next) => {
+  app.use((_req, res, next) => {
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; manifest-src 'self'"
