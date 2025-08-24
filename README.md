@@ -168,7 +168,7 @@ The production server will serve the built client files and handle API requests.
 
 #### Recording Events
 1. In **STANDARD** mode, click on a student square
-2. Enter the teacher code (default: "1234")
+2. Enter the teacher code (default: "456789")
 3. Select an event type (PHONE OUT IN CLASS, BAD LANGUAGE, etc.)
 4. Click "Record Event" to save
 

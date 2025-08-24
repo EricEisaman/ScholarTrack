@@ -19,6 +19,15 @@
                 required
                 class="mb-4"
               />
+              
+              <v-select
+                v-model="reportFormat"
+                :items="reportFormats"
+                label="Report Format"
+                variant="outlined"
+                required
+                class="mb-4"
+              />
 
               <!-- Date Range -->
               <v-row>
@@ -115,6 +124,7 @@ const store = useAppStore()
 
 // Local state
 const reportType = ref<'student' | 'teacher'>('student')
+const reportFormat = ref<'pdf' | 'text' | 'jpg'>('pdf')
 const startDate = ref('')
 const endDate = ref('')
 const selectedClass = ref('')
@@ -128,6 +138,12 @@ const transactions = computed(() => store.transactions)
 const reportTypes = [
   { title: 'Student Transactions', value: 'student' },
   { title: 'Teacher Events', value: 'teacher' }
+]
+
+const reportFormats = [
+  { title: 'PDF (Online)', value: 'pdf' },
+  { title: 'Text (Offline)', value: 'text' },
+  { title: 'Image (Offline)', value: 'jpg' }
 ]
 
 const availableClasses = computed(() => 
@@ -145,26 +161,339 @@ const generateReport = async () => {
   isGenerating.value = true
   
   try {
-    // This would call the backend API to generate the report
     const reportData = {
       type: reportType.value,
       startDate: startDate.value,
       endDate: endDate.value,
-      className: selectedClass.value || undefined
+      className: selectedClass.value || undefined,
+      // Send all IndexedDB data to backend for report generation
+            data: { 
+        students: students.value, 
+        classes: classes.value, 
+        transactions: transactions.value
+      }
     }
     
     console.log('Generating report:', reportData)
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // This would trigger the PDF download
-    console.log('Report generated successfully')
+    if (reportFormat.value === 'jpg') {
+      // Generate JPG report locally
+      const imageBlob = await generateJpgReport(reportData)
+      const filename = `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.jpg`
+      
+      const url = window.URL.createObjectURL(imageBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      console.log('JPG report generated and downloaded successfully')
+      
+    } else if (reportFormat.value === 'text') {
+      // Generate text report locally
+      const textReport = generateOfflineReport(reportData)
+      const filename = `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.txt`
+      
+      const blob = new Blob([textReport], { type: 'text/plain' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      console.log('Text report generated and downloaded successfully')
+      
+    } else {
+      // Try to call the backend API for PDF
+      try {
+        const response = await fetch('/api/reports', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(reportData)
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const contentDisposition = response.headers.get('Content-Disposition')
+        const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+        const filename = filenameMatch ? filenameMatch[1] : `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.pdf`
+        
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        
+        console.log('PDF report generated and downloaded successfully')
+        
+      } catch (networkError) {
+        console.log('Network error, falling back to text report:', networkError)
+        
+        // Fallback to text report
+        const textReport = generateOfflineReport(reportData)
+        const filename = `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.txt`
+        
+        const blob = new Blob([textReport], { type: 'text/plain' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        
+        console.log('Fallback text report generated and downloaded successfully')
+      }
+    }
     
   } catch (error) {
     console.error('Failed to generate report:', error)
   } finally {
     isGenerating.value = false
   }
+}
+
+const generateOfflineReport = (reportData: {
+  type: 'student' | 'teacher'
+  startDate: string
+  endDate: string
+  className?: string
+}): string => {
+  const { type, startDate, endDate, className } = reportData
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  
+  let report = `SCHOLAR TRACK REPORT\n`
+  report += `Generated: ${new Date().toLocaleString()}\n`
+  report += `Type: ${type === 'student' ? 'Student Transactions' : 'Teacher Events'}\n`
+  report += `Period: ${start.toLocaleDateString()} to ${end.toLocaleDateString()}\n`
+  if (className) {
+    report += `Class: ${className}\n`
+  }
+  report += `\n${'='.repeat(50)}\n\n`
+  
+  // Filter transactions by date range and class
+  const filteredTransactions = transactions.value.filter(t => {
+    const transactionDate = new Date(t.timestamp)
+    const inDateRange = transactionDate >= start && transactionDate <= end
+    const inClass = !className || t.className === className
+    return inDateRange && inClass
+  })
+  
+  if (type === 'student') {
+    report += 'STUDENT TRANSACTIONS:\n\n'
+    
+    // Group by student
+    const studentMap = new Map()
+    filteredTransactions.forEach(t => {
+      if (!studentMap.has(t.studentLabel)) {
+        studentMap.set(t.studentLabel, [])
+      }
+      studentMap.get(t.studentLabel).push(t)
+    })
+    
+    studentMap.forEach((studentTransactions, studentLabel) => {
+      report += `Student: ${studentLabel}\n`
+      report += `-`.repeat(20) + `\n`
+      
+      studentTransactions
+        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .forEach((t: any) => {
+          const time = new Date(t.timestamp).toLocaleString()
+          const studentIdentifier = t.studentIdentifier || t.studentLabel
+          report += `${time}: ${studentIdentifier} - ${t.status}\n`
+        })
+      
+      report += `\n`
+    })
+    
+  } else {
+    report += 'TEACHER EVENTS:\n\n'
+    
+    // Filter for transactions that have eventType (teacher events)
+    const teacherEvents = filteredTransactions.filter(t => t.eventType)
+    
+    teacherEvents.forEach(t => {
+      const time = new Date(t.timestamp).toLocaleString()
+      const studentIdentifier = t.studentIdentifier || t.studentLabel
+      report += `${time} - ${studentIdentifier}: ${t.eventType}\n`
+    })
+  }
+  
+  report += `\n${'='.repeat(50)}\n`
+  report += `Total Records: ${filteredTransactions.length}\n`
+  report += `Report generated offline from local data.\n`
+  
+  return report
+}
+
+const generateJpgReport = async (reportData: {
+  type: 'student' | 'teacher'
+  startDate: string
+  endDate: string
+  className?: string
+  data: {
+    students: any[]
+    classes: any[]
+    transactions: any[]
+  }
+}): Promise<Blob> => {
+  const { type, startDate, endDate, className, data } = reportData
+  const { transactions } = data
+  
+  // Create off-screen canvas
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Could not get canvas context')
+  
+  // Set canvas size (A4 ratio)
+  canvas.width = 2480 // 8.5 inches at 300 DPI
+  canvas.height = 3508 // 11 inches at 300 DPI
+  
+  // Set background
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  
+  // Set font styles
+  const titleFont = 'bold 72px Arial, sans-serif'
+  const subtitleFont = 'bold 48px Arial, sans-serif'
+  const headerFont = 'bold 36px Arial, sans-serif'
+  const bodyFont = '24px Arial, sans-serif'
+  const smallFont = '18px Arial, sans-serif'
+  
+  let y = 120 // Starting Y position
+  
+  // Title
+  ctx.fillStyle = '#1976D2'
+  ctx.font = titleFont
+  ctx.textAlign = 'center'
+  ctx.fillText('ScholarTrack Report', canvas.width / 2, y)
+  y += 100
+  
+  // Subtitle
+  ctx.fillStyle = '#424242'
+  ctx.font = subtitleFont
+  ctx.fillText(`${type === 'student' ? 'Student Transactions' : 'Teacher Events'}`, canvas.width / 2, y)
+  y += 80
+  
+  // Report info
+  ctx.font = bodyFont
+  ctx.textAlign = 'left'
+  ctx.fillStyle = '#666666'
+  ctx.fillText(`Generated: ${new Date().toLocaleString()}`, 100, y)
+  y += 40
+  ctx.fillText(`Period: ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}`, 100, y)
+  y += 40
+  if (className) {
+    ctx.fillText(`Class: ${className}`, 100, y)
+    y += 40
+  }
+  
+  y += 40 // Add some space
+  
+  // Filter transactions
+  let filteredTransactions = transactions.filter(t => {
+    const transactionDate = new Date(t.timestamp)
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const inDateRange = transactionDate >= start && transactionDate <= end
+    const inClass = !className || t.className === className
+    return inDateRange && inClass
+  })
+  
+  if (type === 'teacher') {
+    filteredTransactions = filteredTransactions.filter(t => t.eventType)
+  }
+  
+  // Sort by timestamp
+  filteredTransactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  
+  if (filteredTransactions.length === 0) {
+    ctx.fillStyle = '#666666'
+    ctx.font = bodyFont
+    ctx.textAlign = 'center'
+    ctx.fillText('No data found for the selected period.', canvas.width / 2, y + 100)
+  } else {
+    // Table header
+    ctx.fillStyle = '#1976D2'
+    ctx.font = headerFont
+    ctx.textAlign = 'left'
+    ctx.fillText('Student', 100, y)
+    ctx.fillText('Status', 400, y)
+    ctx.fillText('Time', 800, y)
+    if (type === 'teacher') {
+      ctx.fillText('Event', 1200, y)
+    }
+    y += 60
+    
+    // Draw separator line
+    ctx.strokeStyle = '#1976D2'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(100, y - 20)
+    ctx.lineTo(canvas.width - 100, y - 20)
+    ctx.stroke()
+    
+    // Table rows
+    ctx.font = bodyFont
+    ctx.fillStyle = '#424242'
+    
+    for (const transaction of filteredTransactions) {
+      if (y > canvas.height - 200) {
+        // Add new page indicator
+        ctx.fillStyle = '#999999'
+        ctx.font = smallFont
+        ctx.textAlign = 'center'
+        ctx.fillText('(Report continues on next page)', canvas.width / 2, canvas.height - 50)
+        break
+      }
+      
+      // Use stored studentIdentifier
+      const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
+      
+      ctx.textAlign = 'left'
+      ctx.fillText(studentIdentifier, 100, y)
+      ctx.fillText(transaction.status, 400, y)
+      ctx.fillText(new Date(transaction.timestamp).toLocaleString(), 800, y)
+      if (type === 'teacher' && transaction.eventType) {
+        ctx.fillText(transaction.eventType, 1200, y)
+      }
+      
+      y += 50
+    }
+  }
+  
+  // Footer
+  ctx.fillStyle = '#999999'
+  ctx.font = smallFont
+  ctx.textAlign = 'center'
+  ctx.fillText(`Total Records: ${filteredTransactions.length}`, canvas.width / 2, canvas.height - 80)
+  ctx.fillText('Generated by ScholarTrack', canvas.width / 2, canvas.height - 50)
+  
+  // Convert canvas to blob
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob)
+      } else {
+        throw new Error('Failed to generate image blob')
+      }
+    }, 'image/jpeg', 0.9)
+  })
 }
 </script>

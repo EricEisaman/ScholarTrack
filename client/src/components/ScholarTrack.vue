@@ -2,15 +2,15 @@
   <div class="scholar-track">
     <!-- Header with mode and class selectors -->
     <v-app-bar color="primary" dark>
-      <v-container class="d-flex align-center">
+      <v-container class="d-flex align-center py-1 pt-8" style="min-height: 64px;">
         <!-- Mode Selector -->
         <v-select
-          v-model="tempMode"
+          v-model="store.tempMode"
           :items="availableModes"
           label="Mode"
           variant="outlined"
-          density="compact"
-          class="mr-4"
+          density="default"
+          class="mr-4 mb-1"
           style="max-width: 200px"
           @update:model-value="showModeChangeModal"
         />
@@ -19,19 +19,31 @@
         
         <!-- Class Selector -->
         <v-select
-          v-model="tempClass"
+          v-model="store.tempClass"
           :items="classNames"
           label="Class"
           variant="outlined"
-          density="compact"
-          class="mr-4"
+          density="default"
+          class="mr-4 mb-1"
           style="max-width: 200px"
           @update:model-value="showClassChangeModal"
         />
         
         <v-chip color="secondary" class="text-caption">
-          {{ currentMode }}
+          {{ store.currentMode }}
         </v-chip>
+        
+        <v-btn
+          icon
+          size="small"
+          color="info"
+          class="ml-2"
+          @click="manualSync"
+          :loading="isSyncing"
+          title="Sync to server"
+        >
+          <v-icon>mdi-sync</v-icon>
+        </v-btn>
       </v-container>
     </v-app-bar>
 
@@ -47,43 +59,39 @@
     <ModeChangeModal />
     <ClassChangeModal />
     <StudentModal />
-    <AddClassModal />
-    <AddStudentModal />
-    <EditStudentModal />
-    <RemoveStudentModal />
-    <ReportsModal />
+    
+    <!-- PWA Update Prompt -->
+    <PWAUpdatePrompt />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useAppStore } from '../stores/appStore'
+import { computed, onMounted, ref } from 'vue'
+import { useAppStore } from '../stores/appStore.ts'
 import type { AppMode } from '../types'
 import ModeChangeModal from './modals/ModeChangeModal.vue'
 import ClassChangeModal from './modals/ClassChangeModal.vue'
 import StudentModal from './modals/StudentModal.vue'
-import AddClassModal from './modals/AddClassModal.vue'
-import AddStudentModal from './modals/AddStudentModal.vue'
-import EditStudentModal from './modals/EditStudentModal.vue'
-import RemoveStudentModal from './modals/RemoveStudentModal.vue'
-import ReportsModal from './modals/ReportsModal.vue'
+import PWAUpdatePrompt from './PWAUpdatePrompt.vue'
+
 import StandardMode from './modes/StandardMode.vue'
-import AddClassMode from './modes/AddClassMode.vue'
-import AddStudentMode from './modes/AddStudentMode.vue'
-import EditStudentMode from './modes/EditStudentMode.vue'
-import RemoveStudentMode from './modes/RemoveStudentMode.vue'
+import ManageClassesMode from './modes/ManageClassesMode.vue'
+import ManageStudentsMode from './modes/ManageStudentsMode.vue'
 import ReportsMode from './modes/ReportsMode.vue'
+import StyleSettingsMode from './modes/StyleSettingsMode.vue'
 
 const store = useAppStore()
+
+// Local state
+const isSyncing = ref(false)
 
 // Available modes
 const availableModes: AppMode[] = [
   'STANDARD',
-  'ADD CLASS',
-  'ADD STUDENT',
-  'EDIT STUDENT',
-  'REMOVE STUDENT',
-  'REPORTS'
+  'MANAGE CLASSES',
+  'MANAGE STUDENTS',
+  'REPORTS',
+  'STYLE SETTINGS'
 ]
 
 // Class names for selector
@@ -96,16 +104,14 @@ const currentModeComponent = computed(() => {
   switch (store.currentMode) {
     case 'STANDARD':
       return StandardMode
-    case 'ADD CLASS':
-      return AddClassMode
-    case 'ADD STUDENT':
-      return AddStudentMode
-    case 'EDIT STUDENT':
-      return EditStudentMode
-    case 'REMOVE STUDENT':
-      return RemoveStudentMode
+    case 'MANAGE CLASSES':
+      return ManageClassesMode
+    case 'MANAGE STUDENTS':
+      return ManageStudentsMode
     case 'REPORTS':
       return ReportsMode
+    case 'STYLE SETTINGS':
+      return StyleSettingsMode
     default:
       return StandardMode
   }
@@ -113,8 +119,14 @@ const currentModeComponent = computed(() => {
 
 // Show mode change modal
 const showModeChangeModal = (mode: AppMode) => {
-  store.tempMode = mode
-  store.showModeModal = true
+  // Allow switching to STANDARD mode without teacher code
+  if (mode === 'STANDARD') {
+    store.currentMode = mode
+  } else {
+    // Require teacher code for other modes
+    store.tempMode = mode
+    store.showModeModal = true
+  }
 }
 
 // Show class change modal
@@ -123,9 +135,26 @@ const showClassChangeModal = (className: string) => {
   store.showClassModal = true
 }
 
+// Manual sync to server
+const manualSync = async () => {
+  isSyncing.value = true
+  try {
+    await store.syncToServer()
+  } catch (error) {
+    console.error('Manual sync failed:', error)
+  } finally {
+    isSyncing.value = false
+  }
+}
+
 // Initialize app
 onMounted(async () => {
-  await store.initDB()
+  try {
+    await store.initDB()
+  } catch (error) {
+    console.error('Failed to initialize app:', error)
+    // App will still work with empty data
+  }
 })
 </script>
 

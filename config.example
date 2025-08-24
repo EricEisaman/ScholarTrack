@@ -11,4 +11,4 @@ DB_PATH=scholartrack.db
 VITE_API_URL=http://localhost:5000/api
 
 # Security Configuration
-VITE_TEACHER_CODE=your-secure-4-digit-code-here
+VITE_TEACHER_CODE=your-secure-6-digit-code-here

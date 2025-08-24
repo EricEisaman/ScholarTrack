@@ -16,6 +16,7 @@ export interface Class {
 export interface Transaction {
   id?: number
   studentLabel: string
+  studentIdentifier: string // Full identifier: "AB-emoji name"
   status: StudentStatus
   timestamp: string
   className: string
@@ -23,7 +24,7 @@ export interface Transaction {
 }
 
 export type StudentStatus = 
-  | 'DEFAULT'
+  | 'IN CLASS'
   | 'RESTROOM'
   | 'OFFICE'
   | 'COUNSELOR'
@@ -38,11 +39,10 @@ export type TeacherEventType =
 
 export type AppMode = 
   | 'STANDARD'
-  | 'ADD CLASS'
-  | 'ADD STUDENT'
-  | 'EDIT STUDENT'
-  | 'REMOVE STUDENT'
+  | 'MANAGE CLASSES'
+  | 'MANAGE STUDENTS'
   | 'REPORTS'
+  | 'STYLE SETTINGS'
 
 export type StatusColor = Record<StudentStatus, string>
 
@@ -58,4 +58,12 @@ export interface ReportFilters {
   endDate: string
   reportType: 'student' | 'teacher'
   className?: string
+}
+
+export interface StyleSettings {
+  id: string
+  primaryColor: string
+  secondaryColor: string
+  logoImage: string // base64 string
+  updatedAt: string
 }

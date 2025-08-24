@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "types": ["vue"]
+  },
+  "exclude": [
+    "**/*.test.ts",
+    "**/__tests__/**",
+    "src/test/**",
+    "node_modules"
+  ]
+}

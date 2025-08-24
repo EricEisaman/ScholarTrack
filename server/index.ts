@@ -51,6 +51,7 @@ const initDatabase = (): void => {
       CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         studentLabel TEXT NOT NULL,
+        studentIdentifier TEXT NOT NULL,
         status TEXT NOT NULL,
         timestamp TEXT NOT NULL,
         className TEXT NOT NULL,
@@ -58,6 +59,15 @@ const initDatabase = (): void => {
         FOREIGN KEY (studentLabel) REFERENCES students (label)
       )
     `)
+
+    // Migration: Add studentIdentifier column if it doesn't exist
+    db.run(`
+      ALTER TABLE transactions ADD COLUMN studentIdentifier TEXT
+    `, (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('Error adding studentIdentifier column:', err)
+      }
+    })
   })
 }
 
@@ -256,78 +266,188 @@ app.post('/api/transactions', (req, res) => {
 
 // Generate PDF report
 app.post('/api/reports', (req, res) => {
-  const { type, startDate, endDate, className } = req.body
+  const { type, startDate, endDate, className, data } = req.body
   
   if (!type || !startDate || !endDate) {
     res.status(400).json({ error: 'Missing required fields' })
     return
   }
 
-  let query = 'SELECT * FROM transactions WHERE timestamp BETWEEN ? AND ?'
-  const params = [startDate, endDate]
+  // Use data from frontend IndexedDB instead of SQLite
+  const { students = [], classes = [], transactions = [] } = data || {}
+  
+  // Filter transactions by date range and class
+  let filteredTransactions = transactions.filter((t: any) => {
+    const transactionDate = new Date(t.timestamp)
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const inDateRange = transactionDate >= start && transactionDate <= end
+    const inClass = !className || t.className === className
+    return inDateRange && inClass
+  })
 
-  if (className) {
-    query += ' AND className = ?'
-    params.push(className)
-  }
-
+  // Filter by type
   if (type === 'teacher') {
-    query += ' AND eventType IS NOT NULL'
+    filteredTransactions = filteredTransactions.filter((t: any) => t.eventType)
   }
 
-  query += ' ORDER BY timestamp DESC'
+  // Sort by timestamp
+  filteredTransactions.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
-  db.all(query, params, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message })
-      return
-    }
-
-    // Generate PDF
-    const doc = new PDFDocument()
-    const filename = `report_${type}_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
-    
-    res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-    
-    doc.pipe(res)
-    
-    // PDF content
-    doc.fontSize(20).text(`ScholarTrack ${type === 'student' ? 'Student Transaction' : 'Teacher Event'} Report`, { align: 'center' })
-    doc.moveDown()
-    doc.fontSize(12).text(`Period: ${moment(startDate).format('MMM DD, YYYY')} - ${moment(endDate).format('MMM DD, YYYY')}`)
-    if (className) {
-      doc.text(`Class: ${className}`)
-    }
-    doc.moveDown()
-    
-    if (rows.length === 0) {
+  // Generate PDF
+  const doc = new PDFDocument()
+  const filename = `report_${type}_${moment().format('YYYY-MM-DD_HH-mm-ss')}.pdf`
+  
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+  
+  doc.pipe(res)
+  
+  // PDF content
+  doc.fontSize(20).text(`ScholarTrack ${type === 'student' ? 'Student Transaction' : 'Teacher Event'} Report`, { align: 'center' })
+  doc.moveDown()
+  doc.fontSize(12).text(`Period: ${moment(startDate).format('MMM DD, YYYY')} - ${moment(endDate).format('MMM DD, YYYY')}`)
+  if (className) {
+    doc.text(`Class: ${className}`)
+  }
+  doc.moveDown()
+  
+      if (filteredTransactions.length === 0) {
       doc.text('No data found for the selected period.')
     } else {
-      rows.forEach((row: any, index) => {
-        doc.fontSize(10).text(`${index + 1}. ${row.studentLabel} - ${row.status}`, { continued: true })
-        if (row.eventType) {
-          doc.text(` (${row.eventType})`, { continued: false })
+      filteredTransactions.forEach((row: any, index) => {
+        // Use the stored studentIdentifier directly
+        const studentIdentifier = row.studentIdentifier || row.studentLabel
+        
+        if (type === 'teacher') {
+          // For teacher events, show event type prominently
+          doc.fontSize(10).text(`${index + 1}. ${studentIdentifier}: ${row.eventType}`, { continued: false })
+        } else {
+          // For student transactions, show status
+          doc.fontSize(10).text(`${index + 1}. ${studentIdentifier} - ${row.status}`, { continued: false })
         }
         doc.fontSize(8).text(`   ${moment(row.timestamp).format('MMM DD, YYYY HH:mm:ss')}`)
         doc.moveDown(0.5)
       })
     }
-    
-    doc.end()
-  })
+  
+  doc.end()
 })
 
 // Sync endpoint for local-first architecture
 app.post('/api/sync', (req, res) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { students: _students, classes: _classes, transactions: _transactions } = req.body
+  const { students, classes, transactions } = req.body
   
-  // This would handle bidirectional sync between client and server
-  // For now, just acknowledge the sync request
-  res.json({ 
-    message: 'Sync completed',
-    timestamp: new Date().toISOString()
+  if (!students || !classes || !transactions) {
+    res.status(400).json({ error: 'Missing required data' })
+    return
+  }
+
+  // Clear existing data and sync from client
+  db.serialize(() => {
+    // Clear existing data
+    db.run('DELETE FROM students', (err) => {
+      if (err) {
+        console.error('Error clearing students:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM classes', (err) => {
+      if (err) {
+        console.error('Error clearing classes:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM transactions', (err) => {
+      if (err) {
+        console.error('Error clearing transactions:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+
+    // Insert students
+    const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+    students.forEach((student: any) => {
+      const classesJson = JSON.stringify(student.classes)
+      studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt])
+    })
+    studentStmt.finalize()
+
+    // Insert classes
+    const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)')
+    classes.forEach((cls: any) => {
+      classStmt.run([cls.id, cls.name, cls.createdAt])
+    })
+    classStmt.finalize()
+
+    // Insert transactions
+    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    transactions.forEach((transaction: any) => {
+      // Handle legacy transactions that don't have studentIdentifier
+      const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
+      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
+    })
+    transactionStmt.finalize((err) => {
+      if (err) {
+        console.error('Error syncing data:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      console.log(`Synced ${students.length} students, ${classes.length} classes, ${transactions.length} transactions`)
+      res.json({ 
+        message: 'Sync completed',
+        timestamp: new Date().toISOString(),
+        synced: {
+          students: students.length,
+          classes: classes.length,
+          transactions: transactions.length
+        }
+      })
+    })
+  })
+})
+
+// Get all data for initial load
+app.get('/api/data', (req, res) => {
+  db.serialize(() => {
+    db.all('SELECT * FROM students', (err, students) => {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      db.all('SELECT * FROM classes', (err, classes) => {
+        if (err) {
+          res.status(500).json({ error: err.message })
+          return
+        }
+        
+        db.all('SELECT * FROM transactions', (err, transactions) => {
+          if (err) {
+            res.status(500).json({ error: err.message })
+            return
+          }
+          
+          // Parse classes JSON for students
+          const parsedStudents = students.map((student: any) => ({
+            ...student,
+            classes: JSON.parse(student.classes)
+          }))
+          
+          res.json({
+            students: parsedStudents,
+            classes,
+            transactions
+          })
+        })
+      })
+    })
   })
 })
 

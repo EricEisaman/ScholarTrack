@@ -16,12 +16,13 @@
         </p>
         
         <v-text-field
+          ref="codeInput"
           v-model="enteredCode"
           label="Teacher Code"
           type="password"
-          maxlength="4"
+          maxlength="6"
           variant="outlined"
-          :rules="[v => !!v || 'Code is required', v => v.length === 4 || 'Code must be 4 digits']"
+          :rules="[v => !!v || 'Code is required', v => v.length === 6 || 'Code must be 6 digits']"
           required
           @keyup.enter="handleSubmit"
         />
@@ -41,7 +42,7 @@
         <v-btn
           color="primary"
           @click="handleSubmit"
-          :disabled="!enteredCode || enteredCode.length !== 4"
+          :disabled="!enteredCode || enteredCode.length !== 6"
         >
           Change Mode
         </v-btn>
@@ -52,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useAppStore } from '../../stores/appStore'
 
 const store = useAppStore()
@@ -60,6 +61,7 @@ const store = useAppStore()
 // Local state
 const enteredCode = ref('')
 const errorMessage = ref('')
+const codeInput = ref()
 
 // Computed properties
 const showModal = computed(() => store.showModeModal)
@@ -68,6 +70,7 @@ const tempMode = computed(() => store.tempMode)
 // Methods
 const handleSubmit = () => {
   if (enteredCode.value === store.teacherCode) {
+    store.tempCode = enteredCode.value
     store.changeMode(tempMode.value)
     resetForm()
   } else {
@@ -86,8 +89,12 @@ const resetForm = () => {
 }
 
 // Watch for modal state changes
-watch(showModal, (newValue) => {
-  if (!newValue) {
+watch(showModal, async (newValue) => {
+  if (newValue) {
+    // Focus the code input when modal opens
+    await nextTick()
+    codeInput.value?.focus()
+  } else {
     resetForm()
   }
 })
