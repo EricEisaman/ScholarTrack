@@ -1,16 +1,9 @@
 <template>
-  <v-app>
-    <v-main>
-      <v-container>
-        <h1>ScholarTrack</h1>
-        <p>Application is loading...</p>
-      </v-container>
-    </v-main>
-  </v-app>
+  <ScholarTrack />
 </template>
 
 <script setup lang="ts">
-// Minimal setup for testing
+import ScholarTrack from './components/ScholarTrack.vue'
 </script>
 
 <style>

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node build-static.js",
+    "build": "vite build --mode production",
     "build:vite": "vite build --mode production",
     "build:type-check": "vue-tsc && vite build",
     "preview": "vite preview",
