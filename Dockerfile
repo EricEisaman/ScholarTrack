@@ -22,9 +22,13 @@ RUN mkdir -p dist/server
 RUN npm run build:server
 RUN cd client && npm run build
 
-# Ensure proper file permissions for static assets
-RUN chmod -R 755 client/dist/icons/
-RUN chmod -R 755 client/dist/
+# Ensure proper file permissions for static assets (after build)
+RUN chmod -R 755 client/dist/ && \
+    if [ -d "client/dist/icons" ]; then \
+        chmod -R 755 client/dist/icons/; \
+    else \
+        echo "Warning: client/dist/icons directory not found"; \
+    fi
 
 # Expose port
 EXPOSE 10000

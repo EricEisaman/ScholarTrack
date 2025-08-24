@@ -10,7 +10,13 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: [
+        'favicon.ico', 
+        'apple-touch-icon.png', 
+        'masked-icon.svg',
+        'icons/icon-192x192.png',
+        'icons/icon-512x512.png'
+      ],
       manifest: {
         name: 'ScholarTrack',
         short_name: 'ScholarTrack',
