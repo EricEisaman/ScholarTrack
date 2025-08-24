@@ -1,0 +1,14 @@
+# Environment Configuration
+NODE_ENV=development
+
+# Server Configuration
+PORT=5000
+
+# Database Configuration
+DB_PATH=scholartrack.db
+
+# Client Configuration
+VITE_API_URL=http://localhost:5000/api
+
+# Security Configuration
+TEACHER_CODE=1234
