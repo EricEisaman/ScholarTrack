@@ -462,13 +462,21 @@ if (process.env['NODE_ENV'] === 'production') {
     next()
   })
   
-  app.use(express.static(path.join(__dirname, '../../client/dist')))
-  
   // Health check endpoint
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   })
   
+  // Serve manifest with correct MIME type
+  app.get('/manifest.webmanifest', (_req, res) => {
+    res.setHeader('Content-Type', 'application/manifest+json')
+    res.sendFile(path.join(__dirname, '../../client/dist/manifest.webmanifest'))
+  })
+  
+  // Serve static files FIRST (before catch-all)
+  app.use(express.static(path.join(__dirname, '../../client/dist')))
+  
+  // Catch-all route for SPA (must be LAST)
   app.get('*', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/dist/index.html'))
   })
