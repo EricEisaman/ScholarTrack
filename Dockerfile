@@ -23,6 +23,7 @@ EXPOSE 10000
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=10000
+ENV VITE_TEACHER_CODE=1234
 
 # Start the application
 CMD ["npm", "start"]

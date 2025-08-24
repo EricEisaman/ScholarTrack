@@ -241,7 +241,7 @@ The application uses a local-first approach:
 
 ## Security Considerations
 
-- Teacher codes should be changed from default "1234"
+- Teacher codes should be set via VITE_TEACHER_CODE environment variable
 - Student codes should be unique and kept private
 - All administrative actions require teacher authentication
 - Data is stored locally with encryption capabilities

@@ -25,7 +25,7 @@ export const useAppStore = defineStore('app', () => {
   const students: Ref<Student[]> = ref([])
   const classes: Ref<Class[]> = ref([])
   const transactions: Ref<Transaction[]> = ref([])
-  const teacherCode: Ref<string> = ref('1234') // Default teacher code
+  const teacherCode: Ref<string> = ref((import.meta as any).env?.VITE_TEACHER_CODE || '1234') // Get from environment variable
   const showModeModal: Ref<boolean> = ref(false)
   const showClassModal: Ref<boolean> = ref(false)
   const showStudentModal: Ref<boolean> = ref(false)

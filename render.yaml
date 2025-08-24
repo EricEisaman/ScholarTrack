@@ -10,5 +10,7 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: VITE_TEACHER_CODE
+        generateValue: true
     healthCheckPath: /api/students
     autoDeploy: true
