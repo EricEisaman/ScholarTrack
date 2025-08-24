@@ -473,13 +473,7 @@ if (process.env['NODE_ENV'] === 'production') {
     res.sendFile(path.join(__dirname, '../../client/dist/manifest.webmanifest'))
   })
   
-  // Serve static files FIRST (before catch-all)
-  const staticPath = path.join(__dirname, '../../client/dist')
-  console.log('Static files path:', staticPath)
-  console.log('Static files exist:', require('fs').existsSync(staticPath))
-  app.use(express.static(staticPath))
-  
-  // Catch-all route for SPA (must be LAST)
+  // Only serve API routes and SPA fallback - let Render.com handle static files
   app.get('*', (_req, res) => {
     res.sendFile(path.join(__dirname, '../../client/dist/index.html'))
   })
