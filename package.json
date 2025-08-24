@@ -15,7 +15,6 @@
     "type-check": "tsc --noEmit -p server/tsconfig.json && tsc --noEmit -p client/tsconfig.json",
     "lint": "eslint . --ext .ts,.tsx,.vue --fix",
     "lint:check": "eslint . --ext .ts,.tsx,.vue",
-,
     "test:local": "concurrently \"npm run server:local\" \"npm run client:local\"",
     "server:local": "tsx server/index.ts",
     "client:local": "cd client && npm run dev"
