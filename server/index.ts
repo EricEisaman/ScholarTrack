@@ -468,13 +468,13 @@ if (process.env['NODE_ENV'] === 'production') {
   })
   
   // Serve static files (CSS, JS, images, fonts) - this is CRITICAL for Vuetify icons
-  app.use(express.static(path.join(__dirname, '../../client/dist')))
-  
-  // Serve manifest with correct MIME type
-  app.get('/manifest.webmanifest', (_req, res) => {
-    res.setHeader('Content-Type', 'application/manifest+json')
-    res.sendFile(path.join(__dirname, '../../client/dist/manifest.webmanifest'))
-  })
+  app.use(express.static(path.join(__dirname, '../../client/dist'), {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.webmanifest')) {
+        res.setHeader('Content-Type', 'application/manifest+json')
+      }
+    }
+  }))
   
   // SPA fallback - must be last
   app.get('*', (_req, res) => {
