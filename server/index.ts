@@ -470,15 +470,15 @@ if (process.env['NODE_ENV'] === 'production') {
   // Serve manifest with correct MIME type
   app.get('/manifest.webmanifest', (_req, res) => {
     res.setHeader('Content-Type', 'application/manifest+json')
-    res.sendFile(path.join(__dirname, '../../client/dist/manifest.webmanifest'))
+    res.sendFile(path.join(__dirname, '../client/dist/manifest.webmanifest'))
   })
   
   // Serve static files FIRST (before catch-all)
-  app.use(express.static(path.join(__dirname, '../../client/dist')))
+  app.use(express.static(path.join(__dirname, '../client/dist')))
   
   // Catch-all route for SPA (must be LAST)
   app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/dist/index.html'))
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'))
   })
 }
 
