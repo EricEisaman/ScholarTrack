@@ -20,7 +20,7 @@ RUN mkdir -p dist/server
 
 # Build the application
 RUN npm run build:server
-RUN npm run build:client
+RUN cd client && npm run build
 
 # Expose port
 EXPOSE 10000
