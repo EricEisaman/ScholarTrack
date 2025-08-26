@@ -9,7 +9,7 @@
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      
+
       <v-card-text>
         <!-- Search -->
         <v-text-field
@@ -21,7 +21,7 @@
           prepend-inner-icon="mdi-magnify"
           class="mb-4"
         ></v-text-field>
-        
+
         <!-- Category Tabs -->
         <v-tabs v-model="selectedCategory" class="mb-4">
           <v-tab
@@ -32,7 +32,7 @@
             {{ getCategoryDisplayName(category) }}
           </v-tab>
         </v-tabs>
-        
+
         <!-- Emoji Grid -->
         <div class="emoji-grid">
           <v-btn
@@ -47,7 +47,7 @@
             <span class="emoji-display">{{ emoji.emoji }}</span>
           </v-btn>
         </div>
-        
+
         <!-- No Results -->
         <v-alert
           v-if="filteredEmojis.length === 0"
@@ -63,8 +63,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { emojis, getCategories, type EmojiData } from '../data/emojis'
+import { ref, computed } from 'vue';
+import { emojis, getCategories, type EmojiData } from '../data/emojis';
 
 interface Props {
   modelValue: boolean
@@ -75,54 +75,54 @@ interface Emits {
   (e: 'select', emoji: EmojiData): void
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 // Local state
-const searchQuery = ref('')
-const selectedCategory = ref('faces')
+const searchQuery = ref('');
+const selectedCategory = ref('faces');
 
 // Computed properties
 const showPicker = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
-})
+  set: (value) => emit('update:modelValue', value),
+});
 
-const categories = computed(() => getCategories())
+const categories = computed(() => getCategories());
 
 const filteredEmojis = computed(() => {
-  let filtered = emojis.filter(emoji => emoji.category === selectedCategory.value)
-  
+  let filtered = emojis.filter(emoji => emoji.category === selectedCategory.value);
+
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(emoji => 
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(emoji =>
       emoji.name.toLowerCase().includes(query) ||
-      emoji.emoji.includes(query)
-    )
+      emoji.emoji.includes(query),
+    );
   }
-  
-  return filtered
-})
+
+  return filtered;
+});
 
 // Methods
 const getCategoryDisplayName = (category: string): string => {
   const names: Record<string, string> = {
     faces: 'Faces',
     animals: 'Animals',
-    objects: 'Objects'
-  }
-  return names[category] || category
-}
+    objects: 'Objects',
+  };
+  return names[category] || category;
+};
 
 const selectEmoji = (emoji: EmojiData) => {
-  emit('select', emoji)
-  closePicker()
-}
+  emit('select', emoji);
+  closePicker();
+};
 
 const closePicker = () => {
-  showPicker.value = false
-  searchQuery.value = ''
-}
+  showPicker.value = false;
+  searchQuery.value = '';
+};
 </script>
 
 <style scoped>

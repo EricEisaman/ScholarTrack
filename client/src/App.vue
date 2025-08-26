@@ -10,9 +10,3 @@
 import ScholarTrack from './components/ScholarTrack.vue';
 import ThemeProvider from './components/ThemeProvider.vue';
 </script>
-
-<style>
-#app {
-  font-family: 'Roboto', sans-serif;
-}
-</style>

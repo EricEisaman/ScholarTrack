@@ -15,6 +15,9 @@ watch(() => store.styleSettings, (settings) => {
   if (settings && theme.themes.value['light']) {
     theme.themes.value['light'].colors.primary = settings.primaryColor;
     theme.themes.value['light'].colors.secondary = settings.secondaryColor;
+    theme.themes.value['light'].colors.background = settings.tertiaryColor;
+    theme.themes.value['light'].colors.surface = settings.tertiaryColor;
+
     console.log('Theme updated:', settings);
   }
 }, { immediate: true });

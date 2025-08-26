@@ -9,7 +9,7 @@
       <v-icon class="mr-2">mdi-update</v-icon>
       <span>A new version of ScholarTrack is available</span>
     </div>
-    
+
     <template v-slot:actions>
       <v-btn
         color="white"
@@ -30,32 +30,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue';
 
-const showUpdatePrompt = ref(false)
-let updateCallback: (() => void) | null = null
+const showUpdatePrompt = ref(false);
+let updateCallback: (() => void) | null = null;
 
 onMounted(() => {
   // Listen for PWA update events
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       // New service worker activated, prompt for reload
-      showUpdatePrompt.value = true
+      showUpdatePrompt.value = true;
       updateCallback = () => {
-        window.location.reload()
-      }
-    })
+        window.location.reload();
+      };
+    });
   }
-})
+});
 
 const updateApp = () => {
   if (updateCallback) {
-    updateCallback()
+    updateCallback();
   }
-  showUpdatePrompt.value = false
-}
+  showUpdatePrompt.value = false;
+};
 
 const dismissUpdate = () => {
-  showUpdatePrompt.value = false
-}
+  showUpdatePrompt.value = false;
+};
 </script>

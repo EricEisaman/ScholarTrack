@@ -7,7 +7,7 @@
           <v-card-title class="text-h5">
             Add New Class
           </v-card-title>
-          
+
           <v-card-text>
             <v-form ref="addForm" v-model="addFormValid">
               <v-text-field
@@ -18,7 +18,7 @@
                 clearable
                 @keyup.enter="addClass"
               ></v-text-field>
-              
+
               <v-btn
                 color="primary"
                 variant="elevated"
@@ -33,14 +33,14 @@
           </v-card-text>
         </v-card>
       </v-col>
-      
+
       <v-col cols="12" md="6">
         <!-- Class Statistics -->
         <v-card class="mb-4">
           <v-card-title class="text-h5">
             Class Statistics
           </v-card-title>
-          
+
           <v-card-text>
             <v-list>
               <v-list-item>
@@ -49,7 +49,7 @@
                   <v-chip color="primary">{{ classes.length }}</v-chip>
                 </template>
               </v-list-item>
-              
+
               <v-list-item>
                 <v-list-item-title>Total Students</v-list-item-title>
                 <template v-slot:append>
@@ -61,7 +61,7 @@
         </v-card>
       </v-col>
     </v-row>
-    
+
     <!-- Classes List -->
     <v-row>
       <v-col cols="12">
@@ -69,7 +69,7 @@
           <v-card-title class="text-h5">
             Manage Classes
           </v-card-title>
-          
+
           <v-card-text>
             <v-alert
               v-if="classes.length === 0"
@@ -79,7 +79,7 @@
             >
               No classes available. Add your first class above.
             </v-alert>
-            
+
             <v-data-table
               v-else
               :headers="headers"
@@ -90,7 +90,7 @@
               <template v-slot:item.createdAt="{ item }">
                 {{ new Date(item.createdAt).toLocaleDateString() }}
               </template>
-              
+
               <template v-slot:item.studentCount="{ item }">
                 <v-chip
                   :color="getStudentCountColor(item)"
@@ -99,7 +99,7 @@
                   {{ getStudentCount(item) }}
                 </v-chip>
               </template>
-              
+
               <template v-slot:item.actions="{ item }">
                 <v-btn
                   color="error"
@@ -115,19 +115,19 @@
         </v-card>
       </v-col>
     </v-row>
-    
+
     <!-- Confirmation Dialog -->
     <v-dialog v-model="showConfirmDialog" max-width="500">
       <v-card>
         <v-card-title class="text-h6">
           Confirm Class Removal
         </v-card-title>
-        
+
         <v-card-text>
           <p class="text-body-1">
             Are you sure you want to remove the class <strong>"{{ selectedClass?.name }}"</strong>?
           </p>
-          
+
           <v-alert
             type="warning"
             variant="tonal"
@@ -150,7 +150,7 @@
             </ul>
           </v-alert>
         </v-card-text>
-        
+
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
@@ -175,105 +175,105 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useAppStore } from '../../stores/appStore'
-import type { Class, Student } from '../../types'
+import { ref, computed } from 'vue';
+import { useAppStore } from '../../stores/appStore';
+import type { Class, Student } from '../../types';
 
-const store = useAppStore()
+const store = useAppStore();
 
 // Local state
-const newClassName = ref('')
-const addFormValid = ref(false)
-const isAdding = ref(false)
-const showConfirmDialog = ref(false)
-const selectedClass = ref<Class | null>(null)
-const isRemoving = ref(false)
+const newClassName = ref('');
+const addFormValid = ref(false);
+const isAdding = ref(false);
+const showConfirmDialog = ref(false);
+const selectedClass = ref<Class | null>(null);
+const isRemoving = ref(false);
 
 // Form ref
-const addForm = ref()
+const addForm = ref();
 
 // Computed properties
-const classes = computed(() => store.classes)
-const students = computed(() => store.students)
+const classes = computed(() => store.classes);
+const students = computed(() => store.students);
 
 const headers = [
   { title: 'Class Name', key: 'name', sortable: true },
   { title: 'Students', key: 'studentCount', sortable: true },
   { title: 'Created', key: 'createdAt', sortable: true },
-  { title: 'Actions', key: 'actions', sortable: false }
-]
+  { title: 'Actions', key: 'actions', sortable: false },
+];
 
 // Computed properties for confirmation dialog
 const exclusiveStudents = computed(() => {
-  if (!selectedClass.value) return []
-  
-  return students.value.filter((student: Student) => 
-    student.classes.length === 1 && student.classes.includes(selectedClass.value!.name)
-  )
-})
+  if (!selectedClass.value) return [];
+
+  return students.value.filter((student: Student) =>
+    student.classes.length === 1 && student.classes.includes(selectedClass.value!.name),
+  );
+});
 
 const sharedStudents = computed(() => {
-  if (!selectedClass.value) return []
-  
-  return students.value.filter((student: Student) => 
-    student.classes.length > 1 && student.classes.includes(selectedClass.value!.name)
-  )
-})
+  if (!selectedClass.value) return [];
+
+  return students.value.filter((student: Student) =>
+    student.classes.length > 1 && student.classes.includes(selectedClass.value!.name),
+  );
+});
 
 // Methods
 const addClass = async () => {
-  if (!addFormValid.value) return
-  
-  isAdding.value = true
-  
+  if (!addFormValid.value) return;
+
+  isAdding.value = true;
+
   try {
-    await store.addClass(newClassName.value)
-    newClassName.value = ''
-    addForm.value?.resetValidation()
+    await store.addClass(newClassName.value);
+    newClassName.value = '';
+    addForm.value?.resetValidation();
   } catch (error) {
-    console.error('Failed to add class:', error)
+    console.error('Failed to add class:', error);
   } finally {
-    isAdding.value = false
+    isAdding.value = false;
   }
-}
+};
 
 const confirmRemove = (item: any) => {
-  selectedClass.value = item
-  showConfirmDialog.value = true
-}
+  selectedClass.value = item;
+  showConfirmDialog.value = true;
+};
 
 const removeClass = async () => {
-  if (!selectedClass.value) return
-  
-  isRemoving.value = true
-  
+  if (!selectedClass.value) return;
+
+  isRemoving.value = true;
+
   try {
-    await store.removeClass(selectedClass.value.id)
-    showConfirmDialog.value = false
-    selectedClass.value = null
+    await store.removeClass(selectedClass.value.id);
+    showConfirmDialog.value = false;
+    selectedClass.value = null;
   } catch (error) {
-    console.error('Failed to remove class:', error)
+    console.error('Failed to remove class:', error);
   } finally {
-    isRemoving.value = false
+    isRemoving.value = false;
   }
-}
+};
 
 const cancelRemove = () => {
-  showConfirmDialog.value = false
-  selectedClass.value = null
-}
+  showConfirmDialog.value = false;
+  selectedClass.value = null;
+};
 
 const getStudentCount = (classItem: Class): number => {
-  return students.value.filter((student: Student) => 
-    student.classes.includes(classItem.name)
-  ).length
-}
+  return students.value.filter((student: Student) =>
+    student.classes.includes(classItem.name),
+  ).length;
+};
 
 const getStudentCountColor = (classItem: Class): string => {
-  const count = getStudentCount(classItem)
-  if (count === 0) return 'grey'
-  if (count <= 5) return 'green'
-  if (count <= 15) return 'orange'
-  return 'red'
-}
+  const count = getStudentCount(classItem);
+  if (count === 0) return 'grey';
+  if (count <= 5) return 'green';
+  if (count <= 15) return 'orange';
+  return 'red';
+};
 </script>

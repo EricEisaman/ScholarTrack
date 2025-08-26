@@ -5,7 +5,7 @@
         <v-icon class="mr-2">mdi-palette</v-icon>
         Style Settings
       </v-card-title>
-      
+
       <v-card-text>
         <v-form @submit.prevent="saveSettings">
           <!-- Color Settings -->
@@ -25,7 +25,7 @@
                 @update:model-value="updatePrimaryColor"
               />
             </v-col>
-            
+
             <v-col cols="12" md="6">
               <v-color-picker
                 v-model="secondaryColor"
@@ -39,6 +39,40 @@
                 variant="outlined"
                 prepend-icon="mdi-palette-outline"
                 @update:model-value="updateSecondaryColor"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-color-picker
+                v-model="tertiaryColor"
+                mode="hex"
+                hide-inputs
+                class="mb-4"
+              />
+              <v-text-field
+                v-model="tertiaryColor"
+                label="Tertiary Color (Background)"
+                variant="outlined"
+                prepend-icon="mdi-palette-swatch"
+                @update:model-value="updateTertiaryColor"
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-color-picker
+                v-model="quaternaryColor"
+                mode="hex"
+                hide-inputs
+                class="mb-4"
+              />
+              <v-text-field
+                v-model="quaternaryColor"
+                label="Quaternary Color"
+                variant="outlined"
+                prepend-icon="mdi-palette-swatch-variant"
+                @update:model-value="updateQuaternaryColor"
               />
             </v-col>
           </v-row>
@@ -65,7 +99,7 @@
                   <v-icon class="mr-2">mdi-image</v-icon>
                   School Logo
                 </v-card-title>
-                
+
                 <v-card-text>
                   <v-file-input
                     v-model="logoFile"
@@ -76,7 +110,7 @@
                     @change="handleLogoUpload"
                     :rules="[rules.imageSize, rules.imageType]"
                   />
-                  
+
                   <!-- Logo Preview -->
                   <div v-if="logoPreview" class="mt-4">
                     <v-card variant="outlined" class="pa-4 text-center">
@@ -111,7 +145,7 @@
                   <v-icon class="mr-2">mdi-eye</v-icon>
                   Preview
                 </v-card-title>
-                
+
                 <v-card-text>
                   <div class="preview-container" :style="previewStyles">
                     <div class="preview-header">
@@ -129,7 +163,7 @@
           </v-row>
         </v-form>
       </v-card-text>
-      
+
       <v-card-actions>
         <v-spacer />
         <v-btn
@@ -157,141 +191,157 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useAppStore } from '../../stores/appStore'
+import { ref, computed, onMounted } from 'vue';
+import { useAppStore } from '../../stores/appStore';
 
-
-const store = useAppStore()
+const store = useAppStore();
 
 // Form data
-const primaryColor = ref('#1976D2')
-const secondaryColor = ref('#424242')
-const schoolName = ref('ScholarTrack')
-const logoFile = ref<File | null>(null)
-const logoPreview = ref<string>('')
-const saving = ref(false)
-const showSuccess = ref(false)
+const primaryColor = ref('#1976D2');
+const secondaryColor = ref('#424242');
+const tertiaryColor = ref('#000000');
+const quaternaryColor = ref('#121212');
+const schoolName = ref('ScholarTrack');
+const logoFile = ref<File | null>(null);
+const logoPreview = ref<string>('');
+const saving = ref(false);
+const showSuccess = ref(false);
 
 // Validation rules
 const rules = {
   required: (value: string) => !!value || 'This field is required',
   imageSize: (value: File | null) => {
-    if (!value) return true
-    const maxSize = 2 * 1024 * 1024 // 2MB
-    return value.size <= maxSize || 'Image must be less than 2MB'
+    if (!value) return true;
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    return value.size <= maxSize || 'Image must be less than 2MB';
   },
   imageType: (value: File | null) => {
-    if (!value) return true
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml']
-    const fileExtension = value.name.toLowerCase().split('.').pop()
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg']
-    
-    const isValidType = allowedTypes.includes(value.type) || 
-                       (fileExtension && allowedExtensions.includes(fileExtension))
-    
-    return isValidType || 'Please upload a PNG, JPG, JPEG, WebP, or SVG file'
-  }
-}
+    if (!value) return true;
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+    const fileExtension = value.name.toLowerCase().split('.').pop();
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+
+    const isValidType = allowedTypes.includes(value.type) ||
+                       (fileExtension && allowedExtensions.includes(fileExtension));
+
+    return isValidType || 'Please upload a PNG, JPG, JPEG, WebP, or SVG file';
+  },
+};
 
 // Form validation
 const isValid = computed(() => {
-  return primaryColor.value && secondaryColor.value
-})
+  return primaryColor.value && secondaryColor.value;
+});
 
 // Preview styles
 const previewStyles = computed(() => ({
   '--primary-color': primaryColor.value,
-  '--secondary-color': secondaryColor.value
-}))
+  '--secondary-color': secondaryColor.value,
+  '--tertiary-color': tertiaryColor.value,
+  '--quaternary-color': quaternaryColor.value,
+  'background-color': tertiaryColor.value,
+}));
 
 // Load existing settings
 onMounted(() => {
-  const settings = store.getStyleSettings()
+  const settings = store.getStyleSettings();
   if (settings) {
-    primaryColor.value = settings.primaryColor
-    secondaryColor.value = settings.secondaryColor
-    schoolName.value = settings.schoolName || 'ScholarTrack'
+    primaryColor.value = settings.primaryColor;
+    secondaryColor.value = settings.secondaryColor;
+    tertiaryColor.value = settings.tertiaryColor || '#000000';
+    quaternaryColor.value = settings.quaternaryColor || '#121212';
+    schoolName.value = settings.schoolName || 'ScholarTrack';
     if (settings.logoImage) {
-      logoPreview.value = settings.logoImage
+      logoPreview.value = settings.logoImage;
     }
   }
-})
+});
 
 // Update colors
 const updatePrimaryColor = (color: string) => {
-  primaryColor.value = color
-}
+  primaryColor.value = color;
+};
 
 const updateSecondaryColor = (color: string) => {
-  secondaryColor.value = color
-}
+  secondaryColor.value = color;
+};
+
+const updateTertiaryColor = (color: string) => {
+  tertiaryColor.value = color;
+};
+
+const updateQuaternaryColor = (color: string) => {
+  quaternaryColor.value = color;
+};
 
 // Handle logo upload
 const handleLogoUpload = (event: Event | File | null) => {
   // Handle different event types
-  let file: File | null = null
-  
+  let file: File | null = null;
+
   if (event instanceof File) {
-    file = event
+    file = event;
   } else if (event && 'target' in event && event.target) {
-    const target = event.target as HTMLInputElement
-    file = target.files?.[0] || null
+    const target = event.target as HTMLInputElement;
+    file = target.files?.[0] || null;
   } else {
-    file = null
+    file = null;
   }
 
   if (!file) {
-    logoPreview.value = ''
-    return
+    logoPreview.value = '';
+    return;
   }
 
   // Validate file type - support PNG, JPG, JPEG, WebP
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml']
-  const fileExtension = file.name.toLowerCase().split('.').pop()
-  const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg']
-  
-  const isValidType = allowedTypes.includes(file.type) || 
-                     (fileExtension && allowedExtensions.includes(fileExtension))
-  
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+  const fileExtension = file.name.toLowerCase().split('.').pop();
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
+
+  const isValidType = allowedTypes.includes(file.type) ||
+                     (fileExtension && allowedExtensions.includes(fileExtension));
+
   if (!isValidType) {
-    console.error('Invalid file type:', file.type, 'File extension:', fileExtension)
-    return
+    console.error('Invalid file type:', file.type, 'File extension:', fileExtension);
+    return;
   }
 
-  const reader = new FileReader()
+  const reader = new FileReader();
   reader.onload = (e) => {
-    logoPreview.value = e.target?.result as string
-  }
-  reader.readAsDataURL(file)
-}
+    logoPreview.value = e.target?.result as string;
+  };
+  reader.readAsDataURL(file);
+};
 
 // Remove logo
 const removeLogo = () => {
-  logoFile.value = null
-  logoPreview.value = ''
-}
+  logoFile.value = null;
+  logoPreview.value = '';
+};
 
 // Save settings
 const saveSettings = async () => {
-  if (!isValid.value) return
+  if (!isValid.value) return;
 
-  saving.value = true
-  
+  saving.value = true;
+
   try {
     await store.updateStyleSettings({
       primaryColor: primaryColor.value,
       secondaryColor: secondaryColor.value,
+      tertiaryColor: tertiaryColor.value,
+      quaternaryColor: quaternaryColor.value,
       schoolName: schoolName.value,
-      logoImage: logoPreview.value
-    })
-    
-    showSuccess.value = true
+      logoImage: logoPreview.value,
+    });
+
+    showSuccess.value = true;
   } catch (error) {
-    console.error('Error saving style settings:', error)
+    console.error('Error saving style settings:', error);
   } finally {
-    saving.value = false
+    saving.value = false;
   }
-}
+};
 </script>
 
 <style scoped>
@@ -299,7 +349,7 @@ const saveSettings = async () => {
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 16px;
-  background: white;
+  background: var(--tertiary-color, white);
 }
 
 .preview-header {
@@ -347,3 +397,5 @@ const saveSettings = async () => {
   font-size: 12px;
 }
 </style>
+
+

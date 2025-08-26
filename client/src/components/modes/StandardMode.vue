@@ -8,19 +8,19 @@
             <v-icon class="mr-2">mdi-account-group</v-icon>
             <span class="text-truncate">{{ currentClass?.name || 'No Class Selected' }}</span>
             <v-spacer />
-            <v-chip 
-              color="primary" 
+            <v-chip
+              color="primary"
               variant="outlined"
               :size="xs ? 'small' : 'default'"
             >
               {{ currentClassStudents.length }} Students
             </v-chip>
           </v-card-title>
-          
+
           <v-card-text>
             <div v-if="currentClassStudents.length === 0" class="text-center py-8">
-              <v-icon 
-                :size="xs ? '48' : '64'" 
+              <v-icon
+                :size="xs ? '48' : '64'"
                 color="grey"
               >
                 mdi-account-group-outline
@@ -28,7 +28,7 @@
               <p class="text-h6 text-grey mt-4">No students in this class</p>
               <p class="text-body-2 text-grey">Add students using the MANAGE STUDENTS mode</p>
             </div>
-            
+
             <!-- Responsive Student Grid -->
             <div v-else class="student-grid" :class="gridClass">
               <div
@@ -123,60 +123,59 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useDisplay } from 'vuetify'
-import { useAppStore } from '../../stores/appStore'
-import type { StudentStatus } from '../../types'
+import { computed, ref } from 'vue';
+import { useDisplay } from 'vuetify';
+import { useAppStore } from '../../stores/appStore';
+import type { StudentStatus } from '../../types';
 
-const store = useAppStore()
-const { xs, sm, md, lg, mobile } = useDisplay()
+const store = useAppStore();
+const { xs, sm, md, lg, mobile } = useDisplay();
 
 // Local state
-const showMobileActions = ref(false)
+const showMobileActions = ref(false);
 
-const currentClass = computed(() => store.currentClass)
-const currentClassStudents = computed(() => store.currentClassStudents)
+const currentClass = computed(() => store.currentClass);
+const currentClassStudents = computed(() => store.currentClassStudents);
 
 // Responsive grid classes
 const gridClass = computed(() => ({
   'student-grid-xs': xs.value,
   'student-grid-sm': sm.value,
   'student-grid-md': md.value,
-  'student-grid-lg': lg.value
-}))
+  'student-grid-lg': lg.value,
+}));
 
 // Responsive student square classes
 const studentSquareClass = computed(() => ({
   'student-square-xs': xs.value,
   'student-square-sm': sm.value,
   'student-square-md': md.value,
-  'student-square-lg': lg.value
-}))
+  'student-square-lg': lg.value,
+}));
 
 const getStudentStatus = (studentLabel: string): StudentStatus => {
-  return store.getStudentStatus(studentLabel)
-}
+  return store.getStudentStatus(studentLabel);
+};
 
 const getStudentSquareColor = (studentLabel: string): string => {
-  const status = getStudentStatus(studentLabel)
-  return store.statusColors[status]
-}
+  const status = getStudentStatus(studentLabel);
+  return store.statusColors[status];
+};
 
 const openStudentModal = (student: any) => {
-  store.openStudentModal(student)
-}
+  store.openStudentModal(student);
+};
 
 // Quick actions
 const quickAddStudent = () => {
-  store.switchMode('MANAGE STUDENTS')
-  showMobileActions.value = false
-}
+  store.switchMode('MANAGE STUDENTS');
+  showMobileActions.value = false;
+};
 
 const quickViewReports = () => {
-  store.switchMode('REPORTS')
-  showMobileActions.value = false
-}
-
+  store.switchMode('REPORTS');
+  showMobileActions.value = false;
+};
 
 </script>
 
@@ -348,7 +347,7 @@ const quickViewReports = () => {
     bottom: 16px;
     right: 16px;
   }
-  
+
   .mobile-actions {
     bottom: 72px;
     right: 16px;

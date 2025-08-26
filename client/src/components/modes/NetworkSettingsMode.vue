@@ -7,7 +7,7 @@
             <v-icon class="mr-2">mdi-wifi</v-icon>
             Network Settings
           </v-card-title>
-          
+
           <v-card-text>
             <v-alert
               type="info"
@@ -30,7 +30,7 @@
                     <p class="text-body-2 mb-3">
                       Synchronize data between local storage and server to ensure data consistency across devices.
                     </p>
-                    
+
                     <v-row>
                       <v-col cols="12" md="6">
                         <v-btn
@@ -48,7 +48,7 @@
                           Upload local changes to server
                         </p>
                       </v-col>
-                      
+
                       <v-col cols="12" md="6">
                         <v-btn
                           color="secondary"
@@ -66,9 +66,9 @@
                         </p>
                       </v-col>
                     </v-row>
-                    
+
                     <v-divider class="my-4" />
-                    
+
                     <v-btn
                       color="info"
                       @click="fullSync"
@@ -82,7 +82,7 @@
                     <p class="text-caption text-grey mt-2">
                       Complete bidirectional synchronization
                     </p>
-                    
+
                     <v-alert
                       v-if="syncMessage"
                       :type="syncMessageType"
@@ -112,7 +112,7 @@
                         </template>
                         <v-list-item-title>Server Status</v-list-item-title>
                         <v-list-item-subtitle>
-                          <v-chip 
+                          <v-chip
                             :color="serverStatus === 'online' ? 'success' : 'error'"
                             size="small"
                           >
@@ -120,7 +120,7 @@
                           </v-chip>
                         </v-list-item-subtitle>
                       </v-list-item>
-                      
+
                       <v-list-item>
                         <template #prepend>
                           <v-icon>mdi-database</v-icon>
@@ -130,7 +130,7 @@
                           {{ localDataCount }} records stored locally
                         </v-list-item-subtitle>
                       </v-list-item>
-                      
+
                       <v-list-item>
                         <template #prepend>
                           <v-icon>mdi-clock</v-icon>
@@ -140,19 +140,19 @@
                           {{ lastSyncTime || 'Never' }}
                         </v-list-item-subtitle>
                       </v-list-item>
-                      
+
                       <v-list-item>
                         <template #prepend>
                           <v-icon>mdi-sync</v-icon>
                         </template>
                         <v-list-item-title>Sync Status</v-list-item-title>
                         <v-list-item-subtitle>
-                          <v-chip 
+                          <v-chip
                             :color="isUpSyncing || isDownSyncing || isFullSyncing ? 'warning' : 'success'"
                             size="small"
                           >
-                            {{ isUpSyncing ? 'Up Syncing...' : 
-                               isDownSyncing ? 'Down Syncing...' : 
+                            {{ isUpSyncing ? 'Up Syncing...' :
+                               isDownSyncing ? 'Down Syncing...' :
                                isFullSyncing ? 'Full Syncing...' : 'Ready' }}
                           </v-chip>
                         </v-list-item-subtitle>
@@ -184,7 +184,7 @@
                           Automatically sync data when changes are made
                         </p>
                       </v-col>
-                      
+
                       <v-col cols="12" md="6">
                         <v-switch
                           v-model="syncOnStartup"
@@ -197,9 +197,9 @@
                         </p>
                       </v-col>
                     </v-row>
-                    
+
                     <v-divider class="my-4" />
-                    
+
                     <v-btn
                       color="warning"
                       variant="outlined"
@@ -223,116 +223,116 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useAppStore } from '../../stores/appStore'
+import { ref, computed, onMounted } from 'vue';
+import { useAppStore } from '../../stores/appStore';
 
-const store = useAppStore()
+const store = useAppStore();
 
 // Local state
-const isUpSyncing = ref(false)
-const isDownSyncing = ref(false)
-const isFullSyncing = ref(false)
-const syncMessage = ref('')
-const syncMessageType = ref<'success' | 'error' | 'info'>('info')
-const serverStatus = ref<'online' | 'offline'>('offline')
-const autoSync = ref(false)
-const syncOnStartup = ref(true)
-const lastSyncTime = ref('')
+const isUpSyncing = ref(false);
+const isDownSyncing = ref(false);
+const isFullSyncing = ref(false);
+const syncMessage = ref('');
+const syncMessageType = ref<'success' | 'error' | 'info'>('info');
+const serverStatus = ref<'online' | 'offline'>('offline');
+const autoSync = ref(false);
+const syncOnStartup = ref(true);
+const lastSyncTime = ref('');
 
 // Computed properties
 const localDataCount = computed(() => {
-  return store.students.length + store.classes.length + store.transactions.length
-})
+  return store.students.length + store.classes.length + store.transactions.length;
+});
 
 // Methods
 const upSync = async () => {
-  isUpSyncing.value = true
-  syncMessage.value = 'Uploading local changes to server...'
-  syncMessageType.value = 'info'
-  
+  isUpSyncing.value = true;
+  syncMessage.value = 'Uploading local changes to server...';
+  syncMessageType.value = 'info';
+
   try {
-    await store.syncToServer()
-    syncMessage.value = 'Up sync completed successfully!'
-    syncMessageType.value = 'success'
-    lastSyncTime.value = new Date().toLocaleString()
-    serverStatus.value = 'online'
+    await store.syncToServer();
+    syncMessage.value = 'Up sync completed successfully!';
+    syncMessageType.value = 'success';
+    lastSyncTime.value = new Date().toLocaleString();
+    serverStatus.value = 'online';
   } catch (error: unknown) {
-    console.error('Up sync failed:', error)
-    syncMessage.value = 'Up sync failed. Please check your connection and try again.'
-    syncMessageType.value = 'error'
-    serverStatus.value = 'offline'
+    console.error('Up sync failed:', error);
+    syncMessage.value = 'Up sync failed. Please check your connection and try again.';
+    syncMessageType.value = 'error';
+    serverStatus.value = 'offline';
   } finally {
-    isUpSyncing.value = false
+    isUpSyncing.value = false;
   }
-}
+};
 
 const downSync = async () => {
-  isDownSyncing.value = true
-  syncMessage.value = 'Downloading server data to local...'
-  syncMessageType.value = 'info'
-  
+  isDownSyncing.value = true;
+  syncMessage.value = 'Downloading server data to local...';
+  syncMessageType.value = 'info';
+
   try {
-    await store.loadFromServer()
-    syncMessage.value = 'Down sync completed successfully!'
-    syncMessageType.value = 'success'
-    lastSyncTime.value = new Date().toLocaleString()
-    serverStatus.value = 'online'
+    await store.loadFromServer();
+    syncMessage.value = 'Down sync completed successfully!';
+    syncMessageType.value = 'success';
+    lastSyncTime.value = new Date().toLocaleString();
+    serverStatus.value = 'online';
   } catch (error: unknown) {
-    console.error('Down sync failed:', error)
-    syncMessage.value = 'Down sync failed. Please check your connection and try again.'
-    syncMessageType.value = 'error'
-    serverStatus.value = 'offline'
+    console.error('Down sync failed:', error);
+    syncMessage.value = 'Down sync failed. Please check your connection and try again.';
+    syncMessageType.value = 'error';
+    serverStatus.value = 'offline';
   } finally {
-    isDownSyncing.value = false
+    isDownSyncing.value = false;
   }
-}
+};
 
 const fullSync = async () => {
-  isFullSyncing.value = true
-  syncMessage.value = 'Performing full bidirectional sync...'
-  syncMessageType.value = 'info'
-  
+  isFullSyncing.value = true;
+  syncMessage.value = 'Performing full bidirectional sync...';
+  syncMessageType.value = 'info';
+
   try {
-    await store.fullSync()
-    syncMessage.value = 'Full sync completed successfully!'
-    syncMessageType.value = 'success'
-    lastSyncTime.value = new Date().toLocaleString()
-    serverStatus.value = 'online'
+    await store.fullSync();
+    syncMessage.value = 'Full sync completed successfully!';
+    syncMessageType.value = 'success';
+    lastSyncTime.value = new Date().toLocaleString();
+    serverStatus.value = 'online';
   } catch (error: unknown) {
-    console.error('Full sync failed:', error)
-    syncMessage.value = 'Full sync failed. Please check your connection and try again.'
-    syncMessageType.value = 'error'
-    serverStatus.value = 'offline'
+    console.error('Full sync failed:', error);
+    syncMessage.value = 'Full sync failed. Please check your connection and try again.';
+    syncMessageType.value = 'error';
+    serverStatus.value = 'offline';
   } finally {
-    isFullSyncing.value = false
+    isFullSyncing.value = false;
   }
-}
+};
 
 const clearLocalData = async () => {
   if (confirm('Are you sure you want to clear all local data? This action cannot be undone.')) {
     try {
       // Clear local data (this would need to be implemented in the store)
-      syncMessage.value = 'Local data cleared successfully'
-      syncMessageType.value = 'success'
+      syncMessage.value = 'Local data cleared successfully';
+      syncMessageType.value = 'success';
     } catch (error: unknown) {
-      console.error('Failed to clear local data:', error)
-      syncMessage.value = 'Failed to clear local data'
-      syncMessageType.value = 'error'
+      console.error('Failed to clear local data:', error);
+      syncMessage.value = 'Failed to clear local data';
+      syncMessageType.value = 'error';
     }
   }
-}
+};
 
 // Check server status on mount
 onMounted(async () => {
   try {
-    const response = await fetch('/api/health')
+    const response = await fetch('/api/health');
     if (response.ok) {
-      serverStatus.value = 'online'
+      serverStatus.value = 'online';
     }
   } catch (error) {
-    serverStatus.value = 'offline'
+    serverStatus.value = 'offline';
   }
-})
+});
 </script>
 
 <style scoped>
