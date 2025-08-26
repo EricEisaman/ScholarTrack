@@ -86,10 +86,15 @@ export const useAppStore = defineStore('app', () => {
       await loadData()
       console.log('Data loaded successfully')
       
-      // Try to load from server if we have no local data
+      // Try to load from server if we have no local data (but don't fail if server is down)
       if (students.value.length === 0 && classes.value.length === 0) {
         console.log('No local data found, attempting to load from server...')
-        await loadFromServer()
+        try {
+          await loadFromServer()
+        } catch (error) {
+          console.warn('Server not available, continuing with local data only:', error)
+          // Don't fail the app initialization if server is down
+        }
       }
       
     } catch (error) {
@@ -134,7 +139,26 @@ export const useAppStore = defineStore('app', () => {
       students.value = parsedStudents
       classes.value = classesData
       transactions.value = transactionsData
-      styleSettings.value = settingsData.length > 0 ? settingsData[0] : null
+      
+      // Initialize default style settings if none exist
+      if (settingsData.length > 0) {
+        styleSettings.value = settingsData[0]
+      } else {
+        // Create default style settings
+        const defaultSettings: StyleSettings = {
+          id: 'default',
+          primaryColor: '#1976D2',
+          secondaryColor: '#424242',
+          tertiaryColor: '#000000',
+          quaternaryColor: '#121212',
+          schoolName: 'ScholarTrack',
+          logoImage: '',
+          updatedAt: new Date().toISOString()
+        }
+        styleSettings.value = defaultSettings
+        // Save default settings to database
+        await db.put('styleSettings', defaultSettings)
+      }
       
       if (classesData.length > 0 && !currentClass.value) {
         currentClass.value = classesData[0]
@@ -456,7 +480,21 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const getStyleSettings = (): StyleSettings | null => {
-    return styleSettings.value
+    if (styleSettings.value) {
+      return styleSettings.value
+    }
+    
+    // Return default settings if none exist
+    return {
+      id: 'default',
+      primaryColor: '#1976D2',
+      secondaryColor: '#424242',
+      tertiaryColor: '#000000',
+      quaternaryColor: '#121212',
+      schoolName: 'ScholarTrack',
+      logoImage: '',
+      updatedAt: new Date().toISOString()
+    }
   }
 
   // Enhanced sync methods for Up Sync, Down Sync, and Full Sync
@@ -489,6 +527,12 @@ export const useAppStore = defineStore('app', () => {
 
   const loadFromServer = async (): Promise<void> => {
     try {
+      // First check if server is available
+      const healthResponse = await fetch('/api/health')
+      if (!healthResponse.ok) {
+        throw new Error('Server not available')
+      }
+      
       const response = await fetch('/api/sync/down')
       
       if (!response.ok) {

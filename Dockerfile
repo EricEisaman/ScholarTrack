@@ -18,8 +18,8 @@ COPY . .
 # Create dist directory
 RUN mkdir -p dist/server
 
-# Build the application
-RUN cd client && npm run build
+# Build the application (unified build process)
+RUN npm run build
 
 # Ensure proper file permissions for static assets (after build)
 RUN chmod -R 755 client/dist/ && \

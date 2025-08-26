@@ -15,8 +15,10 @@ interface StyleSettingsRow {
   id: string
   primaryColor: string
   secondaryColor: string
-  logoImage: string
+  tertiaryColor: string
+  quaternaryColor: string
   schoolName: string
+  logoImage: string
   updatedAt: string
 }
 
@@ -60,8 +62,10 @@ interface StyleSettingsData {
   id: string
   primaryColor: string
   secondaryColor: string
-  logoImage: string
+  tertiaryColor: string
+  quaternaryColor: string
   schoolName: string
+  logoImage: string
   updatedAt: string
 }
 
@@ -75,7 +79,8 @@ app.use(helmet())
 app.use(compression())
 app.use(morgan('combined'))
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ limit: '50mb', extended: true }))
 
 // Database setup
 const db = new Database('scholartrack.db')
@@ -152,6 +157,8 @@ const initDatabase = (): void => {
         id TEXT PRIMARY KEY,
         primaryColor TEXT NOT NULL,
         secondaryColor TEXT NOT NULL,
+        tertiaryColor TEXT NOT NULL DEFAULT '#000000',
+        quaternaryColor TEXT NOT NULL DEFAULT '#121212',
         logoImage TEXT,
         schoolName TEXT NOT NULL DEFAULT 'ScholarTrack',
         updatedAt TEXT NOT NULL
@@ -175,10 +182,37 @@ const initDatabase = (): void => {
         console.error('Error adding schoolName column:', err)
       }
     })
+
+    // Migration: Add tertiaryColor column to styleSettings if it doesn't exist
+    db.run(`
+      ALTER TABLE styleSettings ADD COLUMN tertiaryColor TEXT DEFAULT '#000000'
+    `, (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('Error adding tertiaryColor column:', err)
+      }
+    })
+
+    // Migration: Add quaternaryColor column to styleSettings if it doesn't exist
+    db.run(`
+      ALTER TABLE styleSettings ADD COLUMN quaternaryColor TEXT DEFAULT '#121212'
+    `, (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('Error adding quaternaryColor column:', err)
+      }
+    })
   })
 }
 
 // API Routes
+
+// Health check endpoint
+app.get('/api/health', (_req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    database: 'connected'
+  })
+})
 
 // Get all students
 app.get('/api/students', (_req, res) => {
@@ -548,10 +582,19 @@ app.post('/api/sync/up', (req, res) => {
         return
       }
       
-      // Insert style settings if provided
+      // Insert or replace style settings if provided
       if (styleSettings) {
-        const styleStmt = db.prepare('INSERT INTO styleSettings (id, primaryColor, secondaryColor, logoImage, updatedAt) VALUES (?, ?, ?, ?, ?)')
-        styleStmt.run([styleSettings.id, styleSettings.primaryColor, styleSettings.secondaryColor, styleSettings.logoImage, styleSettings.updatedAt])
+        const styleStmt = db.prepare('INSERT OR REPLACE INTO styleSettings (id, primaryColor, secondaryColor, tertiaryColor, quaternaryColor, schoolName, logoImage, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        styleStmt.run([
+          styleSettings.id, 
+          styleSettings.primaryColor, 
+          styleSettings.secondaryColor,
+          styleSettings.tertiaryColor || '#000000',
+          styleSettings.quaternaryColor || '#121212',
+          styleSettings.schoolName || 'ScholarTrack',
+          styleSettings.logoImage, 
+          styleSettings.updatedAt
+        ])
         styleStmt.finalize()
       }
       
@@ -575,6 +618,13 @@ app.post('/api/sync/up', (req, res) => {
 app.get('/api/sync/down', (_req, res) => {
   console.log('🔽 Down Sync: Sending server data to client')
   
+  // Check if database is ready
+  if (!db) {
+    console.error('❌ Database not initialized')
+    res.status(500).json({ error: 'Database not initialized' })
+    return
+  }
+  
   db.serialize(() => {
     db.all('SELECT * FROM students', (err, students) => {
       if (err) {
@@ -597,45 +647,67 @@ app.get('/api/sync/down', (_req, res) => {
             return
           }
           
-          // Parse classes JSON for students
-          if (Array.isArray(students)) {
-            const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
-              typeof student === 'object' && 
-              student !== null && 
-              'id' in student && 
-              'label' in student && 
-              'code' in student && 
-              'emoji' in student && 
-              'classes' in student && 
-              'createdAt' in student
-            )
-                        const parsedStudents = studentRows.map((student) => ({
-              ...student,
-              classes: JSON.parse(student.classes)
-            }))
+          db.get('SELECT * FROM styleSettings WHERE id = ?', ['default'], (err, styleSettings) => {
+            if (err) {
+              console.error('Error fetching style settings for down sync:', err)
+              // Don't fail the entire sync if style settings fail, just return null
+              styleSettings = null
+            }
             
-            console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions`)
+            // Ensure style settings has all required fields with defaults
+            const completeStyleSettings = styleSettings && typeof styleSettings === 'object' && 'id' in styleSettings ? {
+              id: (styleSettings as StyleSettingsRow).id || 'default',
+              primaryColor: (styleSettings as StyleSettingsRow).primaryColor || '#1976D2',
+              secondaryColor: (styleSettings as StyleSettingsRow).secondaryColor || '#424242',
+              tertiaryColor: (styleSettings as StyleSettingsRow).tertiaryColor || '#000000',
+              quaternaryColor: (styleSettings as StyleSettingsRow).quaternaryColor || '#121212',
+              schoolName: (styleSettings as StyleSettingsRow).schoolName || 'ScholarTrack',
+              logoImage: (styleSettings as StyleSettingsRow).logoImage || '',
+              updatedAt: (styleSettings as StyleSettingsRow).updatedAt || new Date().toISOString()
+            } : null
             
-            res.json({
-              message: 'Down sync completed successfully',
-              timestamp: new Date().toISOString(),
-              data: {
-                students: parsedStudents,
-                classes,
-                transactions
-              }
-            })
-          } else {
-            res.json({
-              message: 'Down sync completed successfully',
-              timestamp: new Date().toISOString(),
-              data: {
-                students: [],
-                classes,
-                transactions
-              }
-            })
-          }
+            // Parse classes JSON for students
+            if (Array.isArray(students)) {
+              const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+                typeof student === 'object' && 
+                student !== null && 
+                'id' in student && 
+                'label' in student && 
+                'code' in student && 
+                'emoji' in student && 
+                'classes' in student && 
+                'createdAt' in student
+              )
+              const parsedStudents = studentRows.map((student) => ({
+                ...student,
+                classes: JSON.parse(student.classes)
+              }))
+              
+              console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${completeStyleSettings ? 1 : 0}`)
+              
+              res.json({
+                message: 'Down sync completed successfully',
+                timestamp: new Date().toISOString(),
+                data: {
+                  students: parsedStudents,
+                  classes,
+                  transactions,
+                  styleSettings: completeStyleSettings
+                }
+              })
+            } else {
+              res.json({
+                message: 'Down sync completed successfully',
+                timestamp: new Date().toISOString(),
+                data: {
+                  students: [],
+                  classes,
+                  transactions,
+                  styleSettings: completeStyleSettings
+                }
+              })
+            }
+          })
         })
       })
     })

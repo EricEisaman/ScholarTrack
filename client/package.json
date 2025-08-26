@@ -5,7 +5,7 @@
   "scripts": {
     "cleanup": "pkill -f 'vite' || true",
     "dev": "npm run cleanup && vite",
-    "build": "vue-tsc --noEmit -p tsconfig.typecheck.json && vite build --mode production && cd ../server && npm run build:server && cd ../client",
+    "build": "vue-tsc --noEmit -p tsconfig.typecheck.json && vite build --mode production",
     "build:vite": "vite build --mode production",
     "build:type-check": "vue-tsc && vite build",
     "preview": "vite preview",

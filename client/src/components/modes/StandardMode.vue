@@ -3,7 +3,7 @@
     <!-- Responsive Header Card -->
     <v-row>
       <v-col>
-        <v-card>
+        <v-card :color="cardBackgroundColor">
           <v-card-title class="d-flex align-center">
             <v-icon class="mr-2">mdi-account-group</v-icon>
             <span class="text-truncate">{{ currentClass?.name || 'No Class Selected' }}</span>
@@ -153,6 +153,12 @@ const studentSquareClass = computed(() => ({
   'student-square-lg': lg.value,
 }));
 
+// Card background color from theme
+const cardBackgroundColor = computed(() => {
+  const settings = store.getStyleSettings();
+  return settings?.tertiaryColor || '#000000';
+});
+
 const getStudentStatus = (studentLabel: string): StudentStatus => {
   return store.getStudentStatus(studentLabel);
 };
@@ -185,6 +191,7 @@ const quickViewReports = () => {
   display: grid;
   gap: 16px;
   padding: 16px;
+  background-color: transparent;
 }
 
 .student-grid-xs {

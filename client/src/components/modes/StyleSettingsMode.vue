@@ -306,11 +306,47 @@ const handleLogoUpload = (event: Event | File | null) => {
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    logoPreview.value = e.target?.result as string;
+  // Compress image to reduce payload size
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      img.onload = () => {
+        // Calculate new dimensions (max 512x512)
+        const maxSize = 512;
+        let { width, height } = img;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+        resolve(compressedDataUrl);
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
   };
-  reader.readAsDataURL(file);
+
+  // Compress and set the logo
+  compressImage(file).then((compressedDataUrl) => {
+    logoPreview.value = compressedDataUrl;
+  });
 };
 
 // Remove logo
@@ -397,5 +433,4 @@ const saveSettings = async () => {
   font-size: 12px;
 }
 </style>
-
 

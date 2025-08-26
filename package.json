@@ -8,7 +8,7 @@
     "dev": "npm run cleanup && concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "tsx watch server/index.ts",
     "client:dev": "cd client && npm run dev",
-    "build": "cd client && npm run build",
+    "build": "npm run build:server && cd client && npm run build",
     "build:server": "tsc -p server/tsconfig.json",
     "build:client": "cd client && npm run build",
     "install-all": "npm install && cd client && npm install",
