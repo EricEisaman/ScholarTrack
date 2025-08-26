@@ -186,12 +186,12 @@ const openStudentModal = (student: any) => {
 
 // Quick actions
 const quickAddStudent = () => {
-  store.currentMode = 'MANAGE STUDENTS'
+  store.switchMode('MANAGE STUDENTS')
   showMobileActions.value = false
 }
 
 const quickViewReports = () => {
-  store.currentMode = 'REPORTS'
+  store.switchMode('REPORTS')
   showMobileActions.value = false
 }
 

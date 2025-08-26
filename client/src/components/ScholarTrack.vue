@@ -56,6 +56,17 @@
               {{ store.currentMode }}
             </v-chip>
             
+            <!-- Authentication Status Indicator (for debugging) -->
+            <v-chip 
+              v-if="store.isAuthenticated"
+              color="success" 
+              size="small" 
+              class="ml-2"
+            >
+              <v-icon size="small" class="mr-1">mdi-shield-check</v-icon>
+              Auth
+            </v-chip>
+            
             <v-btn
               icon
               size="small"
@@ -263,14 +274,8 @@ const showModeChangeModal = (mode: AppMode) => {
   // Close mobile menu
   mobileMenuOpen.value = false
   
-  // Allow switching to STANDARD mode without teacher code
-  if (mode === 'STANDARD') {
-    store.currentMode = mode
-  } else {
-    // Require teacher code for other modes
-    store.tempMode = mode
-    store.showModeModal = true
-  }
+  // Use the new switchMode function that handles authentication properly
+  store.switchMode(mode)
 }
 
 // Show class change modal

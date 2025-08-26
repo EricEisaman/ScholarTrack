@@ -37,6 +37,9 @@ export const useAppStore = defineStore('app', () => {
   const tempMode: Ref<AppMode> = ref('STANDARD')
   const tempClass: Ref<string> = ref('')
   const tempCode: Ref<string> = ref('')
+  
+  // Authentication state
+  const isAuthenticated: Ref<boolean> = ref(false)
 
   // Database
   let db: IDBPDatabase<DatabaseSchema> | null = null
@@ -344,10 +347,75 @@ export const useAppStore = defineStore('app', () => {
 
   const changeMode = (mode: AppMode): void => {
     if (tempCode.value === teacherCode.value) {
+      console.log(`Changing mode to: ${mode}`)
       currentMode.value = mode
       showModeModal.value = false
       tempCode.value = ''
+      // Update authentication state
+      if (isAuthMode(mode)) {
+        isAuthenticated.value = true
+        console.log('Set authenticated to true (via changeMode)')
+      } else {
+        // Switching to STANDARD mode clears authentication
+        isAuthenticated.value = false
+        console.log('Set authenticated to false (via changeMode)')
+      }
     }
+  }
+
+  // Helper function to determine if a mode requires authentication
+  const isAuthMode = (mode: AppMode): boolean => {
+    return mode !== 'STANDARD'
+  }
+
+  // Helper function to determine if authentication is required for mode switching
+  const requiresAuthForModeSwitch = (fromMode: AppMode, toMode: AppMode): boolean => {
+    // If switching to STANDARD, no auth required
+    if (toMode === 'STANDARD') {
+      return false
+    }
+    
+    // If switching from STANDARD to an auth mode, auth required
+    if (fromMode === 'STANDARD' && isAuthMode(toMode)) {
+      return true
+    }
+    
+    // If already in an auth mode and switching to another auth mode, no auth required
+    if (isAuthMode(fromMode) && isAuthMode(toMode)) {
+      return false
+    }
+    
+    // Default: auth required
+    return true
+  }
+
+  // Function to handle mode switching with proper auth logic
+  const switchMode = (newMode: AppMode): void => {
+    const currentModeValue = currentMode.value
+    
+    console.log(`Mode switch request: ${currentModeValue} -> ${newMode}`)
+    console.log(`Current auth state: ${isAuthenticated.value}`)
+    console.log(`Auth required: ${requiresAuthForModeSwitch(currentModeValue, newMode)}`)
+    
+    // If no auth required, switch directly
+    if (!requiresAuthForModeSwitch(currentModeValue, newMode)) {
+      console.log('No auth required, switching directly')
+      currentMode.value = newMode
+      // Update authentication state
+      if (isAuthMode(newMode)) {
+        isAuthenticated.value = true
+        console.log('Set authenticated to true')
+      } else {
+        isAuthenticated.value = false
+        console.log('Set authenticated to false')
+      }
+      return
+    }
+    
+    // If auth required, show modal
+    console.log('Auth required, showing modal')
+    tempMode.value = newMode
+    showModeModal.value = true
   }
 
   const changeClass = (className: string): void => {
@@ -461,6 +529,7 @@ export const useAppStore = defineStore('app', () => {
     tempMode,
     tempClass,
     tempCode,
+    isAuthenticated,
     
     // Computed
     currentClassStudents,
@@ -484,6 +553,11 @@ export const useAppStore = defineStore('app', () => {
     updateStyleSettings,
     getStyleSettings,
     syncToServer,
-    loadFromServer
+    loadFromServer,
+    
+    // Authentication methods
+    isAuthMode,
+    requiresAuthForModeSwitch,
+    switchMode
   }
 })
