@@ -81,17 +81,7 @@
                   View Reports
                 </v-btn>
               </v-col>
-              <v-col cols="auto">
-                <v-btn
-                  color="info"
-                  variant="outlined"
-                  prepend-icon="mdi-sync"
-                  @click="quickSync"
-                  :loading="isQuickSyncing"
-                >
-                  Sync Data
-                </v-btn>
-              </v-col>
+
             </v-row>
           </v-card-text>
         </v-card>
@@ -127,13 +117,6 @@
           class="mb-2"
           @click="quickViewReports"
         />
-        <v-btn
-          color="info"
-          icon="mdi-sync"
-          size="small"
-          @click="quickSync"
-          :loading="isQuickSyncing"
-        />
       </div>
     </v-fab-transition>
   </div>
@@ -150,7 +133,6 @@ const { xs, sm, md, lg, mobile } = useDisplay()
 
 // Local state
 const showMobileActions = ref(false)
-const isQuickSyncing = ref(false)
 
 const currentClass = computed(() => store.currentClass)
 const currentClassStudents = computed(() => store.currentClassStudents)
@@ -195,16 +177,7 @@ const quickViewReports = () => {
   showMobileActions.value = false
 }
 
-const quickSync = async () => {
-  isQuickSyncing.value = true
-  try {
-    await store.syncToServer()
-  } catch (error: unknown) {
-    console.error('Quick sync failed:', error)
-  } finally {
-    isQuickSyncing.value = false
-  }
-}
+
 </script>
 
 <style scoped>

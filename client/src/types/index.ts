@@ -44,6 +44,7 @@ export type AppMode =
   | 'REPORTS'
   | 'STYLE SETTINGS'
   | 'RESPONSIVE SHOWCASE'
+  | 'NETWORK SETTINGS'
 
 export type StatusColor = Record<StudentStatus, string>
 

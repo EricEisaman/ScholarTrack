@@ -66,18 +66,6 @@
               <v-icon size="small" class="mr-1">mdi-shield-check</v-icon>
               Auth
             </v-chip>
-            
-            <v-btn
-              icon
-              size="small"
-              color="info"
-              class="ml-2"
-              @click="manualSync"
-              :loading="isSyncing"
-              title="Sync to server"
-            >
-              <v-icon>mdi-sync</v-icon>
-            </v-btn>
           </v-col>
         </v-row>
       </div>
@@ -94,18 +82,6 @@
         </v-toolbar-title>
         
         <v-spacer />
-        
-        <!-- Mobile Actions -->
-        <v-btn
-          icon
-          size="small"
-          color="info"
-          @click="manualSync"
-          :loading="isSyncing"
-          title="Sync"
-        >
-          <v-icon>mdi-sync</v-icon>
-        </v-btn>
         
         <!-- Mobile Menu -->
         <v-menu
@@ -202,12 +178,12 @@ import ManageStudentsMode from './modes/ManageStudentsMode.vue'
 import ReportsMode from './modes/ReportsMode.vue'
 import StyleSettingsMode from './modes/StyleSettingsMode.vue'
 import ResponsiveShowcase from './ResponsiveShowcase.vue'
+import NetworkSettingsMode from './modes/NetworkSettingsMode.vue'
 
 const store = useAppStore()
 const { mdAndUp, smAndDown, lgAndUp, xs, sm } = useDisplay()
 
 // Local state
-const isSyncing = ref(false)
 const mobileMenuOpen = ref(false)
 
 // Available modes
@@ -217,7 +193,8 @@ const availableModes: AppMode[] = [
   'MANAGE STUDENTS',
   'REPORTS',
   'STYLE SETTINGS',
-  'RESPONSIVE SHOWCASE'
+  'RESPONSIVE SHOWCASE',
+  'NETWORK SETTINGS'
 ]
 
 // Class names for selector
@@ -232,7 +209,8 @@ const availableModesWithIcons = computed(() => [
   { title: 'MANAGE STUDENTS', value: 'MANAGE STUDENTS', prependIcon: 'mdi-account-multiple' },
   { title: 'REPORTS', value: 'REPORTS', prependIcon: 'mdi-chart-line' },
   { title: 'STYLE SETTINGS', value: 'STYLE SETTINGS', prependIcon: 'mdi-palette' },
-  { title: 'RESPONSIVE SHOWCASE', value: 'RESPONSIVE SHOWCASE', prependIcon: 'mdi-responsive' }
+  { title: 'RESPONSIVE SHOWCASE', value: 'RESPONSIVE SHOWCASE', prependIcon: 'mdi-responsive' },
+  { title: 'NETWORK SETTINGS', value: 'NETWORK SETTINGS', prependIcon: 'mdi-wifi' }
 ])
 
 // Class names with icons
@@ -264,6 +242,8 @@ const currentModeComponent = computed(() => {
       return StyleSettingsMode
     case 'RESPONSIVE SHOWCASE':
       return ResponsiveShowcase
+    case 'NETWORK SETTINGS':
+      return NetworkSettingsMode
     default:
       return StandardMode
   }
@@ -287,17 +267,7 @@ const showClassChangeModal = (className: string) => {
   store.showClassModal = true
 }
 
-// Manual sync to server
-const manualSync = async () => {
-  isSyncing.value = true
-  try {
-    await store.syncToServer()
-  } catch (error: unknown) {
-    console.error('Manual sync failed:', error)
-  } finally {
-    isSyncing.value = false
-  }
-}
+
 
 // Initialize app
 onMounted(async () => {
