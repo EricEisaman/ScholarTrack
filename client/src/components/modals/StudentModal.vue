@@ -1,16 +1,21 @@
 <template>
-  <v-dialog v-model="showModal" max-width="500px" persistent>
-    <v-card>
+  <v-dialog 
+    v-model="showModal" 
+    :max-width="modalMaxWidth"
+    :fullscreen="xs"
+    persistent
+  >
+    <v-card :class="{ 'fullscreen-modal': xs }">
       <v-card-title class="d-flex align-center">
         <v-icon class="mr-2">mdi-account</v-icon>
-        {{ selectedStudent?.label }} {{ selectedStudent?.emoji }}
+        <span class="text-truncate">{{ selectedStudent?.label }} {{ selectedStudent?.emoji }}</span>
         <v-spacer />
         <v-btn icon @click="closeModal">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
 
-      <v-card-text>
+      <v-card-text :class="{ 'pa-4': md, 'pa-3': sm, 'pa-2': xs }">
         <v-form @submit.prevent="codeSubmitted ? handleSubmit() : submitCode()">
           <!-- Code Input (only visible when no code has been submitted) -->
           <div v-if="!codeSubmitted">
@@ -22,6 +27,7 @@
               :maxlength="maxCodeLength"
               variant="outlined"
               :rules="codeValidationRules"
+              :density="xs ? 'compact' : 'default'"
               required
               @keyup.enter="submitCode"
               @input="onCodeInput"
@@ -31,6 +37,8 @@
               color="primary"
               @click="submitCode"
               :disabled="!canSubmitCode"
+              :size="xs ? 'large' : 'default'"
+              :block="xs"
               class="mt-3"
             >
               Submit Code
@@ -40,12 +48,18 @@
           <!-- Student Status Section (if student code matches) -->
           <div v-if="isStudentCode && !isTeacherCode && codeSubmitted" class="mt-4">
             <h3 class="text-h6 mb-3">Select Status</h3>
-            <v-row>
-              <v-col v-for="status in studentStatuses" :key="status" cols="6">
+            <v-row :dense="xs">
+              <v-col 
+                v-for="status in studentStatuses" 
+                :key="status" 
+                :cols="statusGridCols"
+                :class="{ 'pa-1': xs }"
+              >
                 <v-btn
                   :color="selectedStatus === status ? store.statusColors[status] : 'grey'"
                   :variant="selectedStatus === status ? 'flat' : 'outlined'"
-                  block
+                  :size="statusButtonSize"
+                  :block="xs"
                   @click="toggleStatus(status)"
                   class="mb-2"
                 >
@@ -58,12 +72,18 @@
           <!-- Teacher Event Section (if teacher code matches) -->
           <div v-if="isTeacherCode && codeSubmitted" class="mt-4">
             <h3 class="text-h6 mb-3">Record Event</h3>
-            <v-row>
-              <v-col v-for="event in store.teacherEvents" :key="event" cols="6">
+            <v-row :dense="xs">
+              <v-col 
+                v-for="event in store.teacherEvents" 
+                :key="event" 
+                :cols="eventGridCols"
+                :class="{ 'pa-1': xs }"
+              >
                 <v-btn
                   :color="selectedEvent === event ? 'error' : 'grey'"
                   :variant="selectedEvent === event ? 'flat' : 'outlined'"
-                  block
+                  :size="eventButtonSize"
+                  :block="xs"
                   @click="selectedEvent = event"
                   class="mb-2"
                 >
@@ -79,13 +99,14 @@
             type="error"
             variant="tonal"
             class="mt-4"
+            :density="xs ? 'compact' : 'default'"
           >
             {{ errorMessage }}
           </v-alert>
         </v-form>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions :class="{ 'pa-4': md, 'pa-3': sm, 'pa-2': xs }">
         <v-spacer />
         <v-btn
           v-if="codeSubmitted"
@@ -93,10 +114,19 @@
           @click="handleSubmit"
           :disabled="!canSubmit"
           :loading="isSubmitting"
+          :size="xs ? 'large' : 'default'"
+          :block="xs"
         >
           {{ isTeacherCode ? 'Record Event' : 'Apply Status' }}
         </v-btn>
-        <v-btn @click="closeModal">Cancel</v-btn>
+        <v-btn 
+          @click="closeModal"
+          :size="xs ? 'large' : 'default'"
+          :block="xs"
+          :class="{ 'mt-2': xs }"
+        >
+          Cancel
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -104,10 +134,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { useDisplay } from 'vuetify'
 import { useAppStore } from '../../stores/appStore'
 import type { StudentStatus, TeacherEventType } from '../../types'
 
 const store = useAppStore()
+const { xs, sm, md } = useDisplay()
 
 // Local state
 const enteredCode = ref('')
@@ -121,6 +153,38 @@ const codeSubmitted = ref(false)
 // Computed properties
 const showModal = computed(() => store.showStudentModal)
 const selectedStudent = computed(() => store.selectedStudent)
+
+// Responsive modal properties
+const modalMaxWidth = computed(() => {
+  if (xs.value) return '100%'
+  if (sm.value) return '400px'
+  if (md.value) return '500px'
+  return '600px'
+})
+
+const statusGridCols = computed(() => {
+  if (xs.value) return 6
+  if (sm.value) return 4
+  return 6
+})
+
+const eventGridCols = computed(() => {
+  if (xs.value) return 6
+  if (sm.value) return 4
+  return 6
+})
+
+const statusButtonSize = computed(() => {
+  if (xs.value) return 'small'
+  if (sm.value) return 'default'
+  return 'default'
+})
+
+const eventButtonSize = computed(() => {
+  if (xs.value) return 'small'
+  if (sm.value) return 'default'
+  return 'default'
+})
 
 // Smart input detection
 const detectedCodeType = computed(() => {
@@ -286,10 +350,33 @@ watch(showModal, async (newValue) => {
     // Focus the code input when modal opens
     await nextTick()
     codeInput.value?.focus()
-    
-
   } else {
     resetForm()
   }
 })
 </script>
+
+<style scoped>
+.fullscreen-modal {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-modal .v-card-text {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Responsive button spacing for mobile */
+@media (max-width: 600px) {
+  .v-card-actions {
+    flex-direction: column;
+  }
+  
+  .v-card-actions .v-btn {
+    margin-left: 0 !important;
+    margin-top: 8px;
+  }
+}
+</style>

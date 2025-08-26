@@ -14,6 +14,18 @@ const vuetify = createVuetify({
   directives,
   theme: {
     defaultTheme: 'light'
+  },
+  // Enhanced breakpoint configuration for educational devices
+  breakpoint: {
+    thresholds: {
+      xs: 340,    // Small phones
+      sm: 600,    // Large phones / Small tablets
+      md: 960,    // Tablets / Small laptops
+      lg: 1264,   // Desktop / Large tablets
+      xl: 1904    // Large desktop / Interactive whiteboards
+    },
+    scrollBarWidth: 16,
+    mobileBreakpoint: 'sm' // Consider devices below 600px as mobile
   }
 })
 
