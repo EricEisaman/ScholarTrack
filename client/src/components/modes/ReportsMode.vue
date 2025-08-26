@@ -226,7 +226,7 @@ const generateReport = async () => {
         
         const contentDisposition = response.headers.get('Content-Disposition')
         const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
-        const filename = filenameMatch ? filenameMatch[1] : `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.pdf`
+        const filename = filenameMatch?.[1] || `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.pdf`
         
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -272,7 +272,7 @@ const generateOfflineReport = (reportData: {
   type: 'student' | 'teacher'
   startDate: string
   endDate: string
-  className?: string
+  className?: string | undefined
 }): string => {
   const { type, startDate, endDate, className } = reportData
   const start = new Date(startDate)
@@ -346,7 +346,7 @@ const generateJpgReport = async (reportData: {
   type: 'student' | 'teacher'
   startDate: string
   endDate: string
-  className?: string
+  className?: string | undefined
   data: {
     students: any[]
     classes: any[]
@@ -377,6 +377,22 @@ const generateJpgReport = async (reportData: {
   const smallFont = '18px Arial, sans-serif'
   
   let y = 120 // Starting Y position
+  
+  // Add logo if available
+  const settings = store.getStyleSettings()
+  if (settings?.logoImage) {
+    try {
+      const logoImg = new Image()
+      logoImg.onload = () => {
+        // Draw logo in top-left corner
+        ctx.drawImage(logoImg, 100, 50, 80, 80)
+      }
+      logoImg.src = settings.logoImage
+      y += 100 // Extra space for logo
+    } catch (error) {
+      console.error('Error loading logo for image report:', error)
+    }
+  }
   
   // Title
   ctx.fillStyle = '#1976D2'

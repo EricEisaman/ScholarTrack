@@ -14,7 +14,7 @@
         <p class="text-body-2 mb-4">
           Enter teacher code to switch to <strong>{{ tempMode }}</strong> mode
         </p>
-        
+
         <v-text-field
           ref="codeInput"
           v-model="enteredCode"
@@ -53,49 +53,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import { useAppStore } from '../../stores/appStore'
+import { ref, computed, watch, nextTick } from 'vue';
+import { useAppStore } from '../../stores/appStore';
 
-const store = useAppStore()
+const store = useAppStore();
 
 // Local state
-const enteredCode = ref('')
-const errorMessage = ref('')
-const codeInput = ref()
+const enteredCode = ref('');
+const errorMessage = ref('');
+const codeInput = ref();
 
 // Computed properties
-const showModal = computed(() => store.showModeModal)
-const tempMode = computed(() => store.tempMode)
+const showModal = computed(() => store.showModeModal);
+const tempMode = computed(() => store.tempMode);
 
 // Methods
 const handleSubmit = () => {
   if (enteredCode.value === store.teacherCode) {
-    store.tempCode = enteredCode.value
-    store.changeMode(tempMode.value)
-    resetForm()
+    store.tempCode = enteredCode.value;
+    store.changeMode(tempMode.value);
+    resetForm();
   } else {
-    errorMessage.value = 'Invalid teacher code'
+    errorMessage.value = 'Invalid teacher code';
   }
-}
+};
 
 const closeModal = () => {
-  store.showModeModal = false
-  resetForm()
-}
+  store.showModeModal = false;
+  resetForm();
+};
 
 const resetForm = () => {
-  enteredCode.value = ''
-  errorMessage.value = ''
-}
+  enteredCode.value = '';
+  errorMessage.value = '';
+};
 
 // Watch for modal state changes
 watch(showModal, async (newValue) => {
   if (newValue) {
     // Focus the code input when modal opens
-    await nextTick()
-    codeInput.value?.focus()
+    await nextTick();
+    codeInput.value?.focus();
   } else {
-    resetForm()
+    resetForm();
   }
-})
+});
 </script>

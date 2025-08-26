@@ -22,7 +22,13 @@
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "useUnknownInCatchVariables": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "**/*.ts"

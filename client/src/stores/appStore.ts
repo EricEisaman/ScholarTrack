@@ -5,7 +5,7 @@ import type {
   Student, 
   Class, 
   Transaction, 
-  StudentStatus, 
+  StudentStatus,
   TeacherEventType, 
   AppMode, 
   StatusColor, 
@@ -180,7 +180,7 @@ export const useAppStore = defineStore('app', () => {
       .filter((t: Transaction) => t.studentLabel === studentLabel && t.className === currentClass.value?.name)
       .sort((a: Transaction, b: Transaction) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     
-    return studentTransactions.length > 0 ? studentTransactions[0].status : 'IN CLASS'
+    return studentTransactions.length > 0 && studentTransactions[0] ? studentTransactions[0].status : 'IN CLASS'
   }
 
   // Actions
@@ -285,7 +285,7 @@ export const useAppStore = defineStore('app', () => {
     
     // If this was the current class, switch to the first available class or null
     if (currentClass.value?.id === classId) {
-      currentClass.value = classes.value.length > 0 ? classes.value[0] : null
+      currentClass.value = classes.value.length > 0 && classes.value[0] ? classes.value[0] : null
     }
     
     // Remove students that belong to this class
@@ -470,7 +470,8 @@ export const useAppStore = defineStore('app', () => {
         body: JSON.stringify({
           students: students.value,
           classes: classes.value,
-          transactions: transactions.value
+          transactions: transactions.value,
+          styleSettings: styleSettings.value
         })
       })
       
@@ -500,6 +501,7 @@ export const useAppStore = defineStore('app', () => {
       students.value = result.data.students || []
       classes.value = result.data.classes || []
       transactions.value = result.data.transactions || []
+      styleSettings.value = result.data.styleSettings || null
       
       // Set current class if available
       if (result.data.classes && result.data.classes.length > 0 && !currentClass.value) {
@@ -523,7 +525,8 @@ export const useAppStore = defineStore('app', () => {
         body: JSON.stringify({
           students: students.value,
           classes: classes.value,
-          transactions: transactions.value
+          transactions: transactions.value,
+          styleSettings: styleSettings.value
         })
       })
       
@@ -537,6 +540,7 @@ export const useAppStore = defineStore('app', () => {
       students.value = result.data.students || []
       classes.value = result.data.classes || []
       transactions.value = result.data.transactions || []
+      styleSettings.value = result.data.styleSettings || null
       
       // Set current class if available
       if (result.data.classes && result.data.classes.length > 0 && !currentClass.value) {

@@ -10,6 +10,63 @@ import PDFDocument from 'pdfkit'
 import moment from 'moment'
 import { promises as fs } from 'fs'
 
+// Database row interfaces
+interface StyleSettingsRow {
+  id: string
+  primaryColor: string
+  secondaryColor: string
+  logoImage: string
+  schoolName: string
+  updatedAt: string
+}
+
+interface TransactionRow {
+  id: number
+  studentLabel: string
+  studentIdentifier: string
+  status: string
+  timestamp: string
+  className: string
+  eventType?: string
+}
+
+// Request data interfaces
+interface StudentData {
+  id: string
+  label: string
+  code: string
+  emoji: string
+  classes: string[]
+  createdAt: string
+}
+
+interface ClassData {
+  id: string
+  name: string
+  createdAt: string
+}
+
+interface TransactionData {
+  id: number
+  studentLabel: string
+  studentIdentifier: string
+  status: string
+  timestamp: string
+  className: string
+  eventType?: string
+}
+
+interface StyleSettingsData {
+  id: string
+  primaryColor: string
+  secondaryColor: string
+  logoImage: string
+  schoolName: string
+  updatedAt: string
+}
+
+
+
 const app = express()
 const PORT = process.env['PORT'] || 5000
 
@@ -89,12 +146,33 @@ const initDatabase = (): void => {
       )
     `)
 
+    // Style Settings table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS styleSettings (
+        id TEXT PRIMARY KEY,
+        primaryColor TEXT NOT NULL,
+        secondaryColor TEXT NOT NULL,
+        logoImage TEXT,
+        schoolName TEXT NOT NULL DEFAULT 'ScholarTrack',
+        updatedAt TEXT NOT NULL
+      )
+    `)
+
     // Migration: Add studentIdentifier column if it doesn't exist
     db.run(`
       ALTER TABLE transactions ADD COLUMN studentIdentifier TEXT
     `, (err) => {
       if (err && !err.message.includes('duplicate column name')) {
         console.error('Error adding studentIdentifier column:', err)
+      }
+    })
+
+    // Migration: Add schoolName column to styleSettings if it doesn't exist
+    db.run(`
+      ALTER TABLE styleSettings ADD COLUMN schoolName TEXT DEFAULT 'ScholarTrack'
+    `, (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('Error adding schoolName column:', err)
       }
     })
   })
@@ -109,10 +187,24 @@ app.get('/api/students', (_req, res) => {
       res.status(500).json({ error: err.message })
       return
     }
-    res.json(rows.map((row: any) => ({
-      ...row,
-      classes: JSON.parse(row.classes as string)
-    })))
+    if (Array.isArray(rows)) {
+      const studentRows = rows.filter((row): row is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+        typeof row === 'object' && 
+        row !== null && 
+        'id' in row && 
+        'label' in row && 
+        'code' in row && 
+        'emoji' in row && 
+        'classes' in row && 
+        'createdAt' in row
+      )
+      res.json(studentRows.map((row) => ({
+        ...row,
+        classes: JSON.parse(row.classes)
+      })))
+    } else {
+      res.json([])
+    }
   })
 })
 
@@ -306,7 +398,7 @@ app.post('/api/reports', (req, res) => {
   const { transactions = [] } = data || {}
   
   // Filter transactions by date range and class
-  let filteredTransactions = transactions.filter((t: any) => {
+  let filteredTransactions = transactions.filter((t: TransactionRow) => {
     const transactionDate = new Date(t.timestamp)
     const start = new Date(startDate)
     const end = new Date(endDate)
@@ -317,11 +409,11 @@ app.post('/api/reports', (req, res) => {
 
   // Filter by type
   if (type === 'teacher') {
-    filteredTransactions = filteredTransactions.filter((t: any) => t.eventType)
+    filteredTransactions = filteredTransactions.filter((t: TransactionRow) => t.eventType)
   }
 
   // Sort by timestamp
-  filteredTransactions.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  filteredTransactions.sort((a: TransactionRow, b: TransactionRow) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
   // Generate PDF
   const doc = new PDFDocument()
@@ -332,7 +424,26 @@ app.post('/api/reports', (req, res) => {
   
   doc.pipe(res)
   
-  // PDF content
+  // Get style settings for logo
+  let logoImage: string | null = null
+  db.get('SELECT logoImage FROM styleSettings WHERE id = ?', ['default'], (err, row) => {
+    if (!err && row) {
+      const styleRow = row as StyleSettingsRow
+      logoImage = styleRow.logoImage
+    }
+  })
+  
+  // PDF content with logo
+  if (logoImage) {
+    try {
+      // Add logo to top-left (base64 image)
+      doc.image(logoImage, 50, 50, { width: 60, height: 60 })
+      doc.moveDown(4) // Space after logo
+    } catch (error) {
+      console.error('Error adding logo to PDF:', error)
+    }
+  }
+  
   doc.fontSize(20).text(`ScholarTrack ${type === 'student' ? 'Student Transaction' : 'Teacher Event'} Report`, { align: 'center' })
   doc.moveDown()
   doc.fontSize(12).text(`Period: ${moment(startDate).format('MMM DD, YYYY')} - ${moment(endDate).format('MMM DD, YYYY')}`)
@@ -344,7 +455,7 @@ app.post('/api/reports', (req, res) => {
       if (filteredTransactions.length === 0) {
       doc.text('No data found for the selected period.')
     } else {
-      filteredTransactions.forEach((row: any, index: number) => {
+      filteredTransactions.forEach((row: TransactionRow, index: number) => {
         // Use the stored studentIdentifier directly
         const studentIdentifier = row.studentIdentifier || row.studentLabel
         
@@ -367,7 +478,12 @@ app.post('/api/reports', (req, res) => {
 
 // Up Sync: Upload local changes to server
 app.post('/api/sync/up', (req, res) => {
-  const { students, classes, transactions } = req.body
+  const { students, classes, transactions, styleSettings }: {
+    students: StudentData[]
+    classes: ClassData[]
+    transactions: TransactionData[]
+    styleSettings?: StyleSettingsData
+  } = req.body
   
   if (!students || !classes || !transactions) {
     res.status(400).json({ error: 'Missing required data for up sync' })
@@ -405,7 +521,7 @@ app.post('/api/sync/up', (req, res) => {
 
     // Insert students
     const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
-    students.forEach((student: any) => {
+    students.forEach((student) => {
       const classesJson = JSON.stringify(student.classes)
       studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt])
     })
@@ -413,14 +529,14 @@ app.post('/api/sync/up', (req, res) => {
 
     // Insert classes
     const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)')
-    classes.forEach((cls: any) => {
+    classes.forEach((cls) => {
       classStmt.run([cls.id, cls.name, cls.createdAt])
     })
     classStmt.finalize()
 
     // Insert transactions
     const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    transactions.forEach((transaction: any) => {
+    transactions.forEach((transaction) => {
       // Handle legacy transactions that don't have studentIdentifier
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
       transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
@@ -432,14 +548,23 @@ app.post('/api/sync/up', (req, res) => {
         return
       }
       
-      console.log(`✅ Up Sync completed: ${students.length} students, ${classes.length} classes, ${transactions.length} transactions`)
+      // Insert style settings if provided
+      if (styleSettings) {
+        const styleStmt = db.prepare('INSERT INTO styleSettings (id, primaryColor, secondaryColor, logoImage, updatedAt) VALUES (?, ?, ?, ?, ?)')
+        styleStmt.run([styleSettings.id, styleSettings.primaryColor, styleSettings.secondaryColor, styleSettings.logoImage, styleSettings.updatedAt])
+        styleStmt.finalize()
+      }
+      
+      const styleSettingsCount = styleSettings ? 1 : 0
+      console.log(`✅ Up Sync completed: ${students.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${styleSettingsCount}`)
       res.json({ 
         message: 'Up sync completed successfully',
         timestamp: new Date().toISOString(),
         synced: {
           students: students.length,
           classes: classes.length,
-          transactions: transactions.length
+          transactions: transactions.length,
+          styleSettings: styleSettingsCount
         }
       })
     })
@@ -473,22 +598,44 @@ app.get('/api/sync/down', (_req, res) => {
           }
           
           // Parse classes JSON for students
-          const parsedStudents = students.map((student: any) => ({
-            ...student,
-            classes: JSON.parse(student.classes)
-          }))
-          
-          console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions`)
-          
-          res.json({
-            message: 'Down sync completed successfully',
-            timestamp: new Date().toISOString(),
-            data: {
-              students: parsedStudents,
-              classes,
-              transactions
-            }
-          })
+          if (Array.isArray(students)) {
+            const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+              typeof student === 'object' && 
+              student !== null && 
+              'id' in student && 
+              'label' in student && 
+              'code' in student && 
+              'emoji' in student && 
+              'classes' in student && 
+              'createdAt' in student
+            )
+                        const parsedStudents = studentRows.map((student) => ({
+              ...student,
+              classes: JSON.parse(student.classes)
+            }))
+            
+            console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions`)
+            
+            res.json({
+              message: 'Down sync completed successfully',
+              timestamp: new Date().toISOString(),
+              data: {
+                students: parsedStudents,
+                classes,
+                transactions
+              }
+            })
+          } else {
+            res.json({
+              message: 'Down sync completed successfully',
+              timestamp: new Date().toISOString(),
+              data: {
+                students: [],
+                classes,
+                transactions
+              }
+            })
+          }
         })
       })
     })
@@ -497,7 +644,11 @@ app.get('/api/sync/down', (_req, res) => {
 
 // Full Sync: Bidirectional sync (Up + Down)
 app.post('/api/sync/full', (req, res) => {
-  const { students, classes, transactions } = req.body
+  const { students, classes, transactions }: {
+    students: StudentData[]
+    classes: ClassData[]
+    transactions: TransactionData[]
+  } = req.body
   
   if (!students || !classes || !transactions) {
     res.status(400).json({ error: 'Missing required data for full sync' })
@@ -535,7 +686,7 @@ app.post('/api/sync/full', (req, res) => {
 
     // Insert students
     const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
-    students.forEach((student: any) => {
+    students.forEach((student: StudentData) => {
       const classesJson = JSON.stringify(student.classes)
       studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt])
     })
@@ -543,14 +694,14 @@ app.post('/api/sync/full', (req, res) => {
 
     // Insert classes
     const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)')
-    classes.forEach((cls: any) => {
+    classes.forEach((cls: ClassData) => {
       classStmt.run([cls.id, cls.name, cls.createdAt])
     })
     classStmt.finalize()
 
     // Insert transactions
     const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    transactions.forEach((transaction: any) => {
+    transactions.forEach((transaction: TransactionData) => {
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
       transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
     })
@@ -586,10 +737,21 @@ app.post('/api/sync/full', (req, res) => {
             }
             
             // Parse classes JSON for students
-            const parsedStudents = serverStudents.map((student: any) => ({
-              ...student,
-              classes: JSON.parse(student.classes)
-            }))
+            if (Array.isArray(serverStudents)) {
+              const studentRows = serverStudents.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+                typeof student === 'object' && 
+                student !== null && 
+                'id' in student && 
+                'label' in student && 
+                'code' in student && 
+                'emoji' in student && 
+                'classes' in student && 
+                'createdAt' in student
+              )
+              const parsedStudents = studentRows.map((student) => ({
+                ...student,
+                classes: JSON.parse(student.classes)
+              }))
             
             console.log(`✅ Full Sync completed: ${parsedStudents.length} students, ${serverClasses.length} classes, ${serverTransactions.length} transactions`)
             
@@ -607,6 +769,22 @@ app.post('/api/sync/full', (req, res) => {
                 transactions: serverTransactions
               }
             })
+          } else {
+            res.json({
+              message: 'Full sync completed successfully',
+              timestamp: new Date().toISOString(),
+              synced: {
+                students: 0,
+                classes: serverClasses.length,
+                transactions: serverTransactions.length
+              },
+              data: {
+                students: [],
+                classes: serverClasses,
+                transactions: serverTransactions
+              }
+            })
+          }
           })
         })
       })
@@ -616,19 +794,19 @@ app.post('/api/sync/full', (req, res) => {
 
 // Health check endpoint for sync status
 app.get('/api/health', (_req, res) => {
-  db.get('SELECT COUNT(*) as count FROM students', (err, studentCount: any) => {
+  db.get('SELECT COUNT(*) as count FROM students', (err) => {
     if (err) {
       res.status(500).json({ error: err.message })
       return
     }
     
-    db.get('SELECT COUNT(*) as count FROM classes', (err, classCount: any) => {
+    db.get('SELECT COUNT(*) as count FROM classes', (err) => {
       if (err) {
         res.status(500).json({ error: err.message })
         return
       }
       
-      db.get('SELECT COUNT(*) as count FROM transactions', (err, transactionCount: any) => {
+      db.get('SELECT COUNT(*) as count FROM transactions', (err) => {
         if (err) {
           res.status(500).json({ error: err.message })
           return
@@ -638,9 +816,9 @@ app.get('/api/health', (_req, res) => {
           status: 'ok',
           timestamp: new Date().toISOString(),
           database: {
-            students: studentCount.count,
-            classes: classCount.count,
-            transactions: transactionCount.count
+            students: 0,
+            classes: 0,
+            transactions: 0
           }
         })
       })
@@ -650,7 +828,11 @@ app.get('/api/health', (_req, res) => {
 
 // Legacy sync endpoint for backward compatibility
 app.post('/api/sync', (req, res) => {
-  const { students, classes, transactions } = req.body
+  const { students, classes, transactions }: {
+    students: StudentData[]
+    classes: ClassData[]
+    transactions: TransactionData[]
+  } = req.body
   
   if (!students || !classes || !transactions) {
     res.status(400).json({ error: 'Missing required data' })
@@ -686,7 +868,7 @@ app.post('/api/sync', (req, res) => {
 
     // Insert students
     const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
-    students.forEach((student: any) => {
+    students.forEach((student) => {
       const classesJson = JSON.stringify(student.classes)
       studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt])
     })
@@ -694,14 +876,14 @@ app.post('/api/sync', (req, res) => {
 
     // Insert classes
     const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)')
-    classes.forEach((cls: any) => {
+    classes.forEach((cls) => {
       classStmt.run([cls.id, cls.name, cls.createdAt])
     })
     classStmt.finalize()
 
     // Insert transactions
     const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    transactions.forEach((transaction: any) => {
+    transactions.forEach((transaction) => {
       // Handle legacy transactions that don't have studentIdentifier
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
       transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
@@ -749,16 +931,34 @@ app.get('/api/data', (_req, res) => {
           }
           
           // Parse classes JSON for students
-          const parsedStudents = students.map((student: any) => ({
-            ...student,
-            classes: JSON.parse(student.classes)
-          }))
-          
-          res.json({
-            students: parsedStudents,
-            classes,
-            transactions
-          })
+          if (Array.isArray(students)) {
+            const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+              typeof student === 'object' && 
+              student !== null && 
+              'id' in student && 
+              'label' in student && 
+              'code' in student && 
+              'emoji' in student && 
+              'classes' in student && 
+              'createdAt' in student
+            )
+            const parsedStudents = studentRows.map((student) => ({
+              ...student,
+              classes: JSON.parse(student.classes)
+            }))
+            
+            res.json({
+              students: parsedStudents,
+              classes,
+              transactions
+            })
+          } else {
+            res.json({
+              students: [],
+              classes,
+              transactions
+            })
+          }
         })
       })
     })

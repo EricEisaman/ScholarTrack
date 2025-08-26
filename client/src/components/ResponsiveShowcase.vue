@@ -12,7 +12,7 @@
               {{ currentBreakpoint }}
             </v-chip>
           </v-card-title>
-          
+
           <v-card-text>
             <v-row>
               <v-col v-for="breakpoint in breakpoints" :key="breakpoint.name" cols="auto">
@@ -151,8 +151,8 @@
               <v-col>
                 <h4 class="text-subtitle-1 mb-2">Responsive Grid</h4>
                 <v-row>
-                  <v-col 
-                    v-for="i in gridItems" 
+                  <v-col
+                    v-for="i in gridItems"
                     :key="i"
                     :cols="gridCols"
                     :class="{ 'pa-1': xs }"
@@ -171,9 +171,9 @@
               <v-col>
                 <h4 class="text-subtitle-1 mb-2">Responsive Typography</h4>
                 <p :class="responsiveTextClass">
-                  This text adapts its size based on screen size. 
-                  {{ xs ? 'Small mobile text' : 
-                     sm ? 'Medium tablet text' : 
+                  This text adapts its size based on screen size.
+                  {{ xs ? 'Small mobile text' :
+                     sm ? 'Medium tablet text' :
                      'Large desktop text' }}
                 </p>
               </v-col>
@@ -183,7 +183,7 @@
             <v-row>
               <v-col>
                 <h4 class="text-subtitle-1 mb-2">Responsive Spacing</h4>
-                <v-card 
+                <v-card
                   :class="spacingClass"
                   color="grey-lighten-4"
                 >
@@ -211,7 +211,7 @@
           <v-card-text>
             <v-row>
               <v-col v-for="helper in breakpointHelpers" :key="helper.name" cols="6" md="3">
-                <v-card 
+                <v-card
                   :color="helper.active ? 'success' : 'grey-lighten-4'"
                   :class="helper.active ? 'text-white' : ''"
                 >
@@ -258,10 +258,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useDisplay } from 'vuetify'
+import { computed } from 'vue';
+import { useDisplay } from 'vuetify';
 
-const { xs, sm, md, lg, xl, width, mobile } = useDisplay()
+const { xs, sm, md, lg, xl, width, mobile } = useDisplay();
 
 // Breakpoint information
 const breakpoints = computed(() => [
@@ -269,103 +269,103 @@ const breakpoints = computed(() => [
   { name: 'sm', width: '600px+', active: sm.value },
   { name: 'md', width: '960px+', active: md.value },
   { name: 'lg', width: '1264px+', active: lg.value },
-  { name: 'xl', width: '1904px+', active: xl.value }
-])
+  { name: 'xl', width: '1904px+', active: xl.value },
+]);
 
 const currentBreakpoint = computed(() => {
-  if (xs.value) return 'Extra Small (< 600px)'
-  if (sm.value) return 'Small (600px - 959px)'
-  if (md.value) return 'Medium (960px - 1263px)'
-  if (lg.value) return 'Large (1264px - 1903px)'
-  return 'Extra Large (1904px+)'
-})
+  if (xs.value) return 'Extra Small (< 600px)';
+  if (sm.value) return 'Small (600px - 959px)';
+  if (md.value) return 'Medium (960px - 1263px)';
+  if (lg.value) return 'Large (1264px - 1903px)';
+  return 'Extra Large (1904px+)';
+});
 
 // Responsive component examples
 const buttonSizes = computed(() => {
-  if (xs.value) return ['small', 'default']
-  if (sm.value) return ['small', 'default', 'large']
-  return ['x-small', 'small', 'default', 'large', 'x-large']
-})
+  if (xs.value) return ['small', 'default'];
+  if (sm.value) return ['small', 'default', 'large'];
+  return ['x-small', 'small', 'default', 'large', 'x-large'];
+});
 
 const gridItems = computed(() => {
-  if (xs.value) return 2
-  if (sm.value) return 4
-  if (md.value) return 6
-  return 8
-})
+  if (xs.value) return 2;
+  if (sm.value) return 4;
+  if (md.value) return 6;
+  return 8;
+});
 
 const gridCols = computed(() => {
-  if (xs.value) return 6
-  if (sm.value) return 3
-  if (md.value) return 2
-  return 3
-})
+  if (xs.value) return 6;
+  if (sm.value) return 3;
+  if (md.value) return 2;
+  return 3;
+});
 
 const responsiveTextClass = computed(() => {
-  if (xs.value) return 'text-body-2'
-  if (sm.value) return 'text-body-1'
-  return 'text-h6'
-})
+  if (xs.value) return 'text-body-2';
+  if (sm.value) return 'text-body-1';
+  return 'text-h6';
+});
 
 const spacingClass = computed(() => {
-  if (xs.value) return 'pa-2 ma-1'
-  if (sm.value) return 'pa-4 ma-2'
-  return 'pa-6 ma-4'
-})
+  if (xs.value) return 'pa-2 ma-1';
+  if (sm.value) return 'pa-4 ma-2';
+  return 'pa-6 ma-4';
+});
 
 const spacingDescription = computed(() => {
-  if (xs.value) return 'Compact (pa-2, ma-1)'
-  if (sm.value) return 'Medium (pa-4, ma-2)'
-  return 'Spacious (pa-6, ma-4)'
-})
+  if (xs.value) return 'Compact (pa-2, ma-1)';
+  if (sm.value) return 'Medium (pa-4, ma-2)';
+  return 'Spacious (pa-6, ma-4)';
+});
 
 // Breakpoint helper properties
 const breakpointHelpers = computed(() => [
-  { 
-    name: 'xs', 
+  {
+    name: 'xs',
     description: 'Extra small only',
-    active: xs.value 
+    active: xs.value,
   },
-  { 
-    name: 'mobile', 
+  {
+    name: 'mobile',
     description: 'Mobile devices',
-    active: mobile.value 
+    active: mobile.value,
   },
-  { 
-    name: 'md', 
+  {
+    name: 'md',
     description: 'Medium and above',
-    active: md.value 
+    active: md.value,
   },
-  { 
-    name: 'lg', 
+  {
+    name: 'lg',
     description: 'Large screens',
-    active: lg.value 
-  }
-])
+    active: lg.value,
+  },
+]);
 
 // Performance metrics
 const performanceMetrics = computed(() => [
   {
     name: 'Breakpoint Updates',
     value: 'Real-time',
-    icon: 'refresh'
+    icon: 'refresh',
   },
   {
     name: 'Component Rendering',
     value: 'Conditional',
-    icon: 'view-dashboard'
+    icon: 'view-dashboard',
   },
   {
     name: 'Layout Adaptation',
     value: 'Automatic',
-    icon: 'resize'
+    icon: 'resize',
   },
   {
     name: 'Touch Optimization',
     value: mobile.value ? 'Enabled' : 'Desktop',
-    icon: 'gesture-tap'
-  }
-])
+    icon: 'gesture-tap',
+  },
+]);
 </script>
 
 <style scoped>

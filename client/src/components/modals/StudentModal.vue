@@ -186,13 +186,7 @@ const eventButtonSize = computed(() => {
   return 'default'
 })
 
-// Smart input detection
-const detectedCodeType = computed(() => {
-  if (!enteredCode.value) return 'none'
-  if (enteredCode.value.length === 4) return 'student'
-  if (enteredCode.value.length === 6) return 'teacher'
-  return 'none'
-})
+
 
 const maxCodeLength = computed(() => {
   return 6 // Allow up to 6 characters for both student and teacher codes

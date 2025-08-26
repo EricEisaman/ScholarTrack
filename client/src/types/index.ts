@@ -67,5 +67,6 @@ export interface StyleSettings {
   primaryColor: string
   secondaryColor: string
   logoImage: string // base64 string
+  schoolName: string
   updatedAt: string
 }

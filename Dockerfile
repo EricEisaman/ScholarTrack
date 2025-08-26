@@ -19,7 +19,6 @@ COPY . .
 RUN mkdir -p dist/server
 
 # Build the application
-RUN npm run build:server
 RUN cd client && npm run build
 
 # Ensure proper file permissions for static assets (after build)

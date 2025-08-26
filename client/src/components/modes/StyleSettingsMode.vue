@@ -43,6 +43,20 @@
             </v-col>
           </v-row>
 
+          <!-- School Name -->
+          <v-row>
+            <v-col cols="12">
+              <v-text-field
+                v-model="schoolName"
+                label="School Name"
+                variant="outlined"
+                prepend-icon="mdi-school"
+                placeholder="Enter your school name"
+                :rules="[rules.required]"
+              />
+            </v-col>
+          </v-row>
+
           <!-- Logo Upload -->
           <v-row>
             <v-col cols="12">
@@ -102,7 +116,7 @@
                   <div class="preview-container" :style="previewStyles">
                     <div class="preview-header">
                       <img v-if="logoPreview" :src="logoPreview" class="preview-logo" />
-                      <span class="preview-title">ScholarTrack</span>
+                      <span class="preview-title">{{ schoolName }}</span>
                     </div>
                     <div class="preview-content">
                       <div class="preview-button">Sample Button</div>
@@ -152,6 +166,7 @@ const store = useAppStore()
 // Form data
 const primaryColor = ref('#1976D2')
 const secondaryColor = ref('#424242')
+const schoolName = ref('ScholarTrack')
 const logoFile = ref<File | null>(null)
 const logoPreview = ref<string>('')
 const saving = ref(false)
@@ -159,6 +174,7 @@ const showSuccess = ref(false)
 
 // Validation rules
 const rules = {
+  required: (value: string) => !!value || 'This field is required',
   imageSize: (value: File | null) => {
     if (!value) return true
     const maxSize = 2 * 1024 * 1024 // 2MB
@@ -166,8 +182,14 @@ const rules = {
   },
   imageType: (value: File | null) => {
     if (!value) return true
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml']
-    return allowedTypes.includes(value.type) || 'Please upload a PNG, JPG, or SVG file'
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml']
+    const fileExtension = value.name.toLowerCase().split('.').pop()
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg']
+    
+    const isValidType = allowedTypes.includes(value.type) || 
+                       (fileExtension && allowedExtensions.includes(fileExtension))
+    
+    return isValidType || 'Please upload a PNG, JPG, JPEG, WebP, or SVG file'
   }
 }
 
@@ -188,6 +210,7 @@ onMounted(() => {
   if (settings) {
     primaryColor.value = settings.primaryColor
     secondaryColor.value = settings.secondaryColor
+    schoolName.value = settings.schoolName || 'ScholarTrack'
     if (settings.logoImage) {
       logoPreview.value = settings.logoImage
     }
@@ -204,16 +227,34 @@ const updateSecondaryColor = (color: string) => {
 }
 
 // Handle logo upload
-const handleLogoUpload = (file: File | null) => {
+const handleLogoUpload = (event: Event | File | null) => {
+  // Handle different event types
+  let file: File | null = null
+  
+  if (event instanceof File) {
+    file = event
+  } else if (event && 'target' in event && event.target) {
+    const target = event.target as HTMLInputElement
+    file = target.files?.[0] || null
+  } else {
+    file = null
+  }
+
   if (!file) {
     logoPreview.value = ''
     return
   }
 
-  // Validate file type
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml']
-  if (!allowedTypes.includes(file.type)) {
-    console.error('Invalid file type:', file.type)
+  // Validate file type - support PNG, JPG, JPEG, WebP
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml']
+  const fileExtension = file.name.toLowerCase().split('.').pop()
+  const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg']
+  
+  const isValidType = allowedTypes.includes(file.type) || 
+                     (fileExtension && allowedExtensions.includes(fileExtension))
+  
+  if (!isValidType) {
+    console.error('Invalid file type:', file.type, 'File extension:', fileExtension)
     return
   }
 
@@ -240,6 +281,7 @@ const saveSettings = async () => {
     await store.updateStyleSettings({
       primaryColor: primaryColor.value,
       secondaryColor: secondaryColor.value,
+      schoolName: schoolName.value,
       logoImage: logoPreview.value
     })
     
