@@ -17,6 +17,11 @@
               density="default"
               class="mr-4 mb-1"
               :style="{ maxWidth: lgAndUp ? '200px' : '180px' }"
+              :menu-props="{ 
+                maxHeight: '400px',
+                location: 'bottom',
+                offset: '8px'
+              }"
               @update:model-value="showModeChangeModal"
             >
               <template #item="{ item, props }">
@@ -88,8 +93,9 @@
           v-model="mobileMenuOpen"
           :location="xs ? 'bottom' : 'bottom end'"
           :close-on-content-click="false"
+          :max-height="400"
         >
-          <v-card min-width="280">
+          <v-card min-width="280" max-height="400" class="overflow-y-auto">
             <v-list>
               <!-- Current Class Display -->
               <v-list-item>
