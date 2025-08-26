@@ -459,10 +459,10 @@ export const useAppStore = defineStore('app', () => {
     return styleSettings.value
   }
 
-  // Sync methods for server synchronization
+  // Enhanced sync methods for Up Sync, Down Sync, and Full Sync
   const syncToServer = async (): Promise<void> => {
     try {
-      const response = await fetch('/api/sync', {
+      const response = await fetch('/api/sync/up', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -479,37 +479,74 @@ export const useAppStore = defineStore('app', () => {
       }
       
       const result = await response.json()
-      console.log('Sync to server completed:', result)
+      console.log('Up sync completed:', result)
     } catch (error) {
-      console.error('Failed to sync to server:', error)
-      // Don't throw - sync failures shouldn't break the app
+      console.error('Failed to up sync to server:', error)
+      throw error
     }
   }
 
   const loadFromServer = async (): Promise<void> => {
     try {
-      const response = await fetch('/api/data')
+      const response = await fetch('/api/sync/down')
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      const data = await response.json()
+      const result = await response.json()
       
       // Update local state with server data
-      students.value = data.students || []
-      classes.value = data.classes || []
-      transactions.value = data.transactions || []
+      students.value = result.data.students || []
+      classes.value = result.data.classes || []
+      transactions.value = result.data.transactions || []
       
       // Set current class if available
-      if (data.classes && data.classes.length > 0 && !currentClass.value) {
-        currentClass.value = data.classes[0]
+      if (result.data.classes && result.data.classes.length > 0 && !currentClass.value) {
+        currentClass.value = result.data.classes[0]
       }
       
-      console.log('Loaded data from server:', data)
+      console.log('Down sync completed:', result)
     } catch (error) {
-      console.error('Failed to load from server:', error)
-      // Don't throw - server load failures shouldn't break the app
+      console.error('Failed to down sync from server:', error)
+      throw error
+    }
+  }
+
+  const fullSync = async (): Promise<void> => {
+    try {
+      const response = await fetch('/api/sync/full', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          students: students.value,
+          classes: classes.value,
+          transactions: transactions.value
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      // Update local state with server data from full sync
+      students.value = result.data.students || []
+      classes.value = result.data.classes || []
+      transactions.value = result.data.transactions || []
+      
+      // Set current class if available
+      if (result.data.classes && result.data.classes.length > 0 && !currentClass.value) {
+        currentClass.value = result.data.classes[0]
+      }
+      
+      console.log('Full sync completed:', result)
+    } catch (error) {
+      console.error('Failed to full sync with server:', error)
+      throw error
     }
   }
 
@@ -554,6 +591,7 @@ export const useAppStore = defineStore('app', () => {
     getStyleSettings,
     syncToServer,
     loadFromServer,
+    fullSync,
     
     // Authentication methods
     isAuthMode,

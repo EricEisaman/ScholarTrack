@@ -28,18 +28,60 @@
                   </v-card-title>
                   <v-card-text>
                     <p class="text-body-2 mb-3">
-                      Synchronize local data with the server to ensure data consistency across devices.
+                      Synchronize data between local storage and server to ensure data consistency across devices.
                     </p>
                     
+                    <v-row>
+                      <v-col cols="12" md="6">
+                        <v-btn
+                          color="primary"
+                          @click="upSync"
+                          :loading="isUpSyncing"
+                          :disabled="isUpSyncing || isDownSyncing"
+                          prepend-icon="mdi-upload"
+                          block
+                          class="mb-2"
+                        >
+                          {{ isUpSyncing ? 'Up Syncing...' : 'Up Sync' }}
+                        </v-btn>
+                        <p class="text-caption text-grey">
+                          Upload local changes to server
+                        </p>
+                      </v-col>
+                      
+                      <v-col cols="12" md="6">
+                        <v-btn
+                          color="secondary"
+                          @click="downSync"
+                          :loading="isDownSyncing"
+                          :disabled="isUpSyncing || isDownSyncing"
+                          prepend-icon="mdi-download"
+                          block
+                          class="mb-2"
+                        >
+                          {{ isDownSyncing ? 'Down Syncing...' : 'Down Sync' }}
+                        </v-btn>
+                        <p class="text-caption text-grey">
+                          Download server data to local
+                        </p>
+                      </v-col>
+                    </v-row>
+                    
+                    <v-divider class="my-4" />
+                    
                     <v-btn
-                      color="primary"
-                      @click="manualSync"
-                      :loading="isSyncing"
-                      :disabled="isSyncing"
+                      color="info"
+                      @click="fullSync"
+                      :loading="isFullSyncing"
+                      :disabled="isUpSyncing || isDownSyncing || isFullSyncing"
                       prepend-icon="mdi-sync"
+                      block
                     >
-                      {{ isSyncing ? 'Syncing...' : 'Sync to Server' }}
+                      {{ isFullSyncing ? 'Full Syncing...' : 'Full Sync (Up + Down)' }}
                     </v-btn>
+                    <p class="text-caption text-grey mt-2">
+                      Complete bidirectional synchronization
+                    </p>
                     
                     <v-alert
                       v-if="syncMessage"
@@ -96,6 +138,23 @@
                         <v-list-item-title>Last Sync</v-list-item-title>
                         <v-list-item-subtitle>
                           {{ lastSyncTime || 'Never' }}
+                        </v-list-item-subtitle>
+                      </v-list-item>
+                      
+                      <v-list-item>
+                        <template #prepend>
+                          <v-icon>mdi-sync</v-icon>
+                        </template>
+                        <v-list-item-title>Sync Status</v-list-item-title>
+                        <v-list-item-subtitle>
+                          <v-chip 
+                            :color="isUpSyncing || isDownSyncing || isFullSyncing ? 'warning' : 'success'"
+                            size="small"
+                          >
+                            {{ isUpSyncing ? 'Up Syncing...' : 
+                               isDownSyncing ? 'Down Syncing...' : 
+                               isFullSyncing ? 'Full Syncing...' : 'Ready' }}
+                          </v-chip>
                         </v-list-item-subtitle>
                       </v-list-item>
                     </v-list>
@@ -170,7 +229,9 @@ import { useAppStore } from '../../stores/appStore'
 const store = useAppStore()
 
 // Local state
-const isSyncing = ref(false)
+const isUpSyncing = ref(false)
+const isDownSyncing = ref(false)
+const isFullSyncing = ref(false)
 const syncMessage = ref('')
 const syncMessageType = ref<'success' | 'error' | 'info'>('info')
 const serverStatus = ref<'online' | 'offline'>('offline')
@@ -184,24 +245,66 @@ const localDataCount = computed(() => {
 })
 
 // Methods
-const manualSync = async () => {
-  isSyncing.value = true
-  syncMessage.value = 'Syncing data to server...'
+const upSync = async () => {
+  isUpSyncing.value = true
+  syncMessage.value = 'Uploading local changes to server...'
   syncMessageType.value = 'info'
   
   try {
     await store.syncToServer()
-    syncMessage.value = 'Data synchronized successfully!'
+    syncMessage.value = 'Up sync completed successfully!'
     syncMessageType.value = 'success'
     lastSyncTime.value = new Date().toLocaleString()
     serverStatus.value = 'online'
   } catch (error: unknown) {
-    console.error('Manual sync failed:', error)
-    syncMessage.value = 'Failed to sync data. Please check your connection and try again.'
+    console.error('Up sync failed:', error)
+    syncMessage.value = 'Up sync failed. Please check your connection and try again.'
     syncMessageType.value = 'error'
     serverStatus.value = 'offline'
   } finally {
-    isSyncing.value = false
+    isUpSyncing.value = false
+  }
+}
+
+const downSync = async () => {
+  isDownSyncing.value = true
+  syncMessage.value = 'Downloading server data to local...'
+  syncMessageType.value = 'info'
+  
+  try {
+    await store.loadFromServer()
+    syncMessage.value = 'Down sync completed successfully!'
+    syncMessageType.value = 'success'
+    lastSyncTime.value = new Date().toLocaleString()
+    serverStatus.value = 'online'
+  } catch (error: unknown) {
+    console.error('Down sync failed:', error)
+    syncMessage.value = 'Down sync failed. Please check your connection and try again.'
+    syncMessageType.value = 'error'
+    serverStatus.value = 'offline'
+  } finally {
+    isDownSyncing.value = false
+  }
+}
+
+const fullSync = async () => {
+  isFullSyncing.value = true
+  syncMessage.value = 'Performing full bidirectional sync...'
+  syncMessageType.value = 'info'
+  
+  try {
+    await store.fullSync()
+    syncMessage.value = 'Full sync completed successfully!'
+    syncMessageType.value = 'success'
+    lastSyncTime.value = new Date().toLocaleString()
+    serverStatus.value = 'online'
+  } catch (error: unknown) {
+    console.error('Full sync failed:', error)
+    syncMessage.value = 'Full sync failed. Please check your connection and try again.'
+    syncMessageType.value = 'error'
+    serverStatus.value = 'offline'
+  } finally {
+    isFullSyncing.value = false
   }
 }
 

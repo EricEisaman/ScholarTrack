@@ -363,7 +363,292 @@ app.post('/api/reports', (req, res) => {
   doc.end()
 })
 
-// Sync endpoint for local-first architecture
+// Enhanced sync endpoints for Up Sync and Down Sync
+
+// Up Sync: Upload local changes to server
+app.post('/api/sync/up', (req, res) => {
+  const { students, classes, transactions } = req.body
+  
+  if (!students || !classes || !transactions) {
+    res.status(400).json({ error: 'Missing required data for up sync' })
+    return
+  }
+
+  console.log(`🔼 Up Sync: Received ${students.length} students, ${classes.length} classes, ${transactions.length} transactions`)
+
+  // Clear existing data and sync from client (same as current sync)
+  db.serialize(() => {
+    // Clear existing data
+    db.run('DELETE FROM students', (err) => {
+      if (err) {
+        console.error('Error clearing students:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM classes', (err) => {
+      if (err) {
+        console.error('Error clearing classes:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM transactions', (err) => {
+      if (err) {
+        console.error('Error clearing transactions:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+
+    // Insert students
+    const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+    students.forEach((student: any) => {
+      const classesJson = JSON.stringify(student.classes)
+      studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt])
+    })
+    studentStmt.finalize()
+
+    // Insert classes
+    const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)')
+    classes.forEach((cls: any) => {
+      classStmt.run([cls.id, cls.name, cls.createdAt])
+    })
+    classStmt.finalize()
+
+    // Insert transactions
+    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    transactions.forEach((transaction: any) => {
+      // Handle legacy transactions that don't have studentIdentifier
+      const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
+      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
+    })
+    transactionStmt.finalize((err) => {
+      if (err) {
+        console.error('Error during up sync:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      console.log(`✅ Up Sync completed: ${students.length} students, ${classes.length} classes, ${transactions.length} transactions`)
+      res.json({ 
+        message: 'Up sync completed successfully',
+        timestamp: new Date().toISOString(),
+        synced: {
+          students: students.length,
+          classes: classes.length,
+          transactions: transactions.length
+        }
+      })
+    })
+  })
+})
+
+// Down Sync: Download server data to local
+app.get('/api/sync/down', (_req, res) => {
+  console.log('🔽 Down Sync: Sending server data to client')
+  
+  db.serialize(() => {
+    db.all('SELECT * FROM students', (err, students) => {
+      if (err) {
+        console.error('Error fetching students for down sync:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      db.all('SELECT * FROM classes', (err, classes) => {
+        if (err) {
+          console.error('Error fetching classes for down sync:', err)
+          res.status(500).json({ error: err.message })
+          return
+        }
+        
+        db.all('SELECT * FROM transactions', (err, transactions) => {
+          if (err) {
+            console.error('Error fetching transactions for down sync:', err)
+            res.status(500).json({ error: err.message })
+            return
+          }
+          
+          // Parse classes JSON for students
+          const parsedStudents = students.map((student: any) => ({
+            ...student,
+            classes: JSON.parse(student.classes)
+          }))
+          
+          console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions`)
+          
+          res.json({
+            message: 'Down sync completed successfully',
+            timestamp: new Date().toISOString(),
+            data: {
+              students: parsedStudents,
+              classes,
+              transactions
+            }
+          })
+        })
+      })
+    })
+  })
+})
+
+// Full Sync: Bidirectional sync (Up + Down)
+app.post('/api/sync/full', (req, res) => {
+  const { students, classes, transactions } = req.body
+  
+  if (!students || !classes || !transactions) {
+    res.status(400).json({ error: 'Missing required data for full sync' })
+    return
+  }
+
+  console.log('🔄 Full Sync: Starting bidirectional synchronization')
+
+  // First, perform up sync
+  db.serialize(() => {
+    // Clear existing data
+    db.run('DELETE FROM students', (err) => {
+      if (err) {
+        console.error('Error clearing students during full sync:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM classes', (err) => {
+      if (err) {
+        console.error('Error clearing classes during full sync:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM transactions', (err) => {
+      if (err) {
+        console.error('Error clearing transactions during full sync:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+
+    // Insert students
+    const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
+    students.forEach((student: any) => {
+      const classesJson = JSON.stringify(student.classes)
+      studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt])
+    })
+    studentStmt.finalize()
+
+    // Insert classes
+    const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)')
+    classes.forEach((cls: any) => {
+      classStmt.run([cls.id, cls.name, cls.createdAt])
+    })
+    classStmt.finalize()
+
+    // Insert transactions
+    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    transactions.forEach((transaction: any) => {
+      const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
+      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
+    })
+    transactionStmt.finalize((err) => {
+      if (err) {
+        console.error('Error during full sync up phase:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      console.log('✅ Full Sync up phase completed')
+      
+      // Then, return the complete server state (down sync)
+      db.all('SELECT * FROM students', (err, serverStudents) => {
+        if (err) {
+          console.error('Error fetching students for full sync down phase:', err)
+          res.status(500).json({ error: err.message })
+          return
+        }
+        
+        db.all('SELECT * FROM classes', (err, serverClasses) => {
+          if (err) {
+            console.error('Error fetching classes for full sync down phase:', err)
+            res.status(500).json({ error: err.message })
+            return
+          }
+          
+          db.all('SELECT * FROM transactions', (err, serverTransactions) => {
+            if (err) {
+              console.error('Error fetching transactions for full sync down phase:', err)
+              res.status(500).json({ error: err.message })
+              return
+            }
+            
+            // Parse classes JSON for students
+            const parsedStudents = serverStudents.map((student: any) => ({
+              ...student,
+              classes: JSON.parse(student.classes)
+            }))
+            
+            console.log(`✅ Full Sync completed: ${parsedStudents.length} students, ${serverClasses.length} classes, ${serverTransactions.length} transactions`)
+            
+            res.json({
+              message: 'Full sync completed successfully',
+              timestamp: new Date().toISOString(),
+              synced: {
+                students: parsedStudents.length,
+                classes: serverClasses.length,
+                transactions: serverTransactions.length
+              },
+              data: {
+                students: parsedStudents,
+                classes: serverClasses,
+                transactions: serverTransactions
+              }
+            })
+          })
+        })
+      })
+    })
+  })
+})
+
+// Health check endpoint for sync status
+app.get('/api/health', (_req, res) => {
+  db.get('SELECT COUNT(*) as count FROM students', (err, studentCount: any) => {
+    if (err) {
+      res.status(500).json({ error: err.message })
+      return
+    }
+    
+    db.get('SELECT COUNT(*) as count FROM classes', (err, classCount: any) => {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      db.get('SELECT COUNT(*) as count FROM transactions', (err, transactionCount: any) => {
+        if (err) {
+          res.status(500).json({ error: err.message })
+          return
+        }
+        
+        res.json({
+          status: 'ok',
+          timestamp: new Date().toISOString(),
+          database: {
+            students: studentCount.count,
+            classes: classCount.count,
+            transactions: transactionCount.count
+          }
+        })
+      })
+    })
+  })
+})
+
+// Legacy sync endpoint for backward compatibility
 app.post('/api/sync', (req, res) => {
   const { students, classes, transactions } = req.body
   
