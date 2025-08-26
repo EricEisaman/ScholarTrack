@@ -1,50 +1,70 @@
 <template>
-  <div class="scholar-track">
+  <div class="h-100 d-flex flex-column">
     <!-- Header with mode and class selectors -->
     <v-app-bar color="primary" dark>
-      <v-container class="d-flex align-center py-1 pt-8" style="min-height: 64px;">
-        <!-- Mode Selector -->
-        <v-select
-          v-model="store.tempMode"
-          :items="availableModes"
-          label="Mode"
-          variant="outlined"
-          density="default"
-          class="mr-4 mb-1"
-          style="max-width: 200px"
-          @update:model-value="showModeChangeModal"
-        />
-        
-        <v-spacer />
-        
-        <!-- Class Selector -->
-        <v-select
-          v-model="store.tempClass"
-          :items="classNames"
-          label="Class"
-          variant="outlined"
-          density="default"
-          class="mr-4 mb-1"
-          style="max-width: 200px"
-          @update:model-value="showClassChangeModal"
-        />
-        
-        <v-chip color="secondary" class="text-caption">
-          {{ store.currentMode }}
-        </v-chip>
-        
-        <v-btn
-          icon
-          size="small"
-          color="info"
-          class="ml-2"
-          @click="manualSync"
-          :loading="isSyncing"
-          title="Sync to server"
-        >
-          <v-icon>mdi-sync</v-icon>
-        </v-btn>
-      </v-container>
+      <v-row class="d-flex align-center py-1 pt-8 min-height-64 px-4">
+        <v-col class="d-flex align-center">
+          <!-- Mode Selector -->
+          <v-select
+            v-model="store.tempMode"
+            :items="availableModesWithIcons"
+            item-title="title"
+            item-value="value"
+            label="Mode"
+            variant="outlined"
+            density="default"
+            class="mr-4 mb-1 max-width-200"
+            @update:model-value="showModeChangeModal"
+          >
+            <template #item="{ item, props }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-icon :icon="item.raw.prependIcon" />
+                </template>
+              </v-list-item>
+            </template>
+          </v-select>
+          
+          <v-spacer />
+          
+          <!-- Class Selector -->
+          <v-select
+            v-model="store.tempClass"
+            :items="classNamesWithIcons"
+            item-title="title"
+            item-value="value"
+            label="Class"
+            variant="outlined"
+            density="default"
+            class="mr-4 mb-1 max-width-200"
+            @update:model-value="showClassChangeModal"
+          >
+            <template #item="{ item, props }">
+              <v-list-item v-bind="props">
+                <template #prepend>
+                  <v-icon :icon="item.raw.prependIcon" />
+                </template>
+              </v-list-item>
+            </template>
+          </v-select>
+          
+          <v-chip color="secondary" class="text-caption">
+            {{ store.currentMode }}
+          </v-chip>
+          
+          <v-btn
+            icon
+            size="small"
+            color="info"
+            class="ml-2"
+            @click="manualSync"
+            :loading="isSyncing"
+            title="Sync to server"
+          >
+            <v-icon>mdi-sync</v-icon>
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-app-bar>
 
     <!-- Main Content -->
@@ -99,6 +119,24 @@ const classNames = computed(() =>
   store.classes.map(c => c.name)
 )
 
+// Available modes with icons
+const availableModesWithIcons = computed(() => [
+  { title: 'STANDARD', value: 'STANDARD', prependIcon: 'mdi-view-dashboard' },
+  { title: 'MANAGE CLASSES', value: 'MANAGE CLASSES', prependIcon: 'mdi-account-group' },
+  { title: 'MANAGE STUDENTS', value: 'MANAGE STUDENTS', prependIcon: 'mdi-account-multiple' },
+  { title: 'REPORTS', value: 'REPORTS', prependIcon: 'mdi-chart-line' },
+  { title: 'STYLE SETTINGS', value: 'STYLE SETTINGS', prependIcon: 'mdi-palette' }
+])
+
+// Class names with icons
+const classNamesWithIcons = computed(() => 
+  store.classes.map(c => ({
+    title: c.name,
+    value: c.name,
+    prependIcon: 'mdi-account-group'
+  }))
+)
+
 // Current mode component
 const currentModeComponent = computed(() => {
   switch (store.currentMode) {
@@ -140,7 +178,7 @@ const manualSync = async () => {
   isSyncing.value = true
   try {
     await store.syncToServer()
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Manual sync failed:', error)
   } finally {
     isSyncing.value = false
@@ -151,17 +189,11 @@ const manualSync = async () => {
 onMounted(async () => {
   try {
     await store.initDB()
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to initialize app:', error)
     // App will still work with empty data
   }
 })
 </script>
 
-<style scoped>
-.scholar-track {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-</style>
+
