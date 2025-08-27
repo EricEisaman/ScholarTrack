@@ -282,11 +282,15 @@ const addClass = async () => {
   isAdding.value = true;
 
   try {
+    console.log('Attempting to add class:', newClassName.value);
     await store.addClass(newClassName.value);
+    console.log('Class added successfully');
     newClassName.value = '';
     addForm.value?.resetValidation();
   } catch (error) {
     console.error('Failed to add class:', error);
+    // Show user-friendly error message
+    alert(`Failed to add class: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
     isAdding.value = false;
   }

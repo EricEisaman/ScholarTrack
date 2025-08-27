@@ -49,7 +49,7 @@ export const useAppStore = defineStore('app', () => {
     try {
       console.log('Initializing IndexedDB...')
       
-      db = await openDB<DatabaseSchema>('scholartrack', 5, {
+      db = await openDB<DatabaseSchema>('scholartrack', 4, {
         upgrade(db: any, oldVersion: number, newVersion: number) {
           console.log(`Upgrading database from version ${oldVersion} to ${newVersion}...`)
           
@@ -60,8 +60,8 @@ export const useAppStore = defineStore('app', () => {
             studentStore.createIndex('code', 'code', { unique: true })
             // New unique constraint: combination of label and emoji
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true })
-          } else if (oldVersion < 5) {
-            // Migration: Remove old unique constraint on label and add new combination constraint
+          } else if (oldVersion < 4) {
+            // Migration: Update to label+emoji unique constraint
             const studentStore = db.transaction(['students'], 'readwrite').objectStore('students')
             
             // Delete the old unique index on label
@@ -227,59 +227,93 @@ export const useAppStore = defineStore('app', () => {
 
   // Actions
   const addStudent = async (student: NewStudent): Promise<void> => {
-    if (!db) return
-    
-    const newStudent: Student = {
-      id: crypto.randomUUID(),
-      label: student.label,
-      code: student.code,
-      emoji: student.emoji,
-      classes: student.classes, // Keep as array for in-memory
-      createdAt: new Date().toISOString()
+    if (!db) {
+      console.error('Database not initialized')
+      throw new Error('Database not initialized')
     }
     
-    // Convert classes array to JSON string for IndexedDB storage
-    const dbStudent = {
-      id: newStudent.id,
-      label: newStudent.label,
-      code: newStudent.code,
-      emoji: newStudent.emoji,
-      classes: JSON.stringify(student.classes),
-      createdAt: newStudent.createdAt
+    try {
+      const newStudent: Student = {
+        id: crypto.randomUUID(),
+        label: student.label,
+        code: student.code,
+        emoji: student.emoji,
+        classes: student.classes, // Keep as array for in-memory
+        createdAt: new Date().toISOString()
+      }
+      
+      // Convert classes array to JSON string for IndexedDB storage
+      const dbStudent = {
+        id: newStudent.id,
+        label: newStudent.label,
+        code: newStudent.code,
+        emoji: newStudent.emoji,
+        classes: JSON.stringify(student.classes),
+        createdAt: newStudent.createdAt
+      }
+      
+      console.log('Adding student:', { label: newStudent.label, emoji: newStudent.emoji, code: newStudent.code })
+      
+      // Use idb library's convenience method
+      await db.add('students', dbStudent)
+      
+      students.value.push(newStudent)
+      
+      console.log('Student added successfully, syncing to server...')
+      
+      // Sync to server
+      await syncToServer()
+      
+      console.log('Student added and synced successfully')
+    } catch (error) {
+      console.error('Error adding student:', error)
+      if (error instanceof Error && error.name === 'ConstraintError') {
+        throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+      }
+      throw error
     }
-    
-    // Use idb library's convenience method
-    await db.add('students', dbStudent)
-    
-    students.value.push(newStudent)
-    
-    // Sync to server
-    await syncToServer()
   }
 
   const updateStudent = async (student: Student): Promise<void> => {
-    if (!db) return
-    
-    // Convert classes array to JSON string for IndexedDB storage
-    const dbStudent = {
-      id: student.id,
-      label: student.label,
-      code: student.code,
-      emoji: student.emoji,
-      classes: JSON.stringify(student.classes),
-      createdAt: student.createdAt
+    if (!db) {
+      console.error('Database not initialized')
+      throw new Error('Database not initialized')
     }
     
-    // Use idb library's convenience method
-    await db.put('students', dbStudent)
-    
-    const index = students.value.findIndex((s: Student) => s.id === student.id)
-    if (index !== -1) {
-      students.value[index] = student
+    try {
+      // Convert classes array to JSON string for IndexedDB storage
+      const dbStudent = {
+        id: student.id,
+        label: student.label,
+        code: student.code,
+        emoji: student.emoji,
+        classes: JSON.stringify(student.classes),
+        createdAt: student.createdAt
+      }
+      
+      console.log('Updating student:', { id: student.id, label: student.label, emoji: student.emoji })
+      
+      // Use idb library's convenience method
+      await db.put('students', dbStudent)
+      
+      const index = students.value.findIndex((s: Student) => s.id === student.id)
+      if (index !== -1) {
+        students.value[index] = student
+      }
+      
+      console.log('Student updated successfully, syncing to server...')
+      
+      // Sync to server
+      await syncToServer()
+      
+      console.log('Student updated and synced successfully')
+    } catch (error) {
+      console.error('Error updating student:', error)
+      if (error instanceof Error && error.name === 'ConstraintError') {
+        throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+      }
+      throw error
     }
-    
-    // Sync to server
-    await syncToServer()
   }
 
   const removeStudent = async (studentId: string): Promise<void> => {
@@ -295,21 +329,35 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const addClass = async (className: string): Promise<void> => {
-    if (!db) return
-    
-    const newClass: Class = {
-      id: crypto.randomUUID(),
-      name: className,
-      createdAt: new Date().toISOString()
+    if (!db) {
+      console.error('Database not initialized')
+      throw new Error('Database not initialized')
     }
     
-    // Use idb library's convenience method
-    await db.add('classes', newClass)
-    
-    classes.value.push(newClass)
-    
-    // Sync to server
-    await syncToServer()
+    try {
+      const newClass: Class = {
+        id: crypto.randomUUID(),
+        name: className,
+        createdAt: new Date().toISOString()
+      }
+      
+      console.log('Adding class:', newClass)
+      
+      // Use idb library's convenience method
+      await db.add('classes', newClass)
+      
+      classes.value.push(newClass)
+      
+      console.log('Class added successfully, syncing to server...')
+      
+      // Sync to server
+      await syncToServer()
+      
+      console.log('Class added and synced successfully')
+    } catch (error) {
+      console.error('Error adding class:', error)
+      throw error
+    }
   }
 
   const updateClass = async (classData: Class): Promise<void> => {

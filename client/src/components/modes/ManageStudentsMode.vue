@@ -387,6 +387,7 @@ const addStudent = async () => {
   isAdding.value = true;
 
   try {
+    console.log('Attempting to add student:', newStudent.value);
     await store.addStudent(newStudent.value);
 
     // Reset form data
@@ -396,8 +397,11 @@ const addStudent = async () => {
     await nextTick();
     addForm.value?.resetValidation();
 
+    console.log('Student added successfully');
   } catch (error) {
     console.error('Failed to add student:', error);
+    // Show user-friendly error message
+    alert(`Failed to add student: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
     isAdding.value = false;
   }
@@ -414,13 +418,17 @@ const saveStudent = async () => {
   isEditing.value = true;
 
   try {
+    console.log('Attempting to update student:', editingStudent.value);
     await store.updateStudent(editingStudent.value);
     showEditDialog.value = false;
     editingStudent.value = null;
     editForm.value?.resetValidation();
     editFormValid.value = false;
+    console.log('Student updated successfully');
   } catch (error) {
     console.error('Failed to update student:', error);
+    // Show user-friendly error message
+    alert(`Failed to update student: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
     isEditing.value = false;
   }

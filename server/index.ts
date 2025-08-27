@@ -117,7 +117,7 @@ const validatePWAIcons = async (): Promise<void> => {
 // Initialize database tables
 const initDatabase = (): void => {
   db.serialize(() => {
-    // Students table
+    // Students table - CORRECTED: Unique constraint on label+emoji combination
     db.run(`
       CREATE TABLE IF NOT EXISTS students (
         id TEXT PRIMARY KEY,
@@ -139,12 +139,12 @@ const initDatabase = (): void => {
       )
     `)
 
-    // Transactions table
+    // Transactions table - EMERGENCY FIX: Made studentCode optional
     db.run(`
       CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         studentLabel TEXT NOT NULL,
-        studentCode TEXT NOT NULL,
+        studentCode TEXT,
         studentIdentifier TEXT NOT NULL,
         status TEXT NOT NULL,
         timestamp TEXT NOT NULL,
@@ -213,9 +213,9 @@ const initDatabase = (): void => {
       }
     })
 
-    // Migration: Update students table to use label+emoji unique constraint instead of just label
+    // SAFE MIGRATION: Handle existing data with label+emoji unique constraint
     db.run(`
-      CREATE TABLE IF NOT EXISTS students_new (
+      CREATE TABLE IF NOT EXISTS students_temp (
         id TEXT PRIMARY KEY,
         label TEXT NOT NULL,
         code TEXT UNIQUE NOT NULL,
@@ -226,35 +226,65 @@ const initDatabase = (): void => {
       )
     `, (err) => {
       if (err) {
-        console.error('Error creating new students table:', err)
+        console.error('Error creating temp students table:', err)
         return
       }
       
-      // Copy data from old table to new table
-      db.run(`
-        INSERT OR IGNORE INTO students_new 
-        SELECT id, label, code, emoji, classes, createdAt 
-        FROM students
-      `, (err) => {
+      // Check if we need to migrate (only if old table exists with different schema)
+      db.get("PRAGMA table_info(students)", (err, rows) => {
         if (err) {
-          console.error('Error migrating students data:', err)
+          console.log('Students table does not exist, will be created with new schema')
           return
         }
         
-        // Drop old table and rename new table
-        db.run('DROP TABLE students', (err) => {
-          if (err) {
-            console.error('Error dropping old students table:', err)
-            return
-          }
+        // Check if the table has the old UNIQUE constraint on label
+        db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='students'", (err, result) => {
+          if (err || !result) return
           
-          db.run('ALTER TABLE students_new RENAME TO students', (err) => {
-            if (err) {
-              console.error('Error renaming students table:', err)
-            } else {
-              console.log('Successfully migrated students table to use label+emoji unique constraint')
-            }
-          })
+          const tableSql = result.sql as string
+          if (tableSql.includes('label TEXT UNIQUE')) {
+            console.log('Migrating students table to new schema...')
+            
+            // Copy data with conflict resolution
+            db.run(`
+              INSERT OR IGNORE INTO students_temp 
+              SELECT id, label, code, emoji, classes, createdAt 
+              FROM students
+            `, (err) => {
+              if (err) {
+                console.error('Error migrating students data:', err)
+                return
+              }
+              
+              // Get count of migrated records
+              db.get('SELECT COUNT(*) as count FROM students_temp', (err, result) => {
+                if (err) {
+                  console.error('Error counting migrated records:', err)
+                  return
+                }
+                
+                console.log(`Successfully migrated ${result?.count || 0} students to new schema`)
+                
+                // Drop old table and rename new table
+                db.run('DROP TABLE students', (err) => {
+                  if (err) {
+                    console.error('Error dropping old students table:', err)
+                    return
+                  }
+                  
+                  db.run('ALTER TABLE students_temp RENAME TO students', (err) => {
+                    if (err) {
+                      console.error('Error renaming students table:', err)
+                    } else {
+                      console.log('Successfully migrated students table to use label+emoji unique constraint')
+                    }
+                  })
+                })
+              })
+            })
+          } else {
+            console.log('Students table already has correct schema')
+          }
         })
       })
     })
@@ -478,7 +508,7 @@ app.get('/api/transactions', (req, res) => {
 app.post('/api/transactions', (req, res) => {
   const { studentLabel, studentCode, status, className, eventType } = req.body
   
-  if (!studentLabel || !studentCode || !status || !className) {
+  if (!studentLabel || !status || !className) {
     res.status(400).json({ error: 'Missing required fields' })
     return
   }
@@ -857,10 +887,10 @@ app.post('/api/sync/full', (req, res) => {
     })
     classStmt.finalize()
 
-    // Insert transactions
+    // Insert transactions - EMERGENCY FIX: Handle missing studentCode
     const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentCode, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     transactions.forEach((transaction: TransactionData) => {
-      const studentCode = transaction.studentCode || transaction.studentLabel
+      const studentCode = transaction.studentCode || null
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
       transactionStmt.run([transaction.id, transaction.studentLabel, studentCode, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
     })
