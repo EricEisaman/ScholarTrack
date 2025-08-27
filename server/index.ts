@@ -231,7 +231,7 @@ const initDatabase = (): void => {
       }
       
       // Check if we need to migrate (only if old table exists with different schema)
-      db.get("PRAGMA table_info(students)", (err, rows) => {
+      db.get("PRAGMA table_info(students)", (err, _rows) => {
         if (err) {
           console.log('Students table does not exist, will be created with new schema')
           return
@@ -241,7 +241,12 @@ const initDatabase = (): void => {
         db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='students'", (err, result) => {
           if (err || !result) return
           
-          const tableSql = result.sql as string
+          interface TableInfo {
+            sql: string
+          }
+          
+          const tableInfo = result as TableInfo
+          const tableSql = tableInfo.sql
           if (tableSql.includes('label TEXT UNIQUE')) {
             console.log('Migrating students table to new schema...')
             
@@ -263,7 +268,12 @@ const initDatabase = (): void => {
                   return
                 }
                 
-                console.log(`Successfully migrated ${result?.count || 0} students to new schema`)
+                interface CountResult {
+                  count: number
+                }
+                
+                const countResult = result as CountResult | undefined
+                console.log(`Successfully migrated ${countResult?.count || 0} students to new schema`)
                 
                 // Drop old table and rename new table
                 db.run('DROP TABLE students', (err) => {

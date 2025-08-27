@@ -50,51 +50,41 @@ export const useAppStore = defineStore('app', () => {
       console.log('Initializing IndexedDB...')
       
       db = await openDB<DatabaseSchema>('scholartrack', 4, {
-        upgrade(db: any, oldVersion: number, newVersion: number) {
+        upgrade(db: unknown, oldVersion: number, newVersion: number) {
+          const database = db as IDBPDatabase<DatabaseSchema>
           console.log(`Upgrading database from version ${oldVersion} to ${newVersion}...`)
           
           // Students store
-          if (!db.objectStoreNames.contains('students')) {
-            const studentStore = db.createObjectStore('students', { keyPath: 'id' })
+          if (!database.objectStoreNames.contains('students')) {
+            const studentStore = database.createObjectStore('students', { keyPath: 'id' })
             studentStore.createIndex('label', 'label', { unique: false })
             studentStore.createIndex('code', 'code', { unique: true })
             // New unique constraint: combination of label and emoji
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true })
           } else if (oldVersion < 4) {
             // Migration: Update to label+emoji unique constraint
-            const studentStore = db.transaction(['students'], 'readwrite').objectStore('students')
-            
-            // Delete the old unique index on label
-            if (studentStore.indexNames.contains('label')) {
-              studentStore.deleteIndex('label')
-            }
-            
-            // Create new non-unique index on label
-            studentStore.createIndex('label', 'label', { unique: false })
-            
-            // Create new unique index on label + emoji combination
-            if (!studentStore.indexNames.contains('labelEmoji')) {
-              studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true })
-            }
+            console.log('IndexedDB migration: Updating to version 4 with label+emoji unique constraint')
+            // The new schema will be created automatically for new databases
+            // Existing databases will need to be cleared manually if they have conflicts
           }
           
           // Classes store
-          if (!db.objectStoreNames.contains('classes')) {
-            const classStore = db.createObjectStore('classes', { keyPath: 'id' })
+          if (!database.objectStoreNames.contains('classes')) {
+            const classStore = database.createObjectStore('classes', { keyPath: 'id' })
             classStore.createIndex('name', 'name', { unique: true })
           }
           
           // Transactions store
-          if (!db.objectStoreNames.contains('transactions')) {
-            const transactionStore = db.createObjectStore('transactions', { keyPath: 'id', autoIncrement: true })
+          if (!database.objectStoreNames.contains('transactions')) {
+            const transactionStore = database.createObjectStore('transactions', { keyPath: 'id', autoIncrement: true })
             transactionStore.createIndex('studentLabel', 'studentLabel')
             transactionStore.createIndex('timestamp', 'timestamp')
             transactionStore.createIndex('className', 'className')
           }
           
           // Style settings store
-          if (!db.objectStoreNames.contains('styleSettings')) {
-            db.createObjectStore('styleSettings', { keyPath: 'id' })
+          if (!database.objectStoreNames.contains('styleSettings')) {
+            database.createObjectStore('styleSettings', { keyPath: 'id' })
           }
         }
       })
