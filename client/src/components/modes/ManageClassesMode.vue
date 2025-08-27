@@ -102,6 +102,15 @@
 
               <template v-slot:item.actions="{ item }">
                 <v-btn
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                  class="mr-2"
+                  @click="editClass(item)"
+                >
+                  Edit
+                </v-btn>
+                <v-btn
                   color="error"
                   variant="outlined"
                   size="small"
@@ -115,6 +124,47 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <!-- Edit Class Dialog -->
+    <v-dialog v-model="showEditDialog" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6">
+          Edit Class
+        </v-card-title>
+
+        <v-card-text>
+          <v-form ref="editForm" v-model="editFormValid">
+            <v-text-field
+              v-model="editingClass!.name"
+              label="Class Name"
+              :rules="[v => !!v || 'Class name is required']"
+              required
+              clearable
+            ></v-text-field>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="grey"
+            variant="text"
+            @click="cancelEdit"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            :disabled="!editFormValid"
+            :loading="isEditing"
+            @click="saveClass"
+          >
+            Save Changes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Confirmation Dialog -->
     <v-dialog v-model="showConfirmDialog" max-width="500">
@@ -188,9 +238,14 @@ const isAdding = ref(false);
 const showConfirmDialog = ref(false);
 const selectedClass = ref<Class | null>(null);
 const isRemoving = ref(false);
+const showEditDialog = ref(false);
+const editingClass = ref<Class | null>(null);
+const editFormValid = ref(false);
+const isEditing = ref(false);
 
-// Form ref
+// Form refs
 const addForm = ref();
+const editForm = ref();
 
 // Computed properties
 const classes = computed(() => store.classes);
@@ -235,6 +290,36 @@ const addClass = async () => {
   } finally {
     isAdding.value = false;
   }
+};
+
+const editClass = (item: any) => {
+  editingClass.value = { ...item };
+  showEditDialog.value = true;
+};
+
+const saveClass = async () => {
+  if (!editFormValid.value || !editingClass.value) return;
+
+  isEditing.value = true;
+
+  try {
+    await store.updateClass(editingClass.value);
+    showEditDialog.value = false;
+    editingClass.value = null;
+    editForm.value?.resetValidation();
+    editFormValid.value = false;
+  } catch (error) {
+    console.error('Failed to update class:', error);
+  } finally {
+    isEditing.value = false;
+  }
+};
+
+const cancelEdit = () => {
+  showEditDialog.value = false;
+  editingClass.value = null;
+  editForm.value?.resetValidation();
+  editFormValid.value = false;
 };
 
 const confirmRemove = (item: any) => {

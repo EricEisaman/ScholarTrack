@@ -291,25 +291,27 @@ const handleSubmit = async () => {
       // Student status change
       await store.addTransaction({
         studentLabel: selectedStudent.value.label,
+        studentCode: selectedStudent.value.code,
         status: selectedStatus.value,
       });
 
       // Show success message
       store.$patch((_state) => {
         // This would typically use a toast notification system
-        console.log(`Status updated for ${selectedStudent.value?.label}: ${selectedStatus.value}`);
+        console.log(`Status updated for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value}`);
       });
     } else if (isTeacherCode.value && selectedEvent.value) {
       // Teacher event recording
       await store.addTransaction({
         studentLabel: selectedStudent.value.label,
+        studentCode: selectedStudent.value.code,
         status: 'IN CLASS', // Teacher events don't change status
         eventType: selectedEvent.value,
       });
 
       // Show success message
       store.$patch((_state) => {
-        console.log(`Event recorded for ${selectedStudent.value?.label}: ${selectedEvent.value}`);
+        console.log(`Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value}`);
       });
     }
 

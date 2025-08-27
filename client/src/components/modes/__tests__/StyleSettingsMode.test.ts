@@ -40,6 +40,9 @@ describe('StyleSettingsMode', () => {
       id: 'default',
       primaryColor: '#FF0000',
       secondaryColor: '#00FF00',
+      tertiaryColor: '#000000',
+      quaternaryColor: '#121212',
+      schoolName: 'ScholarTrack',
       logoImage: 'data:image/png;base64,test-logo',
       updatedAt: '2023-01-01T00:00:00Z'
     }

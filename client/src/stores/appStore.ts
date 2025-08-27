@@ -49,15 +49,33 @@ export const useAppStore = defineStore('app', () => {
     try {
       console.log('Initializing IndexedDB...')
       
-      db = await openDB<DatabaseSchema>('scholartrack', 3, {
+      db = await openDB<DatabaseSchema>('scholartrack', 5, {
         upgrade(db: any, oldVersion: number, newVersion: number) {
           console.log(`Upgrading database from version ${oldVersion} to ${newVersion}...`)
           
           // Students store
           if (!db.objectStoreNames.contains('students')) {
             const studentStore = db.createObjectStore('students', { keyPath: 'id' })
-            studentStore.createIndex('label', 'label', { unique: true })
+            studentStore.createIndex('label', 'label', { unique: false })
             studentStore.createIndex('code', 'code', { unique: true })
+            // New unique constraint: combination of label and emoji
+            studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true })
+          } else if (oldVersion < 5) {
+            // Migration: Remove old unique constraint on label and add new combination constraint
+            const studentStore = db.transaction(['students'], 'readwrite').objectStore('students')
+            
+            // Delete the old unique index on label
+            if (studentStore.indexNames.contains('label')) {
+              studentStore.deleteIndex('label')
+            }
+            
+            // Create new non-unique index on label
+            studentStore.createIndex('label', 'label', { unique: false })
+            
+            // Create new unique index on label + emoji combination
+            if (!studentStore.indexNames.contains('labelEmoji')) {
+              studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true })
+            }
           }
           
           // Classes store
@@ -199,9 +217,9 @@ export const useAppStore = defineStore('app', () => {
     )
   })
 
-  const getStudentStatus = (studentLabel: string): StudentStatus => {
+  const getStudentStatus = (studentCode: string): StudentStatus => {
     const studentTransactions = transactions.value
-      .filter((t: Transaction) => t.studentLabel === studentLabel && t.className === currentClass.value?.name)
+      .filter((t: Transaction) => t.studentCode === studentCode && t.className === currentClass.value?.name)
       .sort((a: Transaction, b: Transaction) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     
     return studentTransactions.length > 0 && studentTransactions[0] ? studentTransactions[0].status : 'IN CLASS'
@@ -294,6 +312,21 @@ export const useAppStore = defineStore('app', () => {
     await syncToServer()
   }
 
+  const updateClass = async (classData: Class): Promise<void> => {
+    if (!db) return
+    
+    // Use idb library's convenience method
+    await db.put('classes', classData)
+    
+    const index = classes.value.findIndex((c: Class) => c.id === classData.id)
+    if (index !== -1) {
+      classes.value[index] = classData
+    }
+    
+    // Sync to server
+    await syncToServer()
+  }
+
   const removeClass = async (classId: string): Promise<void> => {
     if (!db) return
     
@@ -345,16 +378,17 @@ export const useAppStore = defineStore('app', () => {
   }
   }
 
-  const addTransaction = async (transaction: Omit<Transaction, 'timestamp' | 'className' | 'studentIdentifier'>): Promise<void> => {
+  const addTransaction = async (transaction: Omit<Transaction, 'timestamp' | 'className' | 'studentIdentifier'> & { studentCode: string }): Promise<void> => {
     if (!db) return
     
-    // Find the student to get their emoji name for the identifier
-    const student = students.value.find((s: Student) => s.label === transaction.studentLabel)
+    // Find the student by their unique code for precise identification
+    const student = students.value.find((s: Student) => s.code === transaction.studentCode)
     const emojiName = student ? getNameByEmoji(student.emoji) || student.emoji : ''
-    const studentIdentifier = student ? `${transaction.studentLabel}-${emojiName}` : transaction.studentLabel
+    const studentIdentifier = student ? `${student.label}-${emojiName}` : transaction.studentLabel
     
     const newTransaction: Transaction = {
       ...transaction,
+      studentCode: transaction.studentCode,
       studentIdentifier,
       timestamp: new Date().toISOString(),
       className: currentClass.value?.name || ''
@@ -629,6 +663,7 @@ export const useAppStore = defineStore('app', () => {
     updateStudent,
     removeStudent,
     addClass,
+    updateClass,
     removeClass,
     addTransaction,
     changeMode,

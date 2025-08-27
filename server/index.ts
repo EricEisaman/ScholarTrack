@@ -51,6 +51,7 @@ interface ClassData {
 interface TransactionData {
   id: number
   studentLabel: string
+  studentCode?: string
   studentIdentifier: string
   status: string
   timestamp: string
@@ -120,11 +121,12 @@ const initDatabase = (): void => {
     db.run(`
       CREATE TABLE IF NOT EXISTS students (
         id TEXT PRIMARY KEY,
-        label TEXT UNIQUE NOT NULL,
+        label TEXT NOT NULL,
         code TEXT UNIQUE NOT NULL,
         emoji TEXT NOT NULL,
         classes TEXT NOT NULL,
-        createdAt TEXT NOT NULL
+        createdAt TEXT NOT NULL,
+        UNIQUE(label, emoji)
       )
     `)
 
@@ -142,12 +144,13 @@ const initDatabase = (): void => {
       CREATE TABLE IF NOT EXISTS transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         studentLabel TEXT NOT NULL,
+        studentCode TEXT NOT NULL,
         studentIdentifier TEXT NOT NULL,
         status TEXT NOT NULL,
         timestamp TEXT NOT NULL,
         className TEXT NOT NULL,
         eventType TEXT,
-        FOREIGN KEY (studentLabel) REFERENCES students (label)
+        FOREIGN KEY (studentCode) REFERENCES students (code)
       )
     `)
 
@@ -199,6 +202,61 @@ const initDatabase = (): void => {
       if (err && !err.message.includes('duplicate column name')) {
         console.error('Error adding quaternaryColor column:', err)
       }
+    })
+
+    // Migration: Add studentCode column to transactions if it doesn't exist
+    db.run(`
+      ALTER TABLE transactions ADD COLUMN studentCode TEXT
+    `, (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('Error adding studentCode column:', err)
+      }
+    })
+
+    // Migration: Update students table to use label+emoji unique constraint instead of just label
+    db.run(`
+      CREATE TABLE IF NOT EXISTS students_new (
+        id TEXT PRIMARY KEY,
+        label TEXT NOT NULL,
+        code TEXT UNIQUE NOT NULL,
+        emoji TEXT NOT NULL,
+        classes TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        UNIQUE(label, emoji)
+      )
+    `, (err) => {
+      if (err) {
+        console.error('Error creating new students table:', err)
+        return
+      }
+      
+      // Copy data from old table to new table
+      db.run(`
+        INSERT OR IGNORE INTO students_new 
+        SELECT id, label, code, emoji, classes, createdAt 
+        FROM students
+      `, (err) => {
+        if (err) {
+          console.error('Error migrating students data:', err)
+          return
+        }
+        
+        // Drop old table and rename new table
+        db.run('DROP TABLE students', (err) => {
+          if (err) {
+            console.error('Error dropping old students table:', err)
+            return
+          }
+          
+          db.run('ALTER TABLE students_new RENAME TO students', (err) => {
+            if (err) {
+              console.error('Error renaming students table:', err)
+            } else {
+              console.log('Successfully migrated students table to use label+emoji unique constraint')
+            }
+          })
+        })
+      })
     })
   })
 }
@@ -351,6 +409,33 @@ app.post('/api/classes', (req, res) => {
   )
 })
 
+// Update class
+app.put('/api/classes/:id', (req, res) => {
+  const { id } = req.params
+  const { name } = req.body
+
+  if (!name) {
+    res.status(400).json({ error: 'Class name is required' })
+    return
+  }
+
+  db.run(
+    'UPDATE classes SET name = ? WHERE id = ?',
+    [name, id],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      if (this.changes === 0) {
+        res.status(404).json({ error: 'Class not found' })
+        return
+      }
+      res.json({ message: 'Class updated successfully' })
+    }
+  )
+})
+
 // Get all transactions
 app.get('/api/transactions', (req, res) => {
   const { startDate, endDate, className, studentLabel } = req.query
@@ -391,15 +476,16 @@ app.get('/api/transactions', (req, res) => {
 
 // Add new transaction
 app.post('/api/transactions', (req, res) => {
-  const { studentLabel, status, className, eventType } = req.body
+  const { studentLabel, studentCode, status, className, eventType } = req.body
   
-  if (!studentLabel || !status || !className) {
+  if (!studentLabel || !studentCode || !status || !className) {
     res.status(400).json({ error: 'Missing required fields' })
     return
   }
 
   const transaction = {
     studentLabel,
+    studentCode,
     status,
     timestamp: new Date().toISOString(),
     className,
@@ -407,8 +493,8 @@ app.post('/api/transactions', (req, res) => {
   }
 
   db.run(
-    'INSERT INTO transactions (studentLabel, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?)',
-    [transaction.studentLabel, transaction.status, transaction.timestamp, transaction.className, transaction.eventType],
+    'INSERT INTO transactions (studentLabel, studentCode, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?)',
+    [transaction.studentLabel, transaction.studentCode, transaction.status, transaction.timestamp, transaction.className, transaction.eventType],
     function(err) {
       if (err) {
         res.status(500).json({ error: err.message })
@@ -772,10 +858,11 @@ app.post('/api/sync/full', (req, res) => {
     classStmt.finalize()
 
     // Insert transactions
-    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentCode, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     transactions.forEach((transaction: TransactionData) => {
+      const studentCode = transaction.studentCode || transaction.studentLabel
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
-      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
+      transactionStmt.run([transaction.id, transaction.studentLabel, studentCode, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
     })
     transactionStmt.finalize((err) => {
       if (err) {

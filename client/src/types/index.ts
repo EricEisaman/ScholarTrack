@@ -16,6 +16,7 @@ export interface Class {
 export interface Transaction {
   id?: number
   studentLabel: string
+  studentCode: string // Unique student code for precise identification
   studentIdentifier: string // Full identifier: "AB-emoji name"
   status: StudentStatus
   timestamp: string

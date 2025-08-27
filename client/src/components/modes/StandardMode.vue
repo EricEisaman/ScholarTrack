@@ -36,13 +36,13 @@
                 :key="student.id"
                 class="student-square"
                 :class="studentSquareClass"
-                :style="{ backgroundColor: getStudentSquareColor(student.label) }"
+                :style="{ backgroundColor: getStudentSquareColor(student.code) }"
                 @click="openStudentModal(student)"
               >
                 <div class="student-content">
                   <div class="student-label">{{ student.label }}</div>
                   <div class="student-emoji">{{ student.emoji }}</div>
-                  <div class="student-status">{{ getStudentStatus(student.label) }}</div>
+                  <div class="student-status">{{ getStudentStatus(student.code) }}</div>
                 </div>
               </div>
             </div>
@@ -159,12 +159,12 @@ const cardBackgroundColor = computed(() => {
   return settings?.tertiaryColor || '#000000';
 });
 
-const getStudentStatus = (studentLabel: string): StudentStatus => {
-  return store.getStudentStatus(studentLabel);
+const getStudentStatus = (studentCode: string): StudentStatus => {
+  return store.getStudentStatus(studentCode);
 };
 
-const getStudentSquareColor = (studentLabel: string): string => {
-  const status = getStudentStatus(studentLabel);
+const getStudentSquareColor = (studentCode: string): string => {
+  const status = getStudentStatus(studentCode);
   return store.statusColors[status];
 };
 

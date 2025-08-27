@@ -460,7 +460,7 @@ const removeStudent = async () => {
 };
 
 const getStudentStatus = (student: Student): string => {
-  return store.getStudentStatus(student.label);
+  return store.getStudentStatus(student.code);
 };
 
 const getStatusColor = (student: Student): string => {
