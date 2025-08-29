@@ -43,6 +43,7 @@
                   <div class="student-label">{{ student.label }}</div>
                   <div class="student-emoji">{{ student.emoji }}</div>
                   <div class="student-status">{{ getStudentStatus(student.code) }}</div>
+                  <div v-if="getStudentMemo(student.code)" class="student-memo">{{ getStudentMemo(student.code) }}</div>
                 </div>
               </div>
             </div>
@@ -163,9 +164,17 @@ const getStudentStatus = (studentCode: string): StudentStatus => {
   return store.getStudentStatus(studentCode);
 };
 
+const getStudentMemo = (studentCode: string): string | null => {
+  const studentTransactions = store.transactions
+    .filter((t) => t.studentCode === studentCode && t.className === store.currentClass?.name)
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  return studentTransactions.length > 0 && studentTransactions[0]?.memo ? studentTransactions[0].memo : null;
+};
+
 const getStudentSquareColor = (studentCode: string): string => {
   const status = getStudentStatus(studentCode);
-  return store.statusColors[status];
+  return store.statusColors[status] || '#1976D2'; // Default color if status not found
 };
 
 const openStudentModal = (student: any) => {
@@ -173,13 +182,13 @@ const openStudentModal = (student: any) => {
 };
 
 // Quick actions
-const quickAddStudent = () => {
-  store.switchMode('MANAGE STUDENTS');
+const quickAddStudent = async () => {
+  await store.switchMode('MANAGE STUDENTS');
   showMobileActions.value = false;
 };
 
-const quickViewReports = () => {
-  store.switchMode('REPORTS');
+const quickViewReports = async () => {
+  await store.switchMode('REPORTS');
   showMobileActions.value = false;
 };
 
@@ -278,6 +287,17 @@ const quickViewReports = () => {
   opacity: 0.9;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.student-memo {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  font-style: italic;
+  margin-top: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Responsive text sizes */

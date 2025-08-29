@@ -201,6 +201,7 @@ import PWAUpdatePrompt from './PWAUpdatePrompt.vue';
 import StandardMode from './modes/StandardMode.vue';
 import ManageClassesMode from './modes/ManageClassesMode.vue';
 import ManageStudentsMode from './modes/ManageStudentsMode.vue';
+import ManageTransactionsMode from './modes/ManageTransactionsMode.vue';
 import ReportsMode from './modes/ReportsMode.vue';
 import StyleSettingsMode from './modes/StyleSettingsMode.vue';
 import ResponsiveShowcase from './ResponsiveShowcase.vue';
@@ -217,6 +218,7 @@ const availableModesWithIcons = computed(() => [
   { title: 'STANDARD', value: 'STANDARD', prependIcon: 'mdi-view-dashboard' },
   { title: 'MANAGE CLASSES', value: 'MANAGE CLASSES', prependIcon: 'mdi-account-group' },
   { title: 'MANAGE STUDENTS', value: 'MANAGE STUDENTS', prependIcon: 'mdi-account-multiple' },
+  { title: 'MANAGE TRANSACTIONS', value: 'MANAGE TRANSACTIONS', prependIcon: 'mdi-cog' },
   { title: 'REPORTS', value: 'REPORTS', prependIcon: 'mdi-chart-line' },
   { title: 'STYLE SETTINGS', value: 'STYLE SETTINGS', prependIcon: 'mdi-palette' },
   { title: 'RESPONSIVE SHOWCASE', value: 'RESPONSIVE SHOWCASE', prependIcon: 'mdi-responsive' },
@@ -258,6 +260,8 @@ const currentModeComponent = computed(() => {
     return ManageClassesMode;
   case 'MANAGE STUDENTS':
     return ManageStudentsMode;
+  case 'MANAGE TRANSACTIONS':
+    return ManageTransactionsMode;
   case 'REPORTS':
     return ReportsMode;
   case 'STYLE SETTINGS':
@@ -272,12 +276,12 @@ const currentModeComponent = computed(() => {
 });
 
 // Show mode change modal
-const showModeChangeModal = (mode: AppMode) => {
+const showModeChangeModal = async (mode: AppMode) => {
   // Close mobile menu
   mobileMenuOpen.value = false;
 
   // Use the new switchMode function that handles authentication properly
-  store.switchMode(mode);
+  await store.switchMode(mode);
 };
 
 // Show class change modal

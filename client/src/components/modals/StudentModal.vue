@@ -60,8 +60,8 @@
                   :variant="selectedStatus === status ? 'flat' : 'outlined'"
                   :size="statusButtonSize"
                   :block="xs"
-                  @click="toggleStatus(status)"
-                  class="mb-2"
+                  @click="handleStatusSelection(status)"
+                  class="mb-2 text-wrap"
                 >
                   {{ status }}
                 </v-btn>
@@ -84,8 +84,8 @@
                   :variant="selectedEvent === event ? 'flat' : 'outlined'"
                   :size="eventButtonSize"
                   :block="xs"
-                  @click="selectedEvent = event"
-                  class="mb-2"
+                  @click="handleEventSelection(event)"
+                  class="mb-2 text-wrap"
                 >
                   {{ event }}
                 </v-btn>
@@ -130,6 +130,14 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- Memo Modal -->
+  <MemoModal
+    v-model="showMemoModal"
+    :status-or-event-name="memoStatusOrEventName"
+    :type="memoType"
+    @submit="handleMemoSubmit"
+  />
 </template>
 
 <script setup lang="ts">
@@ -137,6 +145,7 @@ import { ref, computed, watch, nextTick } from 'vue';
 import { useDisplay } from 'vuetify';
 import { useAppStore } from '../../stores/appStore';
 import type { StudentStatus, TeacherEventType } from '../../types';
+import MemoModal from './MemoModal.vue';
 
 const store = useAppStore();
 const { xs, sm, md } = useDisplay();
@@ -149,6 +158,11 @@ const errorMessage = ref('');
 const isSubmitting = ref(false);
 const codeInput = ref();
 const codeSubmitted = ref(false);
+
+// Memo modal state
+const showMemoModal = ref(false);
+const memoStatusOrEventName = ref('');
+const memoType = ref<'status' | 'event'>('status');
 
 // Computed properties
 const showModal = computed(() => store.showStudentModal);
@@ -163,25 +177,25 @@ const modalMaxWidth = computed(() => {
 });
 
 const statusGridCols = computed(() => {
-  if (xs.value) return 6;
-  if (sm.value) return 4;
-  return 6;
+  if (xs.value) return 4; // Fewer columns on mobile for wider buttons
+  if (sm.value) return 3; // Fewer columns on small screens
+  return 4; // Fewer columns on larger screens
 });
 
 const eventGridCols = computed(() => {
-  if (xs.value) return 6;
-  if (sm.value) return 4;
-  return 6;
+  if (xs.value) return 4; // Fewer columns on mobile for wider buttons
+  if (sm.value) return 3; // Fewer columns on small screens
+  return 4; // Fewer columns on larger screens
 });
 
 const statusButtonSize = computed(() => {
-  if (xs.value) return 'small';
+  if (xs.value) return 'large'; // Larger buttons on mobile
   if (sm.value) return 'default';
   return 'default';
 });
 
 const eventButtonSize = computed(() => {
-  if (xs.value) return 'small';
+  if (xs.value) return 'large'; // Larger buttons on mobile
   if (sm.value) return 'default';
   return 'default';
 });
@@ -237,14 +251,22 @@ const canSubmit = computed(() => {
   return false;
 });
 
-const studentStatuses: StudentStatus[] = [
-  'IN CLASS',
-  'RESTROOM',
-  'OFFICE',
-  'COUNSELOR',
-  'LIBRARY',
-  'TEACHER VISIT',
-];
+// Computed property that includes both default and custom status types
+const studentStatuses = computed(() => {
+  const defaultStatuses: StudentStatus[] = [
+    'IN CLASS',
+    'RESTROOM',
+    'OFFICE',
+    'COUNSELOR',
+    'LIBRARY',
+    'TEACHER VISIT',
+  ];
+
+  // Add custom status types from the store
+  const customStatuses = store.customStatusTypes.map(status => status.name as StudentStatus);
+
+  return [...defaultStatuses, ...customStatuses];
+});
 
 // Methods
 const onCodeInput = () => {
@@ -272,11 +294,70 @@ const submitCode = () => {
   }
 };
 
-const toggleStatus = (status: StudentStatus) => {
-  if (selectedStatus.value === status) {
-    selectedStatus.value = 'IN CLASS';
-  } else {
-    selectedStatus.value = status;
+const handleStatusSelection = (status: StudentStatus) => {
+  selectedStatus.value = status;
+
+  // Check if this status requires a memo
+  if (store.requiresMemo(status, 'status')) {
+    memoStatusOrEventName.value = status;
+    memoType.value = 'status';
+    showMemoModal.value = true;
+  }
+};
+
+const handleEventSelection = (event: TeacherEventType) => {
+  selectedEvent.value = event;
+
+  // Check if this event requires a memo
+  if (store.requiresMemo(event, 'event')) {
+    memoStatusOrEventName.value = event;
+    memoType.value = 'event';
+    showMemoModal.value = true;
+  }
+};
+
+const handleMemoSubmit = async (memo: string) => {
+  if (!selectedStudent.value) return;
+
+  isSubmitting.value = true;
+  errorMessage.value = '';
+
+  try {
+    if (isStudentCode.value) {
+      // Student status change with memo
+      await store.addTransaction({
+        studentLabel: selectedStudent.value.label,
+        studentCode: selectedStudent.value.code,
+        status: selectedStatus.value,
+        memo,
+      });
+
+      // Show success message
+      store.$patch((_state) => {
+        console.log(`Status updated for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value} with memo: ${memo}`);
+      });
+    } else if (isTeacherCode.value && selectedEvent.value) {
+      // Teacher event recording with memo
+      await store.addTransaction({
+        studentLabel: selectedStudent.value.label,
+        studentCode: selectedStudent.value.code,
+        status: 'IN CLASS', // Teacher events don't change status
+        eventType: selectedEvent.value,
+        memo,
+      });
+
+      // Show success message
+      store.$patch((_state) => {
+        console.log(`Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value} with memo: ${memo}`);
+      });
+    }
+
+    closeModal();
+  } catch (error) {
+    errorMessage.value = 'Failed to save transaction. Please try again.';
+    console.error('Transaction error:', error);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
@@ -373,4 +454,5 @@ watch(showModal, async (newValue) => {
     margin-top: 8px;
   }
 }
+
 </style>

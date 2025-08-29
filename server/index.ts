@@ -30,6 +30,7 @@ interface TransactionRow {
   timestamp: string
   className: string
   eventType?: string
+  memo?: string
 }
 
 // Request data interfaces
@@ -57,6 +58,7 @@ interface TransactionData {
   timestamp: string
   className: string
   eventType?: string
+  memo?: string
 }
 
 interface StyleSettingsData {
@@ -168,6 +170,27 @@ const initDatabase = (): void => {
       )
     `)
 
+    // Custom Status Types table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS customStatusTypes (
+        id TEXT PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        color TEXT NOT NULL,
+        includeMemo INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL
+      )
+    `)
+
+    // Custom Teacher Event Types table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS customTeacherEventTypes (
+        id TEXT PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        includeMemo INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL
+      )
+    `)
+
     // Migration: Add studentIdentifier column if it doesn't exist
     db.run(`
       ALTER TABLE transactions ADD COLUMN studentIdentifier TEXT
@@ -210,6 +233,15 @@ const initDatabase = (): void => {
     `, (err) => {
       if (err && !err.message.includes('duplicate column name')) {
         console.error('Error adding studentCode column:', err)
+      }
+    })
+
+    // Migration: Add memo column to transactions if it doesn't exist
+    db.run(`
+      ALTER TABLE transactions ADD COLUMN memo TEXT
+    `, (err) => {
+      if (err && !err.message.includes('duplicate column name')) {
+        console.error('Error adding memo column:', err)
       }
     })
 
@@ -621,10 +653,12 @@ app.post('/api/reports', (req, res) => {
         
         if (type === 'teacher') {
           // For teacher events, show event type prominently
-          doc.fontSize(10).text(`${index + 1}. ${studentIdentifier}: ${row.eventType}`, { continued: false })
+          const memoInfo = row.memo ? ` (Memo: ${row.memo})` : '';
+          doc.fontSize(10).text(`${index + 1}. ${studentIdentifier}: ${row.eventType}${memoInfo}`, { continued: false })
         } else {
           // For student transactions, show status
-          doc.fontSize(10).text(`${index + 1}. ${studentIdentifier} - ${row.status}`, { continued: false })
+          const memoInfo = row.memo ? ` (Memo: ${row.memo})` : '';
+          doc.fontSize(10).text(`${index + 1}. ${studentIdentifier} - ${row.status}${memoInfo}`, { continued: false })
         }
         doc.fontSize(8).text(`   ${moment(row.timestamp).format('MMM DD, YYYY HH:mm:ss')}`)
         doc.moveDown(0.5)
@@ -638,11 +672,13 @@ app.post('/api/reports', (req, res) => {
 
 // Up Sync: Upload local changes to server
 app.post('/api/sync/up', (req, res) => {
-  const { students, classes, transactions, styleSettings }: {
+  const { students, classes, transactions, styleSettings, customStatusTypes, customTeacherEventTypes }: {
     students: StudentData[]
     classes: ClassData[]
     transactions: TransactionData[]
     styleSettings?: StyleSettingsData
+    customStatusTypes?: any[]
+    customTeacherEventTypes?: any[]
   } = req.body
   
   if (!students || !classes || !transactions) {
@@ -679,6 +715,23 @@ app.post('/api/sync/up', (req, res) => {
       }
     })
 
+    // Clear custom types
+    db.run('DELETE FROM customStatusTypes', (err) => {
+      if (err) {
+        console.error('Error clearing custom status types:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM customTeacherEventTypes', (err) => {
+      if (err) {
+        console.error('Error clearing custom teacher event types:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+
     // Insert students
     const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
     students.forEach((student) => {
@@ -695,11 +748,11 @@ app.post('/api/sync/up', (req, res) => {
     classStmt.finalize()
 
     // Insert transactions
-    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     transactions.forEach((transaction) => {
       // Handle legacy transactions that don't have studentIdentifier
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
-      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
+      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType, transaction.memo || null])
     })
     transactionStmt.finalize((err) => {
       if (err) {
@@ -723,9 +776,29 @@ app.post('/api/sync/up', (req, res) => {
         ])
         styleStmt.finalize()
       }
+
+      // Insert custom status types if provided
+      if (customStatusTypes && customStatusTypes.length > 0) {
+        const statusStmt = db.prepare('INSERT INTO customStatusTypes (id, name, color, createdAt) VALUES (?, ?, ?, ?)')
+        customStatusTypes.forEach((statusType) => {
+          statusStmt.run([statusType.id, statusType.name, statusType.color, statusType.createdAt])
+        })
+        statusStmt.finalize()
+      }
+
+      // Insert custom teacher event types if provided
+      if (customTeacherEventTypes && customTeacherEventTypes.length > 0) {
+        const eventStmt = db.prepare('INSERT INTO customTeacherEventTypes (id, name, createdAt) VALUES (?, ?, ?)')
+        customTeacherEventTypes.forEach((eventType) => {
+          eventStmt.run([eventType.id, eventType.name, eventType.createdAt])
+        })
+        eventStmt.finalize()
+      }
       
       const styleSettingsCount = styleSettings ? 1 : 0
-      console.log(`✅ Up Sync completed: ${students.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${styleSettingsCount}`)
+      const customStatusCount = customStatusTypes ? customStatusTypes.length : 0
+      const customEventCount = customTeacherEventTypes ? customTeacherEventTypes.length : 0
+      console.log(`✅ Up Sync completed: ${students.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${styleSettingsCount}, custom status types: ${customStatusCount}, custom event types: ${customEventCount}`)
       res.json({ 
         message: 'Up sync completed successfully',
         timestamp: new Date().toISOString(),
@@ -773,66 +846,84 @@ app.get('/api/sync/down', (_req, res) => {
             return
           }
           
-          db.get('SELECT * FROM styleSettings WHERE id = ?', ['default'], (err, styleSettings) => {
+          db.all('SELECT * FROM customStatusTypes', (err, customStatusTypes) => {
             if (err) {
-              console.error('Error fetching style settings for down sync:', err)
-              // Don't fail the entire sync if style settings fail, just return null
-              styleSettings = null
+              console.error('Error fetching custom status types for down sync:', err)
+              customStatusTypes = []
             }
             
-            // Ensure style settings has all required fields with defaults
-            const completeStyleSettings = styleSettings && typeof styleSettings === 'object' && 'id' in styleSettings ? {
-              id: (styleSettings as StyleSettingsRow).id || 'default',
-              primaryColor: (styleSettings as StyleSettingsRow).primaryColor || '#1976D2',
-              secondaryColor: (styleSettings as StyleSettingsRow).secondaryColor || '#424242',
-              tertiaryColor: (styleSettings as StyleSettingsRow).tertiaryColor || '#000000',
-              quaternaryColor: (styleSettings as StyleSettingsRow).quaternaryColor || '#121212',
-              schoolName: (styleSettings as StyleSettingsRow).schoolName || 'ScholarTrack',
-              logoImage: (styleSettings as StyleSettingsRow).logoImage || '',
-              updatedAt: (styleSettings as StyleSettingsRow).updatedAt || new Date().toISOString()
-            } : null
-            
-            // Parse classes JSON for students
-            if (Array.isArray(students)) {
-              const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
-                typeof student === 'object' && 
-                student !== null && 
-                'id' in student && 
-                'label' in student && 
-                'code' in student && 
-                'emoji' in student && 
-                'classes' in student && 
-                'createdAt' in student
-              )
-              const parsedStudents = studentRows.map((student) => ({
-                ...student,
-                classes: JSON.parse(student.classes)
-              }))
+            db.all('SELECT * FROM customTeacherEventTypes', (err, customTeacherEventTypes) => {
+              if (err) {
+                console.error('Error fetching custom teacher event types for down sync:', err)
+                customTeacherEventTypes = []
+              }
               
-              console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${completeStyleSettings ? 1 : 0}`)
-              
-              res.json({
-                message: 'Down sync completed successfully',
-                timestamp: new Date().toISOString(),
-                data: {
-                  students: parsedStudents,
-                  classes,
-                  transactions,
-                  styleSettings: completeStyleSettings
+              db.get('SELECT * FROM styleSettings WHERE id = ?', ['default'], (err, styleSettings) => {
+                if (err) {
+                  console.error('Error fetching style settings for down sync:', err)
+                  // Don't fail the entire sync if style settings fail, just return null
+                  styleSettings = null
+                }
+                
+                // Ensure style settings has all required fields with defaults
+                const completeStyleSettings = styleSettings && typeof styleSettings === 'object' && 'id' in styleSettings ? {
+                  id: (styleSettings as StyleSettingsRow).id || 'default',
+                  primaryColor: (styleSettings as StyleSettingsRow).primaryColor || '#1976D2',
+                  secondaryColor: (styleSettings as StyleSettingsRow).secondaryColor || '#424242',
+                  tertiaryColor: (styleSettings as StyleSettingsRow).tertiaryColor || '#000000',
+                  quaternaryColor: (styleSettings as StyleSettingsRow).quaternaryColor || '#121212',
+                  schoolName: (styleSettings as StyleSettingsRow).schoolName || 'ScholarTrack',
+                  logoImage: (styleSettings as StyleSettingsRow).logoImage || '',
+                  updatedAt: (styleSettings as StyleSettingsRow).updatedAt || new Date().toISOString()
+                } : null
+                
+                // Parse classes JSON for students
+                if (Array.isArray(students)) {
+                  const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+                    typeof student === 'object' && 
+                    student !== null && 
+                    'id' in student && 
+                    'label' in student && 
+                    'code' in student && 
+                    'emoji' in student && 
+                    'classes' in student && 
+                    'createdAt' in student
+                  )
+                  const parsedStudents = studentRows.map((student) => ({
+                    ...student,
+                    classes: JSON.parse(student.classes)
+                  }))
+                  
+                  console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${completeStyleSettings ? 1 : 0}, custom status types: ${customStatusTypes.length}, custom event types: ${customTeacherEventTypes.length}`)
+                  
+                  res.json({
+                    message: 'Down sync completed successfully',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                      students: parsedStudents,
+                      classes,
+                      transactions,
+                      styleSettings: completeStyleSettings,
+                      customStatusTypes,
+                      customTeacherEventTypes
+                    }
+                  })
+                } else {
+                  res.json({
+                    message: 'Down sync completed successfully',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                      students: [],
+                      classes,
+                      transactions,
+                      styleSettings: completeStyleSettings,
+                      customStatusTypes,
+                      customTeacherEventTypes
+                    }
+                  })
                 }
               })
-            } else {
-              res.json({
-                message: 'Down sync completed successfully',
-                timestamp: new Date().toISOString(),
-                data: {
-                  students: [],
-                  classes,
-                  transactions,
-                  styleSettings: completeStyleSettings
-                }
-              })
-            }
+            })
           })
         })
       })
@@ -842,10 +933,12 @@ app.get('/api/sync/down', (_req, res) => {
 
 // Full Sync: Bidirectional sync (Up + Down)
 app.post('/api/sync/full', (req, res) => {
-  const { students, classes, transactions }: {
+  const { students, classes, transactions, customStatusTypes, customTeacherEventTypes }: {
     students: StudentData[]
     classes: ClassData[]
     transactions: TransactionData[]
+    customStatusTypes?: any[]
+    customTeacherEventTypes?: any[]
   } = req.body
   
   if (!students || !classes || !transactions) {
@@ -882,6 +975,23 @@ app.post('/api/sync/full', (req, res) => {
       }
     })
 
+    // Clear custom types
+    db.run('DELETE FROM customStatusTypes', (err) => {
+      if (err) {
+        console.error('Error clearing custom status types during full sync:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+    
+    db.run('DELETE FROM customTeacherEventTypes', (err) => {
+      if (err) {
+        console.error('Error clearing custom teacher event types during full sync:', err)
+        res.status(500).json({ error: err.message })
+        return
+      }
+    })
+
     // Insert students
     const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)')
     students.forEach((student: StudentData) => {
@@ -898,17 +1008,35 @@ app.post('/api/sync/full', (req, res) => {
     classStmt.finalize()
 
     // Insert transactions - EMERGENCY FIX: Handle missing studentCode
-    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentCode, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentCode, studentIdentifier, status, timestamp, className, eventType, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
     transactions.forEach((transaction: TransactionData) => {
       const studentCode = transaction.studentCode || null
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
-      transactionStmt.run([transaction.id, transaction.studentLabel, studentCode, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
+      transactionStmt.run([transaction.id, transaction.studentLabel, studentCode, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType, transaction.memo || null])
     })
     transactionStmt.finalize((err) => {
       if (err) {
         console.error('Error during full sync up phase:', err)
         res.status(500).json({ error: err.message })
         return
+      }
+
+      // Insert custom status types if provided
+      if (customStatusTypes && customStatusTypes.length > 0) {
+        const statusStmt = db.prepare('INSERT INTO customStatusTypes (id, name, color, createdAt) VALUES (?, ?, ?, ?)')
+        customStatusTypes.forEach((statusType) => {
+          statusStmt.run([statusType.id, statusType.name, statusType.color, statusType.createdAt])
+        })
+        statusStmt.finalize()
+      }
+
+      // Insert custom teacher event types if provided
+      if (customTeacherEventTypes && customTeacherEventTypes.length > 0) {
+        const eventStmt = db.prepare('INSERT INTO customTeacherEventTypes (id, name, createdAt) VALUES (?, ?, ?)')
+        customTeacherEventTypes.forEach((eventType) => {
+          eventStmt.run([eventType.id, eventType.name, eventType.createdAt])
+        })
+        eventStmt.finalize()
       }
       
       console.log('✅ Full Sync up phase completed')
@@ -935,55 +1063,79 @@ app.post('/api/sync/full', (req, res) => {
               return
             }
             
-            // Parse classes JSON for students
-            if (Array.isArray(serverStudents)) {
-              const studentRows = serverStudents.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
-                typeof student === 'object' && 
-                student !== null && 
-                'id' in student && 
-                'label' in student && 
-                'code' in student && 
-                'emoji' in student && 
-                'classes' in student && 
-                'createdAt' in student
-              )
-              const parsedStudents = studentRows.map((student) => ({
-                ...student,
-                classes: JSON.parse(student.classes)
-              }))
-            
-            console.log(`✅ Full Sync completed: ${parsedStudents.length} students, ${serverClasses.length} classes, ${serverTransactions.length} transactions`)
-            
-            res.json({
-              message: 'Full sync completed successfully',
-              timestamp: new Date().toISOString(),
-              synced: {
-                students: parsedStudents.length,
-                classes: serverClasses.length,
-                transactions: serverTransactions.length
-              },
-              data: {
-                students: parsedStudents,
-                classes: serverClasses,
-                transactions: serverTransactions
+            db.all('SELECT * FROM customStatusTypes', (err, serverCustomStatusTypes) => {
+              if (err) {
+                console.error('Error fetching custom status types for full sync down phase:', err)
+                res.status(500).json({ error: err.message })
+                return
               }
+              
+              db.all('SELECT * FROM customTeacherEventTypes', (err, serverCustomEventTypes) => {
+                if (err) {
+                  console.error('Error fetching custom teacher event types for full sync down phase:', err)
+                  res.status(500).json({ error: err.message })
+                  return
+                }
+            
+                // Parse classes JSON for students
+                if (Array.isArray(serverStudents)) {
+                  const studentRows = serverStudents.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+                    typeof student === 'object' && 
+                    student !== null && 
+                    'id' in student && 
+                    'label' in student && 
+                    'code' in student && 
+                    'emoji' in student && 
+                    'classes' in student && 
+                    'createdAt' in student
+                  )
+                  const parsedStudents = studentRows.map((student) => ({
+                    ...student,
+                    classes: JSON.parse(student.classes)
+                  }))
+                
+                  console.log(`✅ Full Sync completed: ${parsedStudents.length} students, ${serverClasses.length} classes, ${serverTransactions.length} transactions, ${serverCustomStatusTypes.length} custom status types, ${serverCustomEventTypes.length} custom event types`)
+                  
+                  res.json({
+                    message: 'Full sync completed successfully',
+                    timestamp: new Date().toISOString(),
+                    synced: {
+                      students: parsedStudents.length,
+                      classes: serverClasses.length,
+                      transactions: serverTransactions.length,
+                      customStatusTypes: serverCustomStatusTypes.length,
+                      customTeacherEventTypes: serverCustomEventTypes.length
+                    },
+                    data: {
+                      students: parsedStudents,
+                      classes: serverClasses,
+                      transactions: serverTransactions,
+                      customStatusTypes: serverCustomStatusTypes,
+                      customTeacherEventTypes: serverCustomEventTypes
+                    }
+                  })
+                } else {
+                  res.json({
+                    message: 'Full sync completed successfully',
+                    timestamp: new Date().toISOString(),
+                    synced: {
+                      students: 0,
+                      classes: serverClasses.length,
+                      transactions: serverTransactions.length,
+                      customStatusTypes: serverCustomStatusTypes.length,
+                      customTeacherEventTypes: serverCustomEventTypes.length
+                    },
+                    data: {
+                      students: [],
+                      classes: serverClasses,
+                      transactions: serverTransactions,
+                      customStatusTypes: serverCustomStatusTypes,
+                      customTeacherEventTypes: serverCustomEventTypes
+                    }
+                  })
+                }
+              })
             })
-          } else {
-            res.json({
-              message: 'Full sync completed successfully',
-              timestamp: new Date().toISOString(),
-              synced: {
-                students: 0,
-                classes: serverClasses.length,
-                transactions: serverTransactions.length
-              },
-              data: {
-                students: [],
-                classes: serverClasses,
-                transactions: serverTransactions
-              }
-            })
-          }
           })
         })
       })
@@ -1081,11 +1233,11 @@ app.post('/api/sync', (req, res) => {
     classStmt.finalize()
 
     // Insert transactions
-    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     transactions.forEach((transaction) => {
       // Handle legacy transactions that don't have studentIdentifier
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel
-      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType])
+      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType, transaction.memo || null])
     })
     transactionStmt.finalize((err) => {
       if (err) {
@@ -1129,37 +1281,251 @@ app.get('/api/data', (_req, res) => {
             return
           }
           
-          // Parse classes JSON for students
-          if (Array.isArray(students)) {
-            const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
-              typeof student === 'object' && 
-              student !== null && 
-              'id' in student && 
-              'label' in student && 
-              'code' in student && 
-              'emoji' in student && 
-              'classes' in student && 
-              'createdAt' in student
-            )
-            const parsedStudents = studentRows.map((student) => ({
-              ...student,
-              classes: JSON.parse(student.classes)
-            }))
+          db.all('SELECT * FROM customStatusTypes', (err, customStatusTypes) => {
+            if (err) {
+              res.status(500).json({ error: err.message })
+              return
+            }
             
-            res.json({
-              students: parsedStudents,
-              classes,
-              transactions
+            db.all('SELECT * FROM customTeacherEventTypes', (err, customTeacherEventTypes) => {
+              if (err) {
+                res.status(500).json({ error: err.message })
+                return
+              }
+              
+              // Parse classes JSON for students
+              if (Array.isArray(students)) {
+                const studentRows = students.filter((student): student is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } => 
+                  typeof student === 'object' && 
+                  student !== null && 
+                  'id' in student && 
+                  'label' in student && 
+                  'code' in student && 
+                  'emoji' in student && 
+                  'classes' in student && 
+                  'createdAt' in student
+                )
+                const parsedStudents = studentRows.map((student) => ({
+                  ...student,
+                  classes: JSON.parse(student.classes)
+                }))
+                
+                res.json({
+                  students: parsedStudents,
+                  classes,
+                  transactions,
+                  customStatusTypes,
+                  customTeacherEventTypes
+                })
+              } else {
+                res.json({
+                  students: [],
+                  classes,
+                  transactions,
+                  customStatusTypes,
+                  customTeacherEventTypes
+                })
+              }
             })
-          } else {
-            res.json({
-              students: [],
-              classes,
-              transactions
-            })
-          }
+          })
         })
       })
+    })
+  })
+})
+
+// Custom Status Types endpoints
+app.get('/api/custom-status-types', (_req, res) => {
+  db.all('SELECT * FROM customStatusTypes ORDER BY createdAt', (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message })
+      return
+    }
+    res.json(rows)
+  })
+})
+
+app.post('/api/custom-status-types', (req, res) => {
+  const { id, name, color, includeMemo } = req.body
+  
+  if (!id || !name || !color) {
+    res.status(400).json({ error: 'Missing required fields' })
+    return
+  }
+
+  db.run(
+    'INSERT INTO customStatusTypes (id, name, color, includeMemo, createdAt) VALUES (?, ?, ?, ?, ?)',
+    [id, name, color, includeMemo ? 1 : 0, new Date().toISOString()],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      res.json({ id, name, color, includeMemo: includeMemo || false, createdAt: new Date().toISOString() })
+    }
+  )
+})
+
+app.put('/api/custom-status-types/:id', (req, res) => {
+  const { id } = req.params
+  const { name, color, includeMemo } = req.body
+  
+  if (!name || !color) {
+    res.status(400).json({ error: 'Missing required fields' })
+    return
+  }
+
+  db.run(
+    'UPDATE customStatusTypes SET name = ?, color = ?, includeMemo = ? WHERE id = ?',
+    [name, color, includeMemo ? 1 : 0, id],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      if (this.changes === 0) {
+        res.status(404).json({ error: 'Status type not found' })
+        return
+      }
+      res.json({ id, name, color, includeMemo: includeMemo || false })
+    }
+  )
+})
+
+app.delete('/api/custom-status-types/:id', (req, res) => {
+  const { id } = req.params
+
+  // First, get the status type to check if it had memo enabled
+  db.get('SELECT name, includeMemo FROM customStatusTypes WHERE id = ?', [id], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message })
+      return
+    }
+    
+    if (!row) {
+      res.status(404).json({ error: 'Status type not found' })
+      return
+    }
+
+    const statusType = row as { name: string; includeMemo: number }
+    
+    // Delete the status type
+    db.run('DELETE FROM customStatusTypes WHERE id = ?', [id], function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      // If the status type had memo enabled, clean up memo data from transactions
+      if (statusType.includeMemo) {
+        db.run('UPDATE transactions SET memo = NULL WHERE status = ? AND memo IS NOT NULL', [statusType.name], (cleanupErr) => {
+          if (cleanupErr) {
+            console.error('Error cleaning up memo data:', cleanupErr)
+          } else {
+            console.log(`Cleaned up memo data for deleted status type: ${statusType.name}`)
+          }
+        })
+      }
+      
+      res.json({ message: 'Status type deleted successfully' })
+    })
+  })
+})
+
+// Custom Teacher Event Types endpoints
+app.get('/api/custom-teacher-event-types', (_req, res) => {
+  db.all('SELECT * FROM customTeacherEventTypes ORDER BY createdAt', (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message })
+      return
+    }
+    res.json(rows)
+  })
+})
+
+app.post('/api/custom-teacher-event-types', (req, res) => {
+  const { id, name, includeMemo } = req.body
+  
+  if (!id || !name) {
+    res.status(400).json({ error: 'Missing required fields' })
+    return
+  }
+
+  db.run(
+    'INSERT INTO customTeacherEventTypes (id, name, includeMemo, createdAt) VALUES (?, ?, ?, ?)',
+    [id, name, includeMemo ? 1 : 0, new Date().toISOString()],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      res.json({ id, name, includeMemo: includeMemo || false, createdAt: new Date().toISOString() })
+    }
+  )
+})
+
+app.put('/api/custom-teacher-event-types/:id', (req, res) => {
+  const { id } = req.params
+  const { name, includeMemo } = req.body
+  
+  if (!name) {
+    res.status(400).json({ error: 'Missing required fields' })
+    return
+  }
+
+  db.run(
+    'UPDATE customTeacherEventTypes SET name = ?, includeMemo = ? WHERE id = ?',
+    [name, includeMemo ? 1 : 0, id],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      if (this.changes === 0) {
+        res.status(404).json({ error: 'Event type not found' })
+        return
+      }
+      res.json({ id, name, includeMemo: includeMemo || false })
+    }
+  )
+})
+
+app.delete('/api/custom-teacher-event-types/:id', (req, res) => {
+  const { id } = req.params
+
+  // First, get the event type to check if it had memo enabled
+  db.get('SELECT name, includeMemo FROM customTeacherEventTypes WHERE id = ?', [id], (err, row) => {
+    if (err) {
+      res.status(500).json({ error: err.message })
+      return
+    }
+    
+    if (!row) {
+      res.status(404).json({ error: 'Event type not found' })
+      return
+    }
+
+    const eventType = row as { name: string; includeMemo: number }
+    
+    // Delete the event type
+    db.run('DELETE FROM customTeacherEventTypes WHERE id = ?', [id], function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      
+      // If the event type had memo enabled, clean up memo data from transactions
+      if (eventType.includeMemo) {
+        db.run('UPDATE transactions SET memo = NULL WHERE eventType = ? AND memo IS NOT NULL', [eventType.name], (cleanupErr) => {
+          if (cleanupErr) {
+            console.error('Error cleaning up memo data:', cleanupErr)
+          } else {
+            console.log(`Cleaned up memo data for deleted event type: ${eventType.name}`)
+          }
+        })
+      }
+      
+      res.json({ message: 'Event type deleted successfully' })
     })
   })
 })

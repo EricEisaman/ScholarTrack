@@ -316,7 +316,8 @@ const generateOfflineReport = (reportData: {
         .forEach((t: any) => {
           const time = new Date(t.timestamp).toLocaleString();
           const studentIdentifier = t.studentIdentifier || t.studentLabel;
-          report += `${time}: ${studentIdentifier} - ${t.status}\n`;
+          const memoInfo = t.memo ? ` (Memo: ${t.memo})` : '';
+          report += `${time}: ${studentIdentifier} - ${t.status}${memoInfo}\n`;
         });
 
       report += '\n';
@@ -331,7 +332,8 @@ const generateOfflineReport = (reportData: {
     teacherEvents.forEach(t => {
       const time = new Date(t.timestamp).toLocaleString();
       const studentIdentifier = t.studentIdentifier || t.studentLabel;
-      report += `${time} - ${studentIdentifier}: ${t.eventType}\n`;
+      const memoInfo = t.memo ? ` (Memo: ${t.memo})` : '';
+      report += `${time} - ${studentIdentifier}: ${t.eventType}${memoInfo}\n`;
     });
   }
 

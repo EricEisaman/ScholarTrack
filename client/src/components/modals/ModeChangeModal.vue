@@ -68,10 +68,10 @@ const showModal = computed(() => store.showModeModal);
 const tempMode = computed(() => store.tempMode);
 
 // Methods
-const handleSubmit = () => {
+const handleSubmit = async () => {
   if (enteredCode.value === store.teacherCode) {
     store.tempCode = enteredCode.value;
-    store.changeMode(tempMode.value);
+    await store.changeMode(tempMode.value);
     resetForm();
   } else {
     errorMessage.value = 'Invalid teacher code';
