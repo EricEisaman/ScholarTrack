@@ -356,6 +356,15 @@ export const useAppStore = defineStore('app', () => {
       if (classesData.length > 0 && !currentClass.value) {
         currentClass.value = classesData[0]
       }
+      
+      // Run migration for event type names if needed
+      const needsMigration = transactionsData.some(t => 
+        t.eventType === 'PHONE OUT IN CLASS' || t.eventType === 'OUT OF ASSIGNED SEAT'
+      )
+      if (needsMigration) {
+        console.log('Found transactions with old event type names, running migration...')
+        await migrateEventTypeNames()
+      }
     } catch (error) {
       console.error('Error loading data from IndexedDB:', error)
       // Initialize with empty arrays if database is not ready
@@ -389,9 +398,9 @@ export const useAppStore = defineStore('app', () => {
   // Teacher event types
   const teacherEvents = computed((): TeacherEventType[] => {
     const baseEvents: TeacherEventType[] = [
-      'PHONE OUT IN CLASS',
+      'PHONE VIOLATION',
       'BAD LANGUAGE',
-      'OUT OF ASSIGNED SEAT',
+      'SEATING VIOLATION',
       'HORSE PLAY'
     ]
     
@@ -1215,9 +1224,9 @@ export const useAppStore = defineStore('app', () => {
     ])
     
     const validEvents = new Set([
-      'PHONE OUT IN CLASS',
+      'PHONE VIOLATION',
       'BAD LANGUAGE', 
-      'OUT OF ASSIGNED SEAT',
+      'SEATING VIOLATION',
       'HORSE PLAY',
       ...customTeacherEventTypes.value.map(e => e.name)
     ])
@@ -1287,9 +1296,9 @@ export const useAppStore = defineStore('app', () => {
         ])
         
         const validEvents = new Set([
-          'PHONE OUT IN CLASS',
+          'PHONE VIOLATION',
           'BAD LANGUAGE', 
-          'OUT OF ASSIGNED SEAT',
+          'SEATING VIOLATION',
           'HORSE PLAY',
           ...customTeacherEventTypes.value.map(e => e.name)
         ])
@@ -1590,6 +1599,61 @@ export const useAppStore = defineStore('app', () => {
     return SnapshotManager.deleteSnapshot(snapshotId)
   }
 
+  // Migration function to update old event type names
+  const migrateEventTypeNames = async (): Promise<void> => {
+    if (!db) throw new Error('Database not initialized')
+    
+    console.log('Starting event type name migration...')
+    
+    // Create snapshot before migration
+    const snapshot = await createDatabaseSnapshot(
+      students.value,
+      classes.value,
+      transactions.value,
+      styleSettings.value,
+      customStatusTypes.value,
+      customTeacherEventTypes.value,
+      'Event type name migration: PHONE OUT IN CLASS -> PHONE VIOLATION, OUT OF ASSIGNED SEAT -> SEATING VIOLATION'
+    )
+    
+    // Save snapshot
+    SnapshotManager.saveSnapshot(snapshot)
+    
+    let updatedCount = 0
+    
+    // Update transactions with old event type names
+    for (const transaction of transactions.value) {
+      let needsUpdate = false
+      let updatedTransaction = { ...transaction }
+      
+      if (transaction.eventType === 'PHONE OUT IN CLASS') {
+        updatedTransaction.eventType = 'PHONE VIOLATION'
+        needsUpdate = true
+        updatedCount++
+      } else if (transaction.eventType === 'OUT OF ASSIGNED SEAT') {
+        updatedTransaction.eventType = 'SEATING VIOLATION'
+        needsUpdate = true
+        updatedCount++
+      }
+      
+      if (needsUpdate && db) {
+        await db.put('transactions', updatedTransaction)
+        const index = transactions.value.findIndex(t => t.id === transaction.id)
+        if (index !== -1) {
+          transactions.value[index] = updatedTransaction
+        }
+      }
+    }
+    
+    if (updatedCount > 0) {
+      console.log(`Migration completed: Updated ${updatedCount} transactions`)
+      // Sync changes to server
+      await syncToServer()
+    } else {
+      console.log('No transactions found that need migration')
+    }
+  }
+
   return {
     // State
     currentMode,
@@ -1669,6 +1733,9 @@ export const useAppStore = defineStore('app', () => {
     createSnapshot,
     restoreFromSnapshot,
     getAllSnapshots,
-    deleteSnapshot
+    deleteSnapshot,
+    
+    // Migration
+    migrateEventTypeNames
   }
 })

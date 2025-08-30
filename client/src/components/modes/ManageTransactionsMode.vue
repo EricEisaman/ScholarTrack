@@ -712,7 +712,7 @@ const itemToDelete = ref<{ type: 'status' | 'event'; id: string; name: string } 
 const showDataManagementDialog = ref(false);
 const orphanedDataAction = ref<'delete' | 'migrate' | 'keep'>('migrate');
 const migrationTargetStatus = ref('IN CLASS');
-const migrationTargetEvent = ref('PHONE OUT IN CLASS');
+const migrationTargetEvent = ref('PHONE VIOLATION');
 const isProcessingData = ref(false);
 
 // Data validation and backup
@@ -755,9 +755,9 @@ const availableStatusTypes = computed(() => [
 ]);
 
 const availableEventTypes = computed(() => [
-  'PHONE OUT IN CLASS',
+  'PHONE VIOLATION',
   'BAD LANGUAGE',
-  'OUT OF ASSIGNED SEAT',
+  'SEATING VIOLATION',
   'HORSE PLAY',
   ...customTeacherEventTypes.value
     .filter(e => e.name !== itemToDelete.value?.name)
@@ -946,7 +946,7 @@ const handleDataManagement = async () => {
     // Reset form
     orphanedDataAction.value = 'migrate';
     migrationTargetStatus.value = 'IN CLASS';
-    migrationTargetEvent.value = 'PHONE OUT IN CLASS';
+    migrationTargetEvent.value = 'PHONE VIOLATION';
 
     // Show success message
     if (migrationResult && migrationResult.success) {

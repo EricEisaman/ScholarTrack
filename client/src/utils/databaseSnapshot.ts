@@ -262,7 +262,7 @@ export const verifyDatabaseIntegrity = async (db: any): Promise<{ isValid: boole
     
     // Check for orphaned event types
     const validEvents = new Set([
-      'PHONE OUT IN CLASS', 'BAD LANGUAGE', 'OUT OF ASSIGNED SEAT', 'HORSE PLAY',
+      'PHONE VIOLATION', 'BAD LANGUAGE', 'SEATING VIOLATION', 'HORSE PLAY',
       ...customTeacherEventTypes.map((e: any) => e.name)
     ])
     

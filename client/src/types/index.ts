@@ -35,9 +35,9 @@ export type StudentStatus =
   | string // Allow custom status types
 
 export type TeacherEventType = 
-  | 'PHONE OUT IN CLASS'
+  | 'PHONE VIOLATION'
   | 'BAD LANGUAGE'
-  | 'OUT OF ASSIGNED SEAT'
+  | 'SEATING VIOLATION'
   | 'HORSE PLAY'
   | string // Allow custom teacher event types
 
@@ -123,9 +123,9 @@ export const DEFAULT_NAME_VALIDATION_OPTIONS: NameValidationOptions = {
     'COUNSELOR',
     'LIBRARY',
     'TEACHER VISIT',
-    'PHONE OUT IN CLASS',
+    'PHONE VIOLATION',
     'BAD LANGUAGE',
-    'OUT OF ASSIGNED SEAT',
+    'SEATING VIOLATION',
     'HORSE PLAY'
   ],
   caseSensitive: false

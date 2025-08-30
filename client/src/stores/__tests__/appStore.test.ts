@@ -233,9 +233,9 @@ describe('App Store', () => {
     it('has correct teacher event types', () => {
       const store = useAppStore()
       
-      expect(store.teacherEvents).toContain('PHONE OUT IN CLASS')
+      expect(store.teacherEvents).toContain('PHONE VIOLATION')
       expect(store.teacherEvents).toContain('BAD LANGUAGE')
-      expect(store.teacherEvents).toContain('OUT OF ASSIGNED SEAT')
+      expect(store.teacherEvents).toContain('SEATING VIOLATION')
       expect(store.teacherEvents).toContain('HORSE PLAY')
     })
   })

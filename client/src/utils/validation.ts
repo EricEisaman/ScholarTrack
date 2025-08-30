@@ -27,9 +27,9 @@ export const validateCustomTypeName = (
       'COUNSELOR',
       'LIBRARY',
       'TEACHER VISIT',
-      'PHONE OUT IN CLASS',
+      'PHONE VIOLATION',
       'BAD LANGUAGE',
-      'OUT OF ASSIGNED SEAT',
+      'SEATING VIOLATION',
       'HORSE PLAY'
     ],
     caseSensitive: false,
