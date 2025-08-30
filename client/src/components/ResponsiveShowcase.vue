@@ -8,7 +8,11 @@
             <v-icon class="mr-2">mdi-responsive</v-icon>
             Vuetify Responsive Design Showcase
             <v-spacer />
-            <v-chip color="white" variant="outlined">
+            <v-chip 
+              color="white" 
+              variant="outlined"
+              :class="xs ? 'text-overline' : 'text-body-2'"
+            >
               {{ currentBreakpoint }}
             </v-chip>
           </v-card-title>
@@ -273,7 +277,7 @@ const breakpoints = computed(() => [
 ]);
 
 const currentBreakpoint = computed(() => {
-  if (xs.value) return 'Extra Small (< 600px)';
+  if (xs.value) return 'XS';
   if (sm.value) return 'Small (600px - 959px)';
   if (md.value) return 'Medium (960px - 1263px)';
   if (lg.value) return 'Large (1264px - 1903px)';
