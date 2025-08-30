@@ -69,10 +69,14 @@ export interface ReportFilters {
 
 export interface StyleSettings {
   id: string
+  designMode: 'smart' | 'advanced'
+  colorScheme?: 'monochromatic' | 'adjacent' | 'triadic' | 'tetrad'
+  baseColor?: string
   primaryColor: string
   secondaryColor: string
   tertiaryColor: string
   quaternaryColor: string
+  pageBackgroundColor: string
   logoImage: string // base64 string
   schoolName: string
   updatedAt: string

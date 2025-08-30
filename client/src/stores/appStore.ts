@@ -341,10 +341,14 @@ export const useAppStore = defineStore('app', () => {
         // Create default style settings
         const defaultSettings: StyleSettings = {
           id: 'default',
+          designMode: 'smart',
+          colorScheme: 'monochromatic',
+          baseColor: '#1976D2',
           primaryColor: '#1976D2',
           secondaryColor: '#424242',
           tertiaryColor: '#000000',
           quaternaryColor: '#121212',
+          pageBackgroundColor: '#F5F5F5',
           schoolName: 'ScholarTrack',
           logoImage: '',
           updatedAt: new Date().toISOString()
@@ -819,10 +823,14 @@ export const useAppStore = defineStore('app', () => {
     // Return default settings if none exist
     return {
       id: 'default',
+      designMode: 'smart',
+      colorScheme: 'monochromatic',
+      baseColor: '#1976D2',
       primaryColor: '#1976D2',
       secondaryColor: '#424242',
       tertiaryColor: '#000000',
       quaternaryColor: '#121212',
+      pageBackgroundColor: '#F5F5F5',
       schoolName: 'ScholarTrack',
       logoImage: '',
       updatedAt: new Date().toISOString()
@@ -1540,10 +1548,14 @@ export const useAppStore = defineStore('app', () => {
     // Initialize default style settings
     const defaultSettings: StyleSettings = {
       id: 'default',
+      designMode: 'smart',
+      colorScheme: 'monochromatic',
+      baseColor: '#1976D2',
       primaryColor: '#1976D2',
       secondaryColor: '#424242',
       tertiaryColor: '#000000',
       quaternaryColor: '#121212',
+      pageBackgroundColor: '#F5F5F5',
       schoolName: 'ScholarTrack',
       logoImage: '',
       updatedAt: new Date().toISOString()

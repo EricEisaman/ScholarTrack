@@ -17,15 +17,8 @@ onMounted(() => {
   if (settings && theme.themes.value['light']) {
     theme.themes.value['light'].colors.primary = settings.primaryColor;
     theme.themes.value['light'].colors.secondary = settings.secondaryColor;
-    theme.themes.value['light'].colors.background = settings.tertiaryColor;
+    theme.themes.value['light'].colors.background = settings.pageBackgroundColor;
     theme.themes.value['light'].colors.surface = settings.tertiaryColor;
-
-    // Also apply to body immediately to prevent flash
-    document.body.style.backgroundColor = settings.tertiaryColor;
-    const appElement = document.getElementById('app');
-    if (appElement) {
-      appElement.style.backgroundColor = settings.tertiaryColor;
-    }
   }
 });
 
@@ -34,15 +27,8 @@ watch(() => store.styleSettings, (settings) => {
   if (settings && theme.themes.value['light']) {
     theme.themes.value['light'].colors.primary = settings.primaryColor;
     theme.themes.value['light'].colors.secondary = settings.secondaryColor;
-    theme.themes.value['light'].colors.background = settings.tertiaryColor;
+    theme.themes.value['light'].colors.background = settings.pageBackgroundColor;
     theme.themes.value['light'].colors.surface = settings.tertiaryColor;
-
-    // Apply to body immediately
-    document.body.style.backgroundColor = settings.tertiaryColor;
-    const appElement = document.getElementById('app');
-    if (appElement) {
-      appElement.style.backgroundColor = settings.tertiaryColor;
-    }
 
     componentLogger.info('ThemeProvider', 'Theme updated', settings);
   }

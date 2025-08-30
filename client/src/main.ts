@@ -17,8 +17,8 @@ const vuetify = createVuetify({
     themes: {
       light: {
         colors: {
-          background: '#000000',
-          surface: '#000000',
+          background: '#F5F5F5',
+          surface: '#FFFFFF',
           primary: '#1976D2',
           secondary: '#424242',
         },
@@ -33,11 +33,6 @@ const pinia = createPinia();
 app.use(pinia);
 app.use(vuetify);
 
-// Apply theme immediately to prevent flash
-const appElement = document.getElementById('app');
-if (appElement) {
-  appElement.style.backgroundColor = '#000000';
-}
-document.body.style.backgroundColor = '#000000';
+// Theme will be applied by ThemeProvider component
 
 app.mount('#app');
