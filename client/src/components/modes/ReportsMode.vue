@@ -119,6 +119,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useAppStore } from '../../stores/appStore';
+import { componentLogger } from '../../services/logger';
 
 const store = useAppStore();
 
@@ -174,7 +175,7 @@ const generateReport = async () => {
       },
     };
 
-    console.log('Generating report:', reportData);
+    componentLogger.info('ReportsMode', 'Generating report', reportData);
 
     if (reportFormat.value === 'jpg') {
       // Generate JPG report locally
@@ -190,7 +191,7 @@ const generateReport = async () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      console.log('JPG report generated and downloaded successfully');
+      componentLogger.info('ReportsMode', 'JPG report generated and downloaded successfully');
 
     } else if (reportFormat.value === 'text') {
       // Generate text report locally
@@ -207,7 +208,7 @@ const generateReport = async () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      console.log('Text report generated and downloaded successfully');
+      componentLogger.info('ReportsMode', 'Text report generated and downloaded successfully');
 
     } else {
       // Try to call the backend API for PDF
@@ -238,10 +239,10 @@ const generateReport = async () => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
 
-        console.log('PDF report generated and downloaded successfully');
+        componentLogger.info('ReportsMode', 'PDF report generated and downloaded successfully');
 
       } catch (networkError) {
-        console.log('Network error, falling back to text report:', networkError);
+        componentLogger.warn('ReportsMode', 'Network error, falling back to text report', { networkError });
 
         // Fallback to text report
         const textReport = generateOfflineReport(reportData);
@@ -257,12 +258,12 @@ const generateReport = async () => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
 
-        console.log('Fallback text report generated and downloaded successfully');
+        componentLogger.info('ReportsMode', 'Fallback text report generated and downloaded successfully');
       }
     }
 
   } catch (error) {
-    console.error('Failed to generate report:', error);
+    componentLogger.error('ReportsMode', 'Failed to generate report', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isGenerating.value = false;
   }
@@ -392,7 +393,7 @@ const generateJpgReport = async (reportData: {
       logoImg.src = settings.logoImage;
       y += 100; // Extra space for logo
     } catch (error) {
-      console.error('Error loading logo for image report:', error);
+      componentLogger.error('ReportsMode', 'Error loading logo for image report', error instanceof Error ? error : new Error('Unknown error'));
     }
   }
 

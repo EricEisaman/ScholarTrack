@@ -30,6 +30,7 @@ import {
   restoreFromSnapshot as restoreFromSnapshotUtil
 } from '../utils/databaseSnapshot'
 import type { MigrationResult, DatabaseSnapshot } from '../types'
+import { storeLogger } from '../services/logger'
 
 interface DatabaseSchema {
   students: Student
@@ -68,7 +69,7 @@ export const useAppStore = defineStore('app', () => {
   // Ensure database is ready for operations
   const ensureDBReady = async (): Promise<void> => {
     if (!db) {
-      console.log('Database not initialized, initializing now...')
+      storeLogger.info('Database not initialized, initializing now...')
       await initDB(false)
     }
     
@@ -77,8 +78,8 @@ export const useAppStore = defineStore('app', () => {
     const missingStores = requiredStores.filter(storeName => !db!.objectStoreNames.contains(storeName))
     
     if (missingStores.length > 0) {
-      console.error('Missing object stores:', missingStores)
-      console.log('Database schema is outdated, recreating database with data preservation...')
+      storeLogger.error('Missing object stores', new Error('Database schema mismatch'), { missingStores })
+      storeLogger.info('Database schema is outdated, recreating database with data preservation...')
       
       // Backup existing data before recreating database
       const existingData = {
@@ -107,7 +108,7 @@ export const useAppStore = defineStore('app', () => {
       }
       
       // Restore the data to the new database
-      console.log('Restoring data to new database...')
+      storeLogger.info('Restoring data to new database...')
       await restoreDataToNewDatabase(existingData)
     }
   }
@@ -115,11 +116,11 @@ export const useAppStore = defineStore('app', () => {
   // Delete the existing database
   const deleteDatabase = async (): Promise<void> => {
     try {
-      console.log('Deleting existing database...')
+      storeLogger.info('Deleting existing database...')
       await deleteDB('scholartrack')
-      console.log('Database deleted successfully')
+      storeLogger.info('Database deleted successfully')
     } catch (error) {
-      console.error('Error deleting database:', error)
+      storeLogger.error('Error deleting database', error instanceof Error ? error : new Error('Unknown error'))
       throw error
     }
   }

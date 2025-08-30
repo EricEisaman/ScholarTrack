@@ -193,6 +193,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAppStore } from '../../stores/appStore';
+import { componentLogger } from '../../services/logger';
 
 const store = useAppStore();
 
@@ -300,7 +301,7 @@ const handleLogoUpload = (event: Event | File | null) => {
                      (fileExtension && allowedExtensions.includes(fileExtension));
 
   if (!isValidType) {
-    console.error('Invalid file type:', file.type, 'File extension:', fileExtension);
+    componentLogger.error('StyleSettingsMode', 'Invalid file type', new Error('Invalid file type'), { fileType: file.type, fileExtension });
     return;
   }
 
@@ -371,7 +372,7 @@ const saveSettings = async () => {
 
     showSuccess.value = true;
   } catch (error) {
-    console.error('Error saving style settings:', error);
+    componentLogger.error('StyleSettingsMode', 'Error saving style settings', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     saving.value = false;
   }

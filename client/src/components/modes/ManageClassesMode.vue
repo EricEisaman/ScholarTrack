@@ -236,6 +236,7 @@
 import { ref, computed } from 'vue';
 import { useAppStore } from '../../stores/appStore';
 import type { Class, Student } from '../../types';
+import { componentLogger } from '../../services/logger';
 
 const store = useAppStore();
 
@@ -290,13 +291,13 @@ const addClass = async () => {
   isAdding.value = true;
 
   try {
-    console.log('Attempting to add class:', newClassName.value);
+    componentLogger.info('ManageClassesMode', 'Attempting to add class', { className: newClassName.value });
     await store.addClass(newClassName.value);
-    console.log('Class added successfully');
+    componentLogger.info('ManageClassesMode', 'Class added successfully');
     newClassName.value = '';
     addForm.value?.resetValidation();
   } catch (error) {
-    console.error('Failed to add class:', error);
+    componentLogger.error('ManageClassesMode', 'Failed to add class', error instanceof Error ? error : new Error('Unknown error'));
     // Show user-friendly error message
     alert(`Failed to add class: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
@@ -321,7 +322,7 @@ const saveClass = async () => {
     editForm.value?.resetValidation();
     editFormValid.value = false;
   } catch (error) {
-    console.error('Failed to update class:', error);
+    componentLogger.error('ManageClassesMode', 'Failed to update class', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isEditing.value = false;
   }
@@ -349,7 +350,7 @@ const removeClass = async () => {
     showConfirmDialog.value = false;
     selectedClass.value = null;
   } catch (error) {
-    console.error('Failed to remove class:', error);
+    componentLogger.error('ManageClassesMode', 'Failed to remove class', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isRemoving.value = false;
   }

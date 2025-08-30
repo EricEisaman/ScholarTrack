@@ -196,6 +196,7 @@ import ModeChangeModal from './modals/ModeChangeModal.vue';
 import ClassChangeModal from './modals/ClassChangeModal.vue';
 import StudentModal from './modals/StudentModal.vue';
 import PWAUpdatePrompt from './PWAUpdatePrompt.vue';
+import { componentLogger } from '../services/logger';
 
 import StandardMode from './modes/StandardMode.vue';
 import ManageClassesMode from './modes/ManageClassesMode.vue';
@@ -297,7 +298,7 @@ onMounted(async () => {
   try {
     await store.initDB();
   } catch (error: unknown) {
-    console.error('Failed to initialize app:', error);
+    componentLogger.error('ScholarTrack', 'Failed to initialize app', error instanceof Error ? error : new Error('Unknown error'));
     // App will still work with empty data
   }
 });

@@ -69,6 +69,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
+import { componentLogger } from '../../services/logger';
 
 interface Props {
   modelValue: boolean
@@ -111,7 +112,7 @@ const submitMemo = () => {
     closeModal();
   } catch (error) {
     errorMessage.value = 'Failed to submit memo. Please try again.';
-    console.error('Memo submission error:', error);
+    componentLogger.error('MemoModal', 'Memo submission error', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isSubmitting.value = false;
   }

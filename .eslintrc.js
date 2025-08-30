@@ -48,6 +48,14 @@ module.exports = {
     // General rules
     'no-console': 'warn',
     'no-debugger': 'error',
+    // Allow logger methods but warn about direct console usage
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'CallExpression[callee.object.name="console"][callee.property.name!="error"]',
+        message: 'Use logger service instead of console.log/console.warn/console.info. Use logger.debug(), logger.info(), logger.warn(), or logger.error()'
+      }
+    ],
     'no-unused-vars': 'off', // Use TypeScript version instead
     'prefer-const': 'error',
     'no-var': 'error',

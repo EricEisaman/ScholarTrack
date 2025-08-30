@@ -1,5 +1,6 @@
 import axios, { type InternalAxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios'
 import type { Student, Class, Transaction, NewStudent } from '../types'
+import { apiLogger } from './logger'
 
 // Use a simpler approach without type casting
 const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL || 'http://localhost:5000/api'
@@ -15,11 +16,11 @@ const api = axios.create({
 // Request interceptor for logging
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
+    apiLogger.info(`Request: ${config.method?.toUpperCase()} ${config.url}`)
     return config
   },
   (error: AxiosError) => {
-    console.error('API Request Error:', error)
+    apiLogger.error('Request Error', error)
     return Promise.reject(error)
   }
 )
@@ -27,11 +28,11 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log(`API Response: ${response.status} ${response.config.url}`)
+    apiLogger.info(`Response: ${response.status} ${response.config.url}`)
     return response
   },
   (error: AxiosError) => {
-    console.error('API Response Error:', error.response?.data || error.message)
+    apiLogger.error('Response Error', error, { responseData: error.response?.data })
     return Promise.reject(error)
   }
 )

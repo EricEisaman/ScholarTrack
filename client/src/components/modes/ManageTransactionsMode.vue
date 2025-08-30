@@ -721,6 +721,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useAppStore } from '../../stores/appStore';
 import type { CustomStatusType, CustomTeacherEventType, ValidationResult, MigrationResult } from '../../types';
 import { validateCustomStatusType, validateCustomTeacherEventType } from '../../utils/validation';
+import { componentLogger } from '../../services/logger';
 
 const store = useAppStore();
 
@@ -836,7 +837,7 @@ const addStatusType = async () => {
     newStatusIncludeMemo.value = false;
     statusForm.value?.resetValidation();
   } catch (error) {
-    console.error('Failed to add status type:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to add status type', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isAddingStatus.value = false;
   }
@@ -852,7 +853,7 @@ const addEventType = async () => {
     newEventIncludeMemo.value = false;
     eventForm.value?.resetValidation();
   } catch (error) {
-    console.error('Failed to add event type:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to add event type', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isAddingEvent.value = false;
   }
@@ -880,7 +881,7 @@ const updateStatusType = async () => {
     );
     showEditStatusDialog.value = false;
   } catch (error) {
-    console.error('Failed to update status type:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to update status type', error instanceof Error ? error : new Error('Unknown error'));
   }
 };
 
@@ -895,7 +896,7 @@ const updateEventType = async () => {
     );
     showEditEventDialog.value = false;
   } catch (error) {
-    console.error('Failed to update event type:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to update event type', error instanceof Error ? error : new Error('Unknown error'));
   }
 };
 
@@ -947,7 +948,7 @@ const confirmDelete = async () => {
       await store.removeCustomTeacherEventType(itemToDelete.value.id);
     }
   } catch (error) {
-    console.error('Failed to delete item:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to delete item', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     showConfirmDialog.value = false;
     itemToDelete.value = null;
@@ -1015,7 +1016,7 @@ const handleDataManagement = async () => {
     }
 
   } catch (error) {
-    console.error('Failed to process data management:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to process data management', error instanceof Error ? error : new Error('Unknown error'));
     migrationError.value = error instanceof Error ? error.message : 'Unknown error occurred';
     showMigrationErrorDialog.value = true;
   } finally {
@@ -1029,7 +1030,7 @@ const validateData = async () => {
   try {
     validationResults.value = store.validateTransactionData();
   } catch (error) {
-    console.error('Failed to validate data:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to validate data', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isValidating.value = false;
   }
@@ -1049,7 +1050,7 @@ const exportBackup = async () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('Failed to export backup:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to export backup', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isExporting.value = false;
   }
@@ -1069,7 +1070,7 @@ const importBackup = async () => {
     showImportDialog.value = false;
     importFile.value = null;
   } catch (error) {
-    console.error('Failed to import backup:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to import backup', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isImporting.value = false;
   }
@@ -1081,7 +1082,7 @@ const clearAllData = async () => {
     await store.clearAllData();
     showClearDataDialog.value = false;
   } catch (error) {
-    console.error('Failed to clear data:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to clear data', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isClearingData.value = false;
   }
@@ -1136,7 +1137,7 @@ onMounted(async () => {
     // This will ensure the database is initialized and all object stores exist
     await store.ensureDBReady();
   } catch (error) {
-    console.error('Failed to ensure database readiness in ManageTransactionsMode:', error);
+    componentLogger.error('ManageTransactionsMode', 'Failed to ensure database readiness', error instanceof Error ? error : new Error('Unknown error'));
   }
 });
 </script>

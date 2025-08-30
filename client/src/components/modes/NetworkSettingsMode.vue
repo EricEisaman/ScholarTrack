@@ -225,6 +225,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useAppStore } from '../../stores/appStore';
+import { componentLogger } from '../../services/logger';
 
 const store = useAppStore();
 
@@ -257,7 +258,7 @@ const upSync = async () => {
     lastSyncTime.value = new Date().toLocaleString();
     serverStatus.value = 'online';
   } catch (error: unknown) {
-    console.error('Up sync failed:', error);
+    componentLogger.error('NetworkSettingsMode', 'Up sync failed', error instanceof Error ? error : new Error('Unknown error'));
     syncMessage.value = 'Up sync failed. Please check your connection and try again.';
     syncMessageType.value = 'error';
     serverStatus.value = 'offline';
@@ -278,7 +279,7 @@ const downSync = async () => {
     lastSyncTime.value = new Date().toLocaleString();
     serverStatus.value = 'online';
   } catch (error: unknown) {
-    console.error('Down sync failed:', error);
+    componentLogger.error('NetworkSettingsMode', 'Down sync failed', error instanceof Error ? error : new Error('Unknown error'));
     syncMessage.value = 'Down sync failed. Please check your connection and try again.';
     syncMessageType.value = 'error';
     serverStatus.value = 'offline';
@@ -299,7 +300,7 @@ const fullSync = async () => {
     lastSyncTime.value = new Date().toLocaleString();
     serverStatus.value = 'online';
   } catch (error: unknown) {
-    console.error('Full sync failed:', error);
+    componentLogger.error('NetworkSettingsMode', 'Full sync failed', error instanceof Error ? error : new Error('Unknown error'));
     syncMessage.value = 'Full sync failed. Please check your connection and try again.';
     syncMessageType.value = 'error';
     serverStatus.value = 'offline';
@@ -315,7 +316,7 @@ const clearLocalData = async () => {
       syncMessage.value = 'Local data cleared successfully';
       syncMessageType.value = 'success';
     } catch (error: unknown) {
-      console.error('Failed to clear local data:', error);
+      componentLogger.error('NetworkSettingsMode', 'Failed to clear local data', error instanceof Error ? error : new Error('Unknown error'));
       syncMessage.value = 'Failed to clear local data';
       syncMessageType.value = 'error';
     }

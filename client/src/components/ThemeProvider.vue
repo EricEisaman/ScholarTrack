@@ -6,6 +6,7 @@
 import { watch, onMounted } from 'vue';
 import { useAppStore } from '../stores/appStore';
 import { useTheme } from 'vuetify';
+import { componentLogger } from '../services/logger';
 
 const store = useAppStore();
 const theme = useTheme();
@@ -43,7 +44,7 @@ watch(() => store.styleSettings, (settings) => {
       appElement.style.backgroundColor = settings.tertiaryColor;
     }
 
-    console.log('Theme updated:', settings);
+    componentLogger.info('ThemeProvider', 'Theme updated', settings);
   }
 }, { immediate: true });
 </script>

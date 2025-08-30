@@ -161,6 +161,7 @@ import { useDisplay } from 'vuetify';
 import { useAppStore } from '../../stores/appStore';
 import type { StudentStatus, TeacherEventType } from '../../types';
 import MemoModal from './MemoModal.vue';
+import { componentLogger } from '../../services/logger';
 
 const store = useAppStore();
 const { xs, sm, md } = useDisplay();
@@ -371,7 +372,7 @@ const handleMemoSubmit = async (memo: string) => {
 
       // Show success message
       store.$patch((_state) => {
-        console.log(`Status updated for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value} with memo: ${memo}`);
+        componentLogger.info('StudentModal', `Status updated for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value} with memo: ${memo}`);
       });
     } else if (isTeacherCode.value && selectedEvent.value) {
       // Teacher event recording with memo
@@ -385,14 +386,14 @@ const handleMemoSubmit = async (memo: string) => {
 
       // Show success message
       store.$patch((_state) => {
-        console.log(`Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value} with memo: ${memo}`);
+        componentLogger.info('StudentModal', `Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value} with memo: ${memo}`);
       });
     }
 
     closeModal();
   } catch (error) {
     errorMessage.value = 'Failed to save transaction. Please try again.';
-    console.error('Transaction error:', error);
+    componentLogger.error('StudentModal', 'Transaction error', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isSubmitting.value = false;
   }
@@ -426,7 +427,7 @@ const handleSubmit = async () => {
       // Show success message
       store.$patch((_state) => {
         // This would typically use a toast notification system
-        console.log(`Status updated for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value}`);
+        componentLogger.info('StudentModal', `Status updated for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value}`);
       });
     } else if (isTeacherCode.value) {
       if (teacherMode.value === 'event' && selectedEvent.value) {
@@ -440,7 +441,7 @@ const handleSubmit = async () => {
 
         // Show success message
         store.$patch((_state) => {
-          console.log(`Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value}`);
+          componentLogger.info('StudentModal', `Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value}`);
         });
       } else if (teacherMode.value === 'status') {
         // Teacher status change
@@ -452,7 +453,7 @@ const handleSubmit = async () => {
 
         // Show success message
         store.$patch((_state) => {
-          console.log(`Status changed by teacher for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value}`);
+          componentLogger.info('StudentModal', `Status changed by teacher for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value}`);
         });
       }
     }
@@ -460,7 +461,7 @@ const handleSubmit = async () => {
     closeModal();
   } catch (error) {
     errorMessage.value = 'Failed to save transaction. Please try again.';
-    console.error('Transaction error:', error);
+    componentLogger.error('StudentModal', 'Transaction error', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isSubmitting.value = false;
   }

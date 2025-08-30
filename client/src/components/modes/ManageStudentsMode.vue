@@ -339,6 +339,7 @@ import { useAppStore } from '../../stores/appStore';
 import type { Student } from '../../types';
 import EmojiPicker from '../EmojiPicker.vue';
 import type { EmojiData } from '../../data/emojis';
+import { componentLogger } from '../../services/logger';
 
 const store = useAppStore();
 
@@ -391,7 +392,7 @@ const addStudent = async () => {
   isAdding.value = true;
 
   try {
-    console.log('Attempting to add student:', newStudent.value);
+    componentLogger.info('ManageStudentsMode', 'Attempting to add student', newStudent.value);
     await store.addStudent(newStudent.value);
 
     // Reset form data
@@ -401,9 +402,9 @@ const addStudent = async () => {
     await nextTick();
     addForm.value?.resetValidation();
 
-    console.log('Student added successfully');
+    componentLogger.info('ManageStudentsMode', 'Student added successfully');
   } catch (error) {
-    console.error('Failed to add student:', error);
+    componentLogger.error('ManageStudentsMode', 'Failed to add student', error instanceof Error ? error : new Error('Unknown error'));
     // Show user-friendly error message
     alert(`Failed to add student: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
@@ -422,15 +423,15 @@ const saveStudent = async () => {
   isEditing.value = true;
 
   try {
-    console.log('Attempting to update student:', editingStudent.value);
+    componentLogger.info('ManageStudentsMode', 'Attempting to update student', editingStudent.value);
     await store.updateStudent(editingStudent.value);
     showEditDialog.value = false;
     editingStudent.value = null;
     editForm.value?.resetValidation();
     editFormValid.value = false;
-    console.log('Student updated successfully');
+    componentLogger.info('ManageStudentsMode', 'Student updated successfully');
   } catch (error) {
-    console.error('Failed to update student:', error);
+    componentLogger.error('ManageStudentsMode', 'Failed to update student', error instanceof Error ? error : new Error('Unknown error'));
     // Show user-friendly error message
     alert(`Failed to update student: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
@@ -465,7 +466,7 @@ const removeStudent = async () => {
     showConfirmDialog.value = false;
     selectedStudent.value = null;
   } catch (error) {
-    console.error('Failed to remove student:', error);
+    componentLogger.error('ManageStudentsMode', 'Failed to remove student', error instanceof Error ? error : new Error('Unknown error'));
   } finally {
     isRemoving.value = false;
   }
