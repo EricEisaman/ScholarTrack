@@ -8,8 +8,8 @@
             <v-icon class="mr-2">mdi-responsive</v-icon>
             Vuetify Responsive Design Showcase
             <v-spacer />
-            <v-chip 
-              color="white" 
+            <v-chip
+              color="white"
               variant="outlined"
               :class="xs ? 'text-overline' : 'text-body-2'"
             >
