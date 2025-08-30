@@ -354,12 +354,20 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showImportDialog = false">Cancel</v-btn>
+          <v-btn
+            @click="showImportDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="primary"
             :loading="isImporting"
             :disabled="!importFile"
             @click="importBackup"
+            size="large"
+            min-width="120"
           >
             Import
           </v-btn>
@@ -385,11 +393,19 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showClearDataDialog = false">Cancel</v-btn>
+          <v-btn
+            @click="showClearDataDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="error"
             :loading="isClearingData"
             @click="clearAllData"
+            size="large"
+            min-width="160"
           >
             Clear All Data
           </v-btn>
@@ -433,7 +449,13 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showMigrationErrorDialog = false">Close</v-btn>
+          <v-btn
+            @click="showMigrationErrorDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Close
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -463,7 +485,13 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showMigrationSuccessDialog = false">Close</v-btn>
+          <v-btn
+            @click="showMigrationSuccessDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Close
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -502,11 +530,19 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showEditStatusDialog = false">Cancel</v-btn>
+          <v-btn
+            @click="showEditStatusDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="primary"
             :disabled="!editStatusFormValid"
             @click="updateStatusType"
+            size="large"
+            min-width="120"
           >
             Update
           </v-btn>
@@ -538,11 +574,19 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showEditEventDialog = false">Cancel</v-btn>
+          <v-btn
+            @click="showEditEventDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="primary"
             :disabled="!editEventFormValid"
             @click="updateEventType"
+            size="large"
+            min-width="120"
           >
             Update
           </v-btn>
@@ -559,10 +603,18 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showConfirmDialog = false">Cancel</v-btn>
+          <v-btn
+            @click="showConfirmDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="error"
             @click="confirmDelete"
+            size="large"
+            min-width="120"
           >
             Delete
           </v-btn>
@@ -642,11 +694,19 @@
 
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn @click="showDataManagementDialog = false">Cancel</v-btn>
+          <v-btn
+            @click="showDataManagementDialog = false"
+            size="large"
+            min-width="100"
+          >
+            Cancel
+          </v-btn>
           <v-btn
             color="primary"
             :loading="isProcessingData"
             @click="handleDataManagement"
+            size="large"
+            min-width="160"
           >
             {{ orphanedDataAction === 'keep' ? 'Keep Type' : 'Process Data' }}
           </v-btn>

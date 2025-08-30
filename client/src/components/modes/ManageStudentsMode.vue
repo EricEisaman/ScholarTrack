@@ -263,6 +263,8 @@
             color="grey"
             variant="text"
             @click="cancelEdit"
+            size="large"
+            min-width="100"
           >
             Cancel
           </v-btn>
@@ -272,6 +274,8 @@
             :disabled="!editFormValid"
             :loading="isEditing"
             @click="saveStudent"
+            size="large"
+            min-width="140"
           >
             Save Changes
           </v-btn>

@@ -150,6 +150,8 @@
             color="grey"
             variant="text"
             @click="cancelEdit"
+            size="large"
+            min-width="100"
           >
             Cancel
           </v-btn>
@@ -159,6 +161,8 @@
             :disabled="!editFormValid"
             :loading="isEditing"
             @click="saveClass"
+            size="large"
+            min-width="140"
           >
             Save Changes
           </v-btn>
@@ -207,6 +211,8 @@
             color="grey"
             variant="text"
             @click="cancelRemove"
+            size="large"
+            min-width="100"
           >
             Cancel
           </v-btn>
@@ -215,6 +221,8 @@
             variant="elevated"
             :loading="isRemoving"
             @click="removeClass"
+            size="large"
+            min-width="160"
           >
             Remove Class
           </v-btn>

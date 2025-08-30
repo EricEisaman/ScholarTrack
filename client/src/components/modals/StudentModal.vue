@@ -48,49 +48,41 @@
           <!-- Student Status Section (if student code matches) -->
           <div v-if="isStudentCode && !isTeacherCode && codeSubmitted" class="mt-4">
             <h3 class="text-h6 mb-3">Select Status</h3>
-            <v-row :dense="xs">
-              <v-col
+            <div class="d-flex flex-wrap">
+              <v-btn
                 v-for="status in studentStatuses"
                 :key="status"
-                :cols="statusGridCols"
-                :class="{ 'pa-1': xs }"
+                :color="selectedStatus === status ? store.statusColors[status] : 'grey'"
+                :variant="selectedStatus === status ? 'flat' : 'outlined'"
+                :size="statusButtonSize"
+                :width="statusButtonWidth"
+                :height="xs ? '48px' : sm ? '48px' : '40px'"
+                @click="handleStatusSelection(status)"
+                class="mb-3 mr-3 text-wrap"
               >
-                <v-btn
-                  :color="selectedStatus === status ? store.statusColors[status] : 'grey'"
-                  :variant="selectedStatus === status ? 'flat' : 'outlined'"
-                  :size="statusButtonSize"
-                  :block="xs"
-                  @click="handleStatusSelection(status)"
-                  class="mb-2 text-wrap"
-                >
-                  {{ status }}
-                </v-btn>
-              </v-col>
-            </v-row>
+                {{ status }}
+              </v-btn>
+            </div>
           </div>
 
           <!-- Teacher Event Section (if teacher code matches) -->
           <div v-if="isTeacherCode && codeSubmitted" class="mt-4">
             <h3 class="text-h6 mb-3">Record Event</h3>
-            <v-row :dense="xs">
-              <v-col
+            <div class="d-flex flex-wrap">
+              <v-btn
                 v-for="event in store.teacherEvents"
                 :key="event"
-                :cols="eventGridCols"
-                :class="{ 'pa-1': xs }"
+                :color="selectedEvent === event ? 'error' : 'grey'"
+                :variant="selectedEvent === event ? 'flat' : 'outlined'"
+                :size="eventButtonSize"
+                :width="eventButtonWidth"
+                :height="xs ? '48px' : sm ? '48px' : '40px'"
+                @click="handleEventSelection(event)"
+                class="mb-3 mr-3 text-wrap"
               >
-                <v-btn
-                  :color="selectedEvent === event ? 'error' : 'grey'"
-                  :variant="selectedEvent === event ? 'flat' : 'outlined'"
-                  :size="eventButtonSize"
-                  :block="xs"
-                  @click="handleEventSelection(event)"
-                  class="mb-2 text-wrap"
-                >
-                  {{ event }}
-                </v-btn>
-              </v-col>
-            </v-row>
+                {{ event }}
+              </v-btn>
+            </div>
           </div>
 
           <!-- Error Message -->
@@ -176,28 +168,45 @@ const modalMaxWidth = computed(() => {
   return '600px';
 });
 
-const statusGridCols = computed(() => {
-  if (xs.value) return 4; // Fewer columns on mobile for wider buttons
-  if (sm.value) return 3; // Fewer columns on small screens
-  return 4; // Fewer columns on larger screens
-});
-
-const eventGridCols = computed(() => {
-  if (xs.value) return 4; // Fewer columns on mobile for wider buttons
-  if (sm.value) return 3; // Fewer columns on small screens
-  return 4; // Fewer columns on larger screens
-});
-
 const statusButtonSize = computed(() => {
   if (xs.value) return 'large'; // Larger buttons on mobile
-  if (sm.value) return 'default';
+  if (sm.value) return 'large'; // Larger buttons on small screens for better text fit
   return 'default';
 });
 
 const eventButtonSize = computed(() => {
   if (xs.value) return 'large'; // Larger buttons on mobile
-  if (sm.value) return 'default';
+  if (sm.value) return 'large'; // Larger buttons on small screens for better text fit
   return 'default';
+});
+
+// Computed button widths based on longest labels
+const statusButtonWidth = computed(() => {
+  // Find the longest status label
+  const longestStatus = studentStatuses.value.reduce((longest, current) =>
+    current.length > longest.length ? current : longest, '',
+  );
+
+  // Calculate width based on character count and screen size
+  const baseWidth = longestStatus.length * 8; // Approximate pixels per character
+  const minWidth = xs.value ? 140 : sm.value ? 160 : 180;
+  const maxWidth = xs.value ? 200 : sm.value ? 240 : 280;
+
+  return `${Math.max(minWidth, Math.min(maxWidth, baseWidth + 40))}px`; // Add padding
+});
+
+const eventButtonWidth = computed(() => {
+  // Find the longest event label
+  const longestEvent = store.teacherEvents.reduce((longest, current) =>
+    current.length > longest.length ? current : longest, '',
+  );
+
+  // Calculate width based on character count and screen size
+  const baseWidth = longestEvent.length * 8; // Approximate pixels per character
+  const minWidth = xs.value ? 160 : sm.value ? 180 : 200;
+  const maxWidth = xs.value ? 240 : sm.value ? 280 : 320;
+
+  return `${Math.max(minWidth, Math.min(maxWidth, baseWidth + 40))}px`; // Add padding
 });
 
 const maxCodeLength = computed(() => {

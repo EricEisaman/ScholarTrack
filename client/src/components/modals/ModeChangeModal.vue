@@ -43,10 +43,18 @@
           color="primary"
           @click="handleSubmit"
           :disabled="!enteredCode || enteredCode.length !== 6"
+          size="large"
+          min-width="140"
         >
           Change Mode
         </v-btn>
-        <v-btn @click="closeModal">Cancel</v-btn>
+        <v-btn
+          @click="closeModal"
+          size="large"
+          min-width="100"
+        >
+          Cancel
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

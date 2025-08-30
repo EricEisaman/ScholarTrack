@@ -45,10 +45,18 @@
           @click="submitMemo"
           :disabled="!memoText || memoText.length > 15"
           :loading="isSubmitting"
+          size="large"
+          min-width="120"
         >
           Submit Memo
         </v-btn>
-        <v-btn @click="closeModal">Cancel</v-btn>
+        <v-btn
+          @click="closeModal"
+          size="large"
+          min-width="100"
+        >
+          Cancel
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
