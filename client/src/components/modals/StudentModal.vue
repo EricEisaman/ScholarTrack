@@ -45,8 +45,31 @@
             </v-btn>
           </div>
 
-          <!-- Student Status Section (if student code matches) -->
-          <div v-if="isStudentCode && !isTeacherCode && codeSubmitted" class="mt-4">
+          <!-- Teacher Mode Toggle (if teacher code matches) -->
+          <div v-if="isTeacherCode && codeSubmitted" class="mt-4">
+            <div class="d-flex align-center mb-3">
+              <h3 class="text-h6 mb-0">Teacher Actions</h3>
+              <v-spacer />
+              <v-btn-toggle
+                v-model="teacherMode"
+                color="primary"
+                mandatory
+                density="compact"
+              >
+                <v-btn value="event" size="small">
+                  <v-icon start>mdi-calendar-plus</v-icon>
+                  Record Event
+                </v-btn>
+                <v-btn value="status" size="small">
+                  <v-icon start>mdi-account-edit</v-icon>
+                  Change Status
+                </v-btn>
+              </v-btn-toggle>
+            </div>
+          </div>
+
+          <!-- Student Status Section (if student code matches OR teacher in status mode) -->
+          <div v-if="(isStudentCode && !isTeacherCode && codeSubmitted) || (isTeacherCode && teacherMode === 'status' && codeSubmitted)" class="mt-4">
             <h3 class="text-h6 mb-3">Select Status</h3>
             <div class="d-flex flex-wrap">
               <v-btn
@@ -65,8 +88,8 @@
             </div>
           </div>
 
-          <!-- Teacher Event Section (if teacher code matches) -->
-          <div v-if="isTeacherCode && codeSubmitted" class="mt-4">
+          <!-- Teacher Event Section (if teacher code matches and in event mode) -->
+          <div v-if="isTeacherCode && teacherMode === 'event' && codeSubmitted" class="mt-4">
             <h3 class="text-h6 mb-3">Record Event</h3>
             <div class="d-flex flex-wrap">
               <v-btn
@@ -109,7 +132,7 @@
           :size="xs ? 'large' : 'default'"
           :block="xs"
         >
-          {{ isTeacherCode ? 'Record Event' : 'Apply Status' }}
+          {{ getSubmitButtonText() }}
         </v-btn>
         <v-btn
           @click="closeModal"
@@ -150,6 +173,7 @@ const errorMessage = ref('');
 const isSubmitting = ref(false);
 const codeInput = ref();
 const codeSubmitted = ref(false);
+const teacherMode = ref<'status' | 'event'>('event'); // Teacher mode toggle
 
 // Memo modal state
 const showMemoModal = ref(false);
@@ -254,7 +278,11 @@ const canSubmit = computed(() => {
   }
 
   if (isTeacherCode.value) {
-    return selectedEvent.value !== null;
+    if (teacherMode.value === 'event') {
+      return selectedEvent.value !== null;
+    } else {
+      return true; // Teacher can always change status
+    }
   }
 
   return false;
@@ -370,6 +398,16 @@ const handleMemoSubmit = async (memo: string) => {
   }
 };
 
+const getSubmitButtonText = (): string => {
+  if (isStudentCode.value) {
+    return 'Apply Status';
+  }
+  if (isTeacherCode.value) {
+    return teacherMode.value === 'event' ? 'Record Event' : 'Apply Status';
+  }
+  return 'Submit';
+};
+
 const handleSubmit = async () => {
   if (!selectedStudent.value) return;
 
@@ -390,19 +428,33 @@ const handleSubmit = async () => {
         // This would typically use a toast notification system
         console.log(`Status updated for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value}`);
       });
-    } else if (isTeacherCode.value && selectedEvent.value) {
-      // Teacher event recording
-      await store.addTransaction({
-        studentLabel: selectedStudent.value.label,
-        studentCode: selectedStudent.value.code,
-        status: 'IN CLASS', // Teacher events don't change status
-        eventType: selectedEvent.value,
-      });
+    } else if (isTeacherCode.value) {
+      if (teacherMode.value === 'event' && selectedEvent.value) {
+        // Teacher event recording
+        await store.addTransaction({
+          studentLabel: selectedStudent.value.label,
+          studentCode: selectedStudent.value.code,
+          status: 'IN CLASS', // Teacher events don't change status
+          eventType: selectedEvent.value,
+        });
 
-      // Show success message
-      store.$patch((_state) => {
-        console.log(`Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value}`);
-      });
+        // Show success message
+        store.$patch((_state) => {
+          console.log(`Event recorded for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedEvent.value}`);
+        });
+      } else if (teacherMode.value === 'status') {
+        // Teacher status change
+        await store.addTransaction({
+          studentLabel: selectedStudent.value.label,
+          studentCode: selectedStudent.value.code,
+          status: selectedStatus.value,
+        });
+
+        // Show success message
+        store.$patch((_state) => {
+          console.log(`Status changed by teacher for ${selectedStudent.value?.label} (${selectedStudent.value?.emoji}): ${selectedStatus.value}`);
+        });
+      }
     }
 
     closeModal();
@@ -426,6 +478,7 @@ const resetForm = () => {
   errorMessage.value = '';
   isSubmitting.value = false;
   codeSubmitted.value = false;
+  teacherMode.value = 'event'; // Reset to default teacher mode
 };
 
 // Watch for modal state changes
