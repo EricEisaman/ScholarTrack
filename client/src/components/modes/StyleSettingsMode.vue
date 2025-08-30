@@ -712,36 +712,43 @@ const adaptivePrimaryLargeTextColor = computed(() => getAccessibleLargeTextColor
 
 // Color swatches for preview
 const colorSwatches = computed(() => {
+  // Ensure all colors have valid fallback values and are not undefined
+  const primary = primaryColor.value && primaryColor.value.trim() ? primaryColor.value : '#1976D2';
+  const secondary = secondaryColor.value && secondaryColor.value.trim() ? secondaryColor.value : '#212121';
+  const tertiary = tertiaryColor.value && tertiaryColor.value.trim() ? tertiaryColor.value : '#FFFFFF';
+  const quaternary = quaternaryColor.value && quaternaryColor.value.trim() ? quaternaryColor.value : '#FF9800';
+  const background = pageBackgroundColor.value && pageBackgroundColor.value.trim() ? pageBackgroundColor.value : '#F5F5F5';
+
   const swatches = [
     {
       name: 'Primary',
-      color: primaryColor.value || '#1976D2',
+      color: primary,
       emoji: '🎨',
-      textColor: getAccessibleTextColor(primaryColor.value || '#1976D2'),
+      textColor: getAccessibleTextColor(primary),
     },
     {
       name: 'Secondary',
-      color: secondaryColor.value || '#212121',
+      color: secondary,
       emoji: '📝',
-      textColor: getAccessibleTextColor(secondaryColor.value || '#212121'),
+      textColor: getAccessibleTextColor(secondary),
     },
     {
       name: 'Tertiary',
-      color: tertiaryColor.value || '#FFFFFF',
+      color: tertiary,
       emoji: '🖼️',
-      textColor: getAccessibleTextColor(tertiaryColor.value || '#FFFFFF'),
+      textColor: getAccessibleTextColor(tertiary),
     },
     {
       name: 'Quaternary',
-      color: quaternaryColor.value || '#FF9800',
+      color: quaternary,
       emoji: '⭐',
-      textColor: getAccessibleTextColor(quaternaryColor.value || '#FF9800'),
+      textColor: getAccessibleTextColor(quaternary),
     },
     {
       name: 'Background',
-      color: pageBackgroundColor.value || '#F5F5F5',
+      color: background,
       emoji: '🏠',
-      textColor: getAccessibleTextColor(pageBackgroundColor.value || '#F5F5F5'),
+      textColor: getAccessibleTextColor(background),
     },
   ];
 
@@ -1010,18 +1017,23 @@ const hslToHex = (h: number, s: number, l: number) => {
 };
 
 const generateMonochromaticPalette = (baseHsl: { h: number; s: number; l: number }) => {
+  // Ensure HSL values are within valid ranges
+  const h = Math.max(0, Math.min(360, baseHsl.h || 0));
+  const s = Math.max(0, Math.min(100, baseHsl.s || 50));
+  const l = Math.max(0, Math.min(100, baseHsl.l || 50));
+
   // Generate colors with proper background-to-foreground relationships
   const palette = {
     // Primary: Button background (medium brightness)
-    primary: hslToHex(baseHsl.h, Math.max(baseHsl.s, 40), Math.max(Math.min(baseHsl.l, 60), 40)),
+    primary: hslToHex(h, Math.max(s, 40), Math.max(Math.min(l, 60), 40)),
     // Secondary: Text color (dark for good contrast on light backgrounds)
-    secondary: hslToHex(baseHsl.h, Math.max(baseHsl.s * 0.6, 20), Math.max(Math.min(baseHsl.l * 0.4, 30), 15)),
+    secondary: hslToHex(h, Math.max(s * 0.6, 20), Math.max(Math.min(l * 0.4, 30), 15)),
     // Tertiary: Main content background (very light)
-    tertiary: hslToHex(baseHsl.h, Math.min(baseHsl.s * 0.1, 10), Math.min(baseHsl.l * 1.4, 98)),
+    tertiary: hslToHex(h, Math.min(s * 0.1, 10), Math.min(l * 1.4, 98)),
     // Quaternary: Accent button background (medium-high brightness)
-    quaternary: hslToHex(baseHsl.h, Math.max(baseHsl.s * 0.8, 30), Math.max(Math.min(baseHsl.l * 0.8, 65), 45)),
+    quaternary: hslToHex(h, Math.max(s * 0.8, 30), Math.max(Math.min(l * 0.8, 65), 45)),
     // Page Background: App background (extremely light)
-    pageBackground: hslToHex(baseHsl.h, Math.min(baseHsl.s * 0.05, 5), Math.min(baseHsl.l * 1.6, 99)),
+    pageBackground: hslToHex(h, Math.min(s * 0.05, 5), Math.min(l * 1.6, 99)),
   };
 
   return palette;
