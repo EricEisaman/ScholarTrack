@@ -120,6 +120,7 @@
                         max-height="200"
                         class="mx-auto"
                         contain
+                        bg-color="transparent"
                       />
                       <v-btn
                         color="error"
@@ -143,20 +144,242 @@
               <v-card variant="outlined" class="pa-4">
                 <v-card-title class="text-h6">
                   <v-icon class="mr-2">mdi-eye</v-icon>
-                  Preview
+                  Application Preview
                 </v-card-title>
 
                 <v-card-text>
-                  <div class="preview-container" :class="previewClasses">
-                    <div class="preview-header">
-                      <img v-if="logoPreview" :src="logoPreview" class="preview-logo" />
-                      <span class="preview-title">{{ schoolName }}</span>
-                    </div>
-                    <div class="preview-content">
-                      <div class="preview-button">Sample Button</div>
-                      <div class="preview-chip">Sample Chip</div>
-                    </div>
-                  </div>
+                  <v-card class="preview-container" :color="tertiaryColor" max-height="800">
+                    <!-- App Bar Preview -->
+                    <v-app-bar :color="primaryColor" dark>
+                      <v-select
+                        model-value="Standard Mode"
+                        :items="['Standard Mode']"
+                        variant="outlined"
+                        density="comfortable"
+                        class="mr-4"
+                        hide-details
+                        readonly
+                      >
+                        <template #prepend-inner>
+                          <v-icon size="small" class="mr-2">mdi-account-group</v-icon>
+                        </template>
+                      </v-select>
+
+                      <v-spacer />
+
+                      <div class="d-flex align-center">
+                        <v-img
+                          v-if="logoPreview"
+                          :src="logoPreview"
+                          width="24"
+                          height="24"
+                          class="mr-3"
+                          contain
+                          bg-color="transparent"
+                        />
+                        <div class="d-flex flex-column align-center">
+                          <span class="text-h6 font-weight-bold">{{ schoolName }}</span>
+                          <span class="text-caption text-medium-emphasis">ScholarTrack</span>
+                        </div>
+                      </div>
+
+                      <v-spacer />
+
+                      <v-select
+                        model-value="Math 101"
+                        :items="['Math 101']"
+                        variant="outlined"
+                        density="comfortable"
+                        class="mr-4"
+                        hide-details
+                        readonly
+                      >
+                        <template #prepend-inner>
+                          <v-icon size="small" class="mr-2">mdi-account-group</v-icon>
+                        </template>
+                      </v-select>
+
+                      <v-chip :color="secondaryColor" class="text-caption">
+                        Standard
+                      </v-chip>
+                    </v-app-bar>
+
+                    <!-- Main Content Preview -->
+                    <v-container class="pa-6">
+                      <!-- Header Card -->
+                      <v-card class="mb-3">
+                        <v-card-title class="d-flex align-center">
+                          <v-icon class="mr-2">mdi-account-group</v-icon>
+                          <span class="text-truncate">Math 101</span>
+                          <v-spacer />
+                          <v-chip :color="primaryColor" variant="outlined">
+                            24 Students
+                          </v-chip>
+                        </v-card-title>
+
+                        <v-card-text>
+                          <!-- Student Grid Preview -->
+                          <v-row>
+                            <v-col cols="6" sm="3" v-for="(student, index) in previewStudents" :key="index">
+                              <v-card
+                                :color="student.color"
+                                class="student-preview-card"
+                                @click="() => {}"
+                              >
+                                <v-card-text class="text-center pa-2">
+                                  <div class="text-body-2 font-weight-bold">{{ student.name }}</div>
+                                  <div class="text-h6 mb-1">{{ student.emoji }}</div>
+                                  <div class="text-caption">{{ student.status }}</div>
+                                </v-card-text>
+                              </v-card>
+                            </v-col>
+                          </v-row>
+                        </v-card-text>
+                      </v-card>
+
+                      <!-- Data Table Preview -->
+                      <v-card class="mb-3">
+                        <v-card-title class="d-flex align-center">
+                          <v-icon class="mr-2">mdi-account</v-icon>
+                          <span>Student Management</span>
+                        </v-card-title>
+
+                        <v-data-table
+                          :headers="previewTableHeaders"
+                          :items="previewTableItems"
+                          :items-per-page="1"
+                          hide-default-footer
+                          class="elevation-1"
+                        >
+                          <template v-slot:item.emoji="{ item }">
+                            <span class="text-h6">{{ item.emoji }}</span>
+                          </template>
+
+                          <template v-slot:item.classes="{ item }">
+                            <v-chip size="small" :color="secondaryColor">
+                              {{ item.classes }}
+                            </v-chip>
+                          </template>
+
+                          <template v-slot:item.status="{ item }">
+                            <v-chip size="small" color="success">
+                              {{ item.status }}
+                            </v-chip>
+                          </template>
+
+                          <template v-slot:item.actions>
+                            <v-btn
+                              :color="primaryColor"
+                              variant="outlined"
+                              size="small"
+                            >
+                              Edit
+                            </v-btn>
+                          </template>
+                        </v-data-table>
+                      </v-card>
+
+                      <!-- Form Preview -->
+                      <v-card class="mb-4">
+                        <v-card-title class="d-flex align-center">
+                          <v-icon class="mr-2">mdi-plus</v-icon>
+                          <span>Add New Student</span>
+                        </v-card-title>
+
+                        <v-card-text>
+                          <v-form>
+                            <v-text-field
+                              model-value=""
+                              label="Student Name"
+                              variant="outlined"
+                              prepend-inner-icon="mdi-account"
+                              placeholder="Enter student name..."
+                              readonly
+                            />
+
+                            <v-select
+                              model-value="😊"
+                              :items="['😊']"
+                              label="Emoji"
+                              variant="outlined"
+                              readonly
+                            />
+
+                            <v-btn
+                              :color="primaryColor"
+                              variant="elevated"
+                              class="mt-4"
+                            >
+                              Add Student
+                            </v-btn>
+                          </v-form>
+                        </v-card-text>
+                      </v-card>
+
+                      <!-- Dialog Preview -->
+                      <v-dialog v-model="showPreviewDialog" max-width="400" persistent>
+                        <v-card :color="quaternaryColor">
+                          <v-card-title class="d-flex align-center">
+                            <v-icon class="mr-2">mdi-account</v-icon>
+                            <span>Edit Student</span>
+                            <v-spacer />
+                            <v-btn icon @click="showPreviewDialog = false">
+                              <v-icon>mdi-close</v-icon>
+                            </v-btn>
+                          </v-card-title>
+
+                          <v-card-text>
+                            <v-text-field
+                              model-value="John Doe"
+                              label="Student Name"
+                              variant="outlined"
+                              readonly
+                            />
+                          </v-card-text>
+
+                          <v-card-actions>
+                            <v-spacer />
+                            <v-btn @click="showPreviewDialog = false">
+                              Cancel
+                            </v-btn>
+                            <v-btn :color="primaryColor" variant="elevated">
+                              Save Changes
+                            </v-btn>
+                          </v-card-actions>
+                        </v-card>
+                      </v-dialog>
+
+                      <!-- Quick Actions -->
+                      <v-card>
+                        <v-card-title class="text-subtitle-1">
+                          <v-icon class="mr-2">mdi-lightning-bolt</v-icon>
+                          Quick Actions
+                        </v-card-title>
+                        <v-card-text>
+                          <v-row>
+                            <v-col cols="auto">
+                              <v-btn
+                                :color="quaternaryColor"
+                                variant="outlined"
+                                prepend-icon="mdi-account-plus"
+                              >
+                                Add Student
+                              </v-btn>
+                            </v-col>
+                            <v-col cols="auto">
+                              <v-btn
+                                :color="secondaryColor"
+                                variant="outlined"
+                                prepend-icon="mdi-chart-line"
+                              >
+                                View Reports
+                              </v-btn>
+                            </v-col>
+                          </v-row>
+                        </v-card-text>
+                      </v-card>
+                    </v-container>
+                  </v-card>
                 </v-card-text>
               </v-card>
             </v-col>
@@ -208,6 +431,31 @@ const logoPreview = ref<string>('');
 const saving = ref(false);
 const showSuccess = ref(false);
 
+// Preview data
+const previewStudents = ref([
+  { name: 'John D.', emoji: '😊', status: 'Present', color: 'rgba(76, 175, 80, 0.2)' },
+  { name: 'Sarah M.', emoji: '😴', status: 'Absent', color: 'rgba(244, 67, 54, 0.2)' },
+  { name: 'Mike R.', emoji: '🏃', status: 'Late', color: 'rgba(255, 152, 0, 0.2)' },
+  { name: 'Lisa K.', emoji: '📚', status: 'Present', color: 'rgba(76, 175, 80, 0.2)' },
+]);
+
+const previewTableHeaders = ref([
+  { title: 'Name', key: 'name', align: 'start' as const },
+  { title: 'Emoji', key: 'emoji', align: 'center' as const },
+  { title: 'Classes', key: 'classes', align: 'center' as const },
+  { title: 'Status', key: 'status', align: 'center' as const },
+  { title: 'Actions', key: 'actions', align: 'center' as const },
+]);
+
+const previewTableItems = ref([
+  { name: 'John Doe', emoji: '😊', classes: 'Math 101', status: 'Present' },
+  { name: 'Sarah M.', emoji: '😴', classes: 'Math 101', status: 'Absent' },
+  { name: 'Mike R.', emoji: '🏃', classes: 'Math 101', status: 'Late' },
+  { name: 'Lisa K.', emoji: '📚', classes: 'Math 101', status: 'Present' },
+]);
+
+const showPreviewDialog = ref(false);
+
 // Validation rules
 const rules = {
   required: (value: string) => !!value || 'This field is required',
@@ -232,13 +480,6 @@ const rules = {
 // Form validation
 const isValid = computed(() => {
   return primaryColor.value && secondaryColor.value;
-});
-
-// Preview classes
-const previewClasses = computed(() => {
-  // For now, we'll use a simple approach with CSS custom properties
-  // This would need to be expanded to use Vuetify's theming system
-  return 'preview-container-default';
 });
 
 // Load existing settings
@@ -332,10 +573,25 @@ const handleLogoUpload = (event: Event | File | null) => {
         canvas.width = width;
         canvas.height = height;
 
+        // Clear canvas with transparent background
+        ctx?.clearRect(0, 0, width, height);
+
         // Draw and compress
         ctx?.drawImage(img, 0, 0, width, height);
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
-        resolve(compressedDataUrl);
+        
+        // Use PNG format for transparency support, JPEG for photos
+        const isPNG = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+        const isSVG = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+        
+        if (isPNG || isSVG) {
+          // Preserve transparency for PNG and SVG
+          const compressedDataUrl = canvas.toDataURL('image/png');
+          resolve(compressedDataUrl);
+        } else {
+          // Use JPEG for photos (JPG, JPEG, WebP)
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(compressedDataUrl);
+        }
       };
 
       img.src = URL.createObjectURL(file);
@@ -380,63 +636,5 @@ const saveSettings = async () => {
 </script>
 
 <style scoped>
-.preview-container {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  background: var(--tertiary-color, white);
-}
-
-.preview-container-default {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  background: #000000;
-}
-
-.preview-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background: var(--primary-color);
-  color: white;
-  border-radius: 4px;
-}
-
-.preview-logo {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
-
-.preview-title {
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.preview-content {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.preview-button {
-  background: var(--primary-color);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.preview-chip {
-  background: var(--secondary-color);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-}
 </style>
 
