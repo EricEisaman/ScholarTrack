@@ -11,9 +11,14 @@
       </v-card-title>
 
       <v-card-text>
-        <p class="text-body-2 mb-4">
-          Please enter a memo for <strong>{{ statusOrEventName }}</strong> (max 15 characters)
-        </p>
+        <div class="mb-4">
+          <p class="text-body-2 mb-1">
+            Please enter a memo for <strong>{{ statusOrEventName }}</strong>
+          </p>
+          <p class="text-caption text-grey">
+            (max 15 characters)
+          </p>
+        </div>
 
         <v-text-field
           ref="memoInput"
@@ -41,7 +46,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn
-          color="primary"
+          color="quaternary"
           @click="submitMemo"
           :disabled="!memoText || memoText.length > 15"
           :loading="isSubmitting"
@@ -72,8 +77,8 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'submit', memo: string): void
+  (_e: 'update:modelValue', _value: boolean): void
+  (_e: 'submit', _memo: string): void
 }
 
 const props = defineProps<Props>();

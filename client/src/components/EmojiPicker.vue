@@ -71,8 +71,8 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'select', emoji: EmojiData): void
+  (_e: 'update:modelValue', _value: boolean): void
+  (_e: 'select', _emoji: EmojiData): void
 }
 
 const props = defineProps<Props>();
