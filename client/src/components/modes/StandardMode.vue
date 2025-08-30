@@ -35,8 +35,7 @@
                 v-for="student in currentClassStudents"
                 :key="student.id"
                 class="student-square"
-                :class="studentSquareClass"
-                :style="{ backgroundColor: getStudentSquareColor(student.code) }"
+                :class="[studentSquareClass, `bg-${getStudentSquareColorClass(student.code)}`]"
                 @click="openStudentModal(student)"
               >
                 <div class="student-content">
@@ -172,9 +171,37 @@ const getStudentMemo = (studentCode: string): string | null => {
   return studentTransactions.length > 0 && studentTransactions[0]?.memo ? studentTransactions[0].memo : null;
 };
 
-const getStudentSquareColor = (studentCode: string): string => {
+// This function is kept for potential future use but not currently used
+// const getStudentSquareColor = (studentCode: string): string => {
+//   const status = getStudentStatus(studentCode);
+//   return store.statusColors[status] || '#1976D2'; // Default color if status not found
+// };
+
+const getStudentSquareColorClass = (studentCode: string): string => {
   const status = getStudentStatus(studentCode);
-  return store.statusColors[status] || '#1976D2'; // Default color if status not found
+  const color = store.statusColors[status] || '#1976D2';
+
+  // Convert hex colors to CSS classes
+  switch (color.toLowerCase()) {
+  case '#4caf50': return 'green';
+  case '#ff9800': return 'orange';
+  case '#f44336': return 'red';
+  case '#2196f3': return 'blue';
+  case '#9c27b0': return 'purple';
+  case '#ff5722': return 'deep-orange';
+  case '#795548': return 'brown';
+  case '#607d8b': return 'blue-grey';
+  case '#e91e63': return 'pink';
+  case '#00bcd4': return 'cyan';
+  case '#8bc34a': return 'light-green';
+  case '#ffc107': return 'amber';
+  case '#673ab7': return 'deep-purple';
+  case '#3f51b5': return 'indigo';
+  case '#009688': return 'teal';
+  case '#ffeb3b': return 'yellow';
+  case '#1976d2':
+  default: return 'primary';
+  }
 };
 
 const openStudentModal = (student: any) => {
@@ -347,6 +374,75 @@ const quickViewReports = async () => {
 
 .student-square-lg .student-status {
   font-size: 0.8rem;
+}
+
+/* Student Square Color Classes */
+.bg-green {
+  background-color: #4caf50 !important;
+}
+
+.bg-orange {
+  background-color: #ff9800 !important;
+}
+
+.bg-red {
+  background-color: #f44336 !important;
+}
+
+.bg-blue {
+  background-color: #2196f3 !important;
+}
+
+.bg-purple {
+  background-color: #9c27b0 !important;
+}
+
+.bg-deep-orange {
+  background-color: #ff5722 !important;
+}
+
+.bg-brown {
+  background-color: #795548 !important;
+}
+
+.bg-blue-grey {
+  background-color: #607d8b !important;
+}
+
+.bg-pink {
+  background-color: #e91e63 !important;
+}
+
+.bg-cyan {
+  background-color: #00bcd4 !important;
+}
+
+.bg-light-green {
+  background-color: #8bc34a !important;
+}
+
+.bg-amber {
+  background-color: #ffc107 !important;
+}
+
+.bg-deep-purple {
+  background-color: #673ab7 !important;
+}
+
+.bg-indigo {
+  background-color: #3f51b5 !important;
+}
+
+.bg-teal {
+  background-color: #009688 !important;
+}
+
+.bg-yellow {
+  background-color: #ffeb3b !important;
+}
+
+.bg-primary {
+  background-color: #1976d2 !important;
 }
 
 /* Mobile Floating Action Button */

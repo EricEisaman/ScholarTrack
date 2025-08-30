@@ -15,7 +15,7 @@
             variant="outlined"
             density="comfortable"
             class="mr-4 mt-1 pt-3"
-            :style="{ maxWidth: lgAndUp ? '200px' : '180px' }"
+            :class="lgAndUp ? 'max-width-200' : 'max-width-180'"
             :menu-props="{
               maxHeight: '400px',
               location: 'bottom',
@@ -39,8 +39,7 @@
             <img
               :src="appLogo"
               alt="ScholarTrack Logo"
-              class="mr-3"
-              style="width: 40px; height: 40px; object-fit: contain;"
+              class="mr-3 logo-image"
             />
             <div class="d-flex flex-column">
               <span class="text-h5 font-weight-bold">{{ schoolName }}</span>
@@ -60,7 +59,7 @@
             variant="outlined"
             density="comfortable"
             class="mr-4 mt-1 pt-3"
-            :style="{ maxWidth: lgAndUp ? '200px' : '180px' }"
+            :class="lgAndUp ? 'max-width-200' : 'max-width-180'"
             @update:model-value="showClassChangeModal"
           >
             <template #item="{ item, props }">
@@ -101,7 +100,7 @@
             <img
               :src="appLogo"
               alt="ScholarTrack Logo"
-              style="width: 32px; height: 32px; object-fit: contain;"
+              class="logo-image-mobile"
             />
           </div>
         </div>
@@ -303,4 +302,26 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style scoped>
+.max-width-200 {
+  max-width: 200px;
+}
+
+.max-width-180 {
+  max-width: 180px;
+}
+
+.logo-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.logo-image-mobile {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+</style>
 

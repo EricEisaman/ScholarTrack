@@ -147,7 +147,7 @@
                 </v-card-title>
 
                 <v-card-text>
-                  <div class="preview-container" :style="previewStyles">
+                  <div class="preview-container" :class="previewClasses">
                     <div class="preview-header">
                       <img v-if="logoPreview" :src="logoPreview" class="preview-logo" />
                       <span class="preview-title">{{ schoolName }}</span>
@@ -233,14 +233,12 @@ const isValid = computed(() => {
   return primaryColor.value && secondaryColor.value;
 });
 
-// Preview styles
-const previewStyles = computed(() => ({
-  '--primary-color': primaryColor.value,
-  '--secondary-color': secondaryColor.value,
-  '--tertiary-color': tertiaryColor.value,
-  '--quaternary-color': quaternaryColor.value,
-  'background-color': tertiaryColor.value,
-}));
+// Preview classes
+const previewClasses = computed(() => {
+  // For now, we'll use a simple approach with CSS custom properties
+  // This would need to be expanded to use Vuetify's theming system
+  return 'preview-container-default';
+});
 
 // Load existing settings
 onMounted(() => {
@@ -386,6 +384,13 @@ const saveSettings = async () => {
   border-radius: 8px;
   padding: 16px;
   background: var(--tertiary-color, white);
+}
+
+.preview-container-default {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: #000000;
 }
 
 .preview-header {

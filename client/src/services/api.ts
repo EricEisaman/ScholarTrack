@@ -1,7 +1,8 @@
-import axios from 'axios'
+import axios, { type InternalAxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios'
 import type { Student, Class, Transaction, NewStudent } from '../types'
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api'
+// Use a simpler approach without type casting
+const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL || 'http://localhost:5000/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,11 +14,11 @@ const api = axios.create({
 
 // Request interceptor for logging
 api.interceptors.request.use(
-  (config: any) => {
+  (config: InternalAxiosRequestConfig) => {
     console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`)
     return config
   },
-  (error: any) => {
+  (error: AxiosError) => {
     console.error('API Request Error:', error)
     return Promise.reject(error)
   }
@@ -25,11 +26,11 @@ api.interceptors.request.use(
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response: any) => {
+  (response: AxiosResponse) => {
     console.log(`API Response: ${response.status} ${response.config.url}`)
     return response
   },
-  (error: any) => {
+  (error: AxiosError) => {
     console.error('API Response Error:', error.response?.data || error.message)
     return Promise.reject(error)
   }

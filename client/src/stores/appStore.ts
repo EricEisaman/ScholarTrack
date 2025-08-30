@@ -50,7 +50,7 @@ export const useAppStore = defineStore('app', () => {
   const styleSettings: Ref<StyleSettings | null> = ref(null)
   const customStatusTypes: Ref<CustomStatusType[]> = ref([])
   const customTeacherEventTypes: Ref<CustomTeacherEventType[]> = ref([])
-  const teacherCode: Ref<string> = ref((import.meta as any).env?.VITE_TEACHER_CODE || '456789') // Get from environment variable
+  const teacherCode: Ref<string> = ref((import.meta as { env?: { VITE_TEACHER_CODE?: string } }).env?.VITE_TEACHER_CODE || '456789') // Get from environment variable
   const showModeModal: Ref<boolean> = ref(false)
   const showClassModal: Ref<boolean> = ref(false)
   const showStudentModal: Ref<boolean> = ref(false)
@@ -1332,7 +1332,7 @@ export const useAppStore = defineStore('app', () => {
             // Handle orphaned event type
             if (transaction.eventType && !validEvents.has(transaction.eventType)) {
               if (options.orphanedEventAction === 'delete') {
-                updatedTransaction.eventType = undefined as any
+                delete updatedTransaction.eventType
                 needsUpdate = true
                 affected++
               } else if (options.orphanedEventAction === 'migrate' && options.migrationEvent) {
