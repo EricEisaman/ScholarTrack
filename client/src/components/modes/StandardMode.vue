@@ -21,12 +21,12 @@
             <div v-if="currentClassStudents.length === 0" class="text-center py-8">
               <v-icon
                 :size="xs ? '48' : '64'"
-                color="grey"
+                :color="accessibleTextColor === '#FFFFFF' ? 'white' : 'black'"
               >
                 mdi-account-group-outline
               </v-icon>
-              <p class="text-h6 text-grey mt-4">No students in this class</p>
-              <p class="text-body-2 text-grey">Add students using the MANAGE STUDENTS mode</p>
+              <p class="text-h6 mt-4" :class="accessibleTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">No students in this class</p>
+              <p class="text-body-2" :class="accessibleTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">Add students using the MANAGE STUDENTS mode</p>
             </div>
 
             <!-- Responsive Student Grid -->
@@ -126,7 +126,8 @@
 import { computed, ref } from 'vue';
 import { useDisplay } from 'vuetify';
 import { useAppStore } from '../../stores/appStore';
-import type { StudentStatus } from '../../types';
+import { getAccessibleTextColor } from '../../utils/colorUtils';
+import type { StudentStatus, Student } from '../../types';
 
 const store = useAppStore();
 const { xs, sm, md, lg, mobile } = useDisplay();
@@ -157,6 +158,11 @@ const studentSquareClass = computed(() => ({
 const cardBackgroundColor = computed(() => {
   const settings = store.getStyleSettings();
   return settings?.tertiaryColor || '#000000';
+});
+
+// Accessible text color for the card background
+const accessibleTextColor = computed(() => {
+  return getAccessibleTextColor(cardBackgroundColor.value);
 });
 
 const getStudentStatus = (studentCode: string): StudentStatus => {
@@ -204,7 +210,7 @@ const getStudentSquareColorClass = (studentCode: string): string => {
   }
 };
 
-const openStudentModal = (student: any) => {
+const openStudentModal = (student: Student) => {
   store.openStudentModal(student);
 };
 
