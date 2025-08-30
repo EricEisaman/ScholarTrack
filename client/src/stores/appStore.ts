@@ -202,7 +202,7 @@ export const useAppStore = defineStore('app', () => {
             const studentStore = database.createObjectStore('students', { keyPath: 'id' })
             studentStore.createIndex('label', 'label', { unique: false })
             studentStore.createIndex('code', 'code', { unique: true })
-            // New unique constraint: combination of label and emoji
+            // Unique constraint: combination of label and emoji
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true })
           } else if (oldVersion < 4) {
             // Migration: Update to label+emoji unique constraint
@@ -460,7 +460,27 @@ export const useAppStore = defineStore('app', () => {
     } catch (error) {
       console.error('Error adding student:', error)
       if (error instanceof Error && error.name === 'ConstraintError') {
-        throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+        // Check what's actually causing the constraint error
+        const existingStudentWithLabel = students.value.find(s => s.label === student.label)
+        const existingStudentWithEmoji = students.value.find(s => s.emoji === student.emoji)
+        const existingStudentWithCode = students.value.find(s => s.code === student.code)
+        const existingStudentWithLabelAndEmoji = students.value.find(s => s.label === student.label && s.emoji === student.emoji)
+        
+        console.log('Constraint error analysis:', {
+          existingStudentWithLabel: existingStudentWithLabel ? { label: existingStudentWithLabel.label, emoji: existingStudentWithLabel.emoji } : null,
+          existingStudentWithEmoji: existingStudentWithEmoji ? { label: existingStudentWithEmoji.label, emoji: existingStudentWithEmoji.emoji } : null,
+          existingStudentWithCode: existingStudentWithCode ? { label: existingStudentWithCode.label, code: existingStudentWithCode.code } : null,
+          existingStudentWithLabelAndEmoji: existingStudentWithLabelAndEmoji ? { label: existingStudentWithLabelAndEmoji.label, emoji: existingStudentWithLabelAndEmoji.emoji } : null
+        })
+        
+        if (existingStudentWithCode) {
+          throw new Error(`A student with code "${student.code}" already exists`)
+        } else if (existingStudentWithLabelAndEmoji) {
+          throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+        } else {
+          // Fallback error message
+          throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+        }
       }
       throw error
     }
@@ -502,7 +522,17 @@ export const useAppStore = defineStore('app', () => {
     } catch (error) {
       console.error('Error updating student:', error)
       if (error instanceof Error && error.name === 'ConstraintError') {
-        throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+        // Check if it's a label+emoji combination conflict or just label conflict
+        const existingStudent = students.value.find(s => s.label === student.label && s.id !== student.id)
+        if (existingStudent) {
+          if (existingStudent.emoji === student.emoji) {
+            throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+          } else {
+            throw new Error(`A student with label "${student.label}" already exists (with emoji "${existingStudent.emoji}"). Each student label must be unique.`)
+          }
+        } else {
+          throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`)
+        }
       }
       throw error
     }
