@@ -76,7 +76,7 @@
               </v-card>
 
               <v-btn
-                color="primary"
+                color="quaternary"
                 variant="elevated"
                 :disabled="!addFormValid"
                 :loading="isAdding"

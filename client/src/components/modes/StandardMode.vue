@@ -64,7 +64,7 @@
             <v-row>
               <v-col cols="auto">
                 <v-btn
-                  color="primary"
+                  color="quaternary"
                   variant="outlined"
                   prepend-icon="mdi-account-plus"
                   @click="quickAddStudent"
@@ -105,7 +105,7 @@
     <v-fab-transition>
       <div v-if="showMobileActions && mobile" class="mobile-actions">
         <v-btn
-          color="primary"
+          color="quaternary"
           icon="mdi-account-plus"
           size="small"
           class="mb-2"

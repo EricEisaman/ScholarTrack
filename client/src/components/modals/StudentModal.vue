@@ -102,7 +102,7 @@
         <v-spacer />
         <v-btn
           v-if="codeSubmitted"
-          color="primary"
+          color="quaternary"
           @click="handleSubmit"
           :disabled="!canSubmit"
           :loading="isSubmitting"
