@@ -451,6 +451,15 @@ const saveStudent = async (): Promise<void> => {
   isEditing.value = true;
 
   try {
+    // Debug: Log exactly what we're about to send to the store
+    componentLogger.debug('ManageStudentsMode', 'Student data being sent to store for update', {
+      id: editingStudent.value.id,
+      label: editingStudent.value.label,
+      emoji: editingStudent.value.emoji,
+      code: editingStudent.value.code,
+      classes: editingStudent.value.classes
+    });
+    
     componentLogger.info('ManageStudentsMode', 'Attempting to update student', editingStudent.value);
     await store.updateStudent(editingStudent.value);
     showEditDialog.value = false;

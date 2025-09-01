@@ -548,8 +548,10 @@ export const useAppStore = defineStore('app', () => {
         const existingStudentWithLabelAndEmoji = students.value.find(s => s.label === student.label && s.emoji === student.emoji && s.id !== student.id);
 
         storeLogger.debug('Constraint error analysis', {
-          existingStudentWithCode: existingStudentWithCode ? { label: existingStudentWithCode.label, code: existingStudentWithCode.code } : null,
-          existingStudentWithLabelAndEmoji: existingStudentWithLabelAndEmoji ? { label: existingStudentWithLabelAndEmoji.label, emoji: existingStudentWithLabelAndEmoji.emoji } : null,
+          studentBeingUpdated: { id: student.id, label: student.label, emoji: student.emoji, code: student.code },
+          existingStudentWithCode: existingStudentWithCode ? { id: existingStudentWithCode.id, label: existingStudentWithCode.label, code: existingStudentWithCode.code } : null,
+          existingStudentWithLabelAndEmoji: existingStudentWithLabelAndEmoji ? { id: existingStudentWithLabelAndEmoji.id, label: existingStudentWithLabelAndEmoji.label, emoji: existingStudentWithLabelAndEmoji.emoji } : null,
+          allStudentsWithSameLabel: students.value.filter(s => s.label === student.label).map(s => ({ id: s.id, label: s.label, emoji: s.emoji, code: s.code }))
         });
 
         if (existingStudentWithCode) {
