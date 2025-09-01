@@ -206,10 +206,10 @@ export const useAppStore = defineStore('app', () => {
             studentStore.createIndex('emoji', 'emoji', { unique: false });
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true });
           } else if (oldVersion < 8) {
-            // Migration: Update to remove unique constraint on id field
-            storeLogger.info('IndexedDB migration: Updating to version 8 - removing unique constraint on id field');
+            // Migration: Update to remove unique constraints on id and label fields
+            storeLogger.info('IndexedDB migration: Updating to version 8 - removing unique constraints on id and label fields');
             
-            // For existing databases, we need to recreate the students store to remove the unique constraint
+            // For existing databases, we need to recreate the students store to remove the unique constraints
             // This will require clearing the database and recreating it
             storeLogger.warn('Database schema change requires recreation. Existing data will be preserved and restored.');
           }
@@ -249,9 +249,9 @@ export const useAppStore = defineStore('app', () => {
 
       storeLogger.info('Database initialized, checking schema');
 
-      // Check if we need to recreate the database due to schema changes (e.g., removing unique constraint on id)
-      if (db && db.version === 7) {
-        storeLogger.info('Detected database version 7, recreating to version 8 to remove unique constraint on id field');
+      // Check if we need to recreate the database due to schema changes (e.g., removing unique constraints on id and label)
+      if (db && db.version < 8) {
+        storeLogger.info(`Detected database version ${db.version}, recreating to version 8 to remove unique constraints on id and label fields`);
         
         // Close the current database connection
         db.close();
