@@ -6,7 +6,7 @@
         <v-card :color="cardBackgroundColor">
           <v-card-title class="d-flex align-center">
             <v-icon class="mr-2">mdi-account-group</v-icon>
-            <span class="text-truncate">{{ currentClass?.name || 'No Class Selected' }}</span>
+            <span class="text-truncate">{{ currentClass?.name ?? 'No Class Selected' }}</span>
             <v-spacer />
             <v-chip
               color="primary"
@@ -157,7 +157,7 @@ const studentSquareClass = computed(() => ({
 // Card background color from theme
 const cardBackgroundColor = computed(() => {
   const settings = store.getStyleSettings();
-  return settings?.tertiaryColor || '#000000';
+  return settings?.tertiaryColor ?? '#000000';
 });
 
 // Accessible text color for the card background
@@ -185,7 +185,7 @@ const getStudentMemo = (studentCode: string): string | null => {
 
 const getStudentSquareColorClass = (studentCode: string): string => {
   const status = getStudentStatus(studentCode);
-  const color = store.statusColors[status] || '#1976D2';
+  const color = store.statusColors[status] ?? '#1976D2';
 
   // Convert hex colors to CSS classes
   switch (color.toLowerCase()) {

@@ -101,7 +101,9 @@ watch(showModal, async (newValue) => {
   if (newValue) {
     // Focus the code input when modal opens
     await nextTick();
-    codeInput.value?.focus();
+    if (codeInput.value && typeof codeInput.value.focus === 'function') {
+      codeInput.value.focus();
+    }
   } else {
     resetForm();
   }

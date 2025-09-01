@@ -87,11 +87,11 @@
               :items-per-page="10"
               class="elevation-1"
             >
-              <template v-slot:item.createdAt="{ item }">
+              <template #item.createdAt="{ item }">
                 {{ new Date(item.createdAt).toLocaleDateString() }}
               </template>
 
-              <template v-slot:item.studentCount="{ item }">
+              <template #item.studentCount="{ item }">
                 <v-chip
                   :color="getStudentCountColor(item)"
                   size="small"
@@ -100,7 +100,7 @@
                 </v-chip>
               </template>
 
-              <template v-slot:item.actions="{ item }">
+              <template #item.actions="{ item }">
                 <v-btn
                   color="primary"
                   variant="outlined"

@@ -120,7 +120,7 @@
                   <template #prepend>
                     <v-icon>mdi-account-group</v-icon>
                   </template>
-                  <v-list-item-title>{{ store.currentClass?.name || 'No Class' }}</v-list-item-title>
+                  <v-list-item-title>{{ store.currentClass?.name ?? 'No Class' }}</v-list-item-title>
                   <v-list-item-subtitle>{{ currentClassStudentsCount }} Students</v-list-item-subtitle>
                 </v-list-item>
 
@@ -242,13 +242,13 @@ const currentClassStudentsCount = computed(() =>
 // App logo - use custom logo if available, otherwise use default
 const appLogo = computed(() => {
   const settings = store.getStyleSettings();
-  return settings?.logoImage || '/icons/icon-512x512.png';
+  return settings?.logoImage ?? '/icons/icon-512x512.png';
 });
 
 // School name - use custom name if available, otherwise use default
 const schoolName = computed(() => {
   const settings = store.getStyleSettings();
-  return settings?.schoolName || 'ScholarTrack';
+  return settings?.schoolName ?? 'ScholarTrack';
 });
 
 // Current mode component

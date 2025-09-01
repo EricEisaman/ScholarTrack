@@ -7,17 +7,18 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
-    '@vue/eslint-config-typescript',
     'plugin:vue/vue3-essential',
+    '@vue/eslint-config-typescript',
   ],
   parser: 'vue-eslint-parser',
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
     parser: '@typescript-eslint/parser',
+    project: ['./client/tsconfig.json', './server/tsconfig.json'],
   },
-  plugins: ['@typescript-eslint', 'vue'],
+  ignorePatterns: ['**/vite.config.ts', '**/vitest.config.ts'],
+  plugins: ['vue'],
   rules: {
     // Microsoft-endorsed TypeScript rules
     '@typescript-eslint/no-explicit-any': 'error',

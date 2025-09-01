@@ -451,23 +451,23 @@
                           hide-default-footer
                           class="elevation-1"
                         >
-                          <template v-slot:item.emoji="{ item }">
+                          <template #item.emoji="{ item }">
                             <span class="text-h6">{{ item.emoji }}</span>
                           </template>
 
-                          <template v-slot:item.classes="{ item }">
+                          <template #item.classes="{ item }">
                             <v-chip size="small" :color="secondaryColor">
                               {{ item.classes }}
                             </v-chip>
                           </template>
 
-                          <template v-slot:item.status="{ item }">
+                          <template #item.status="{ item }">
                             <v-chip size="small" color="success">
                               {{ item.status }}
                             </v-chip>
                           </template>
 
-                          <template v-slot:item.actions>
+                          <template #item.actions>
                             <v-btn
                               :color="primaryColor"
                               variant="outlined"
@@ -693,10 +693,10 @@ const rules = {
     const fileExtension = value.name.toLowerCase().split('.').pop();
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
 
-    const isValidType = allowedTypes.includes(value.type) ||
+    const isValidType = allowedTypes.includes(value.type) ??
                        (fileExtension && allowedExtensions.includes(fileExtension));
 
-    return isValidType || 'Please upload a PNG, JPG, JPEG, WebP, or SVG file';
+    return isValidType ?? 'Please upload a PNG, JPG, JPEG, WebP, or SVG file';
   },
 };
 
@@ -827,21 +827,21 @@ watch([colorScheme, baseColor], () => {
 onMounted(() => {
   const settings = store.getStyleSettings();
   if (settings) {
-    designMode.value = settings.designMode || 'smart';
-    colorScheme.value = settings.colorScheme || 'monochromatic';
-    baseColor.value = settings.baseColor || '#1976D2';
+    designMode.value = settings.designMode ?? 'smart';
+    colorScheme.value = settings.colorScheme ?? 'monochromatic';
+    baseColor.value = settings.baseColor ?? '#1976D2';
 
     if (designMode.value === 'smart') {
       generateSmartColors();
     } else {
       primaryColor.value = settings.primaryColor;
       secondaryColor.value = settings.secondaryColor;
-      tertiaryColor.value = settings.tertiaryColor || '#FFFFFF';
-      quaternaryColor.value = settings.quaternaryColor || '#FF9800';
-      pageBackgroundColor.value = settings.pageBackgroundColor || '#F5F5F5';
+      tertiaryColor.value = settings.tertiaryColor ?? '#FFFFFF';
+      quaternaryColor.value = settings.quaternaryColor ?? '#FF9800';
+      pageBackgroundColor.value = settings.pageBackgroundColor ?? '#F5F5F5';
     }
 
-    schoolName.value = settings.schoolName || 'ScholarTrack';
+    schoolName.value = settings.schoolName ?? 'ScholarTrack';
     if (settings.logoImage) {
       logoPreview.value = settings.logoImage;
     }
@@ -959,9 +959,9 @@ const hexToHsl = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return { h: 0, s: 0, l: 50 };
 
-  const r = parseInt(result[1] || '0', 16) / 255;
-  const g = parseInt(result[2] || '0', 16) / 255;
-  const b = parseInt(result[3] || '0', 16) / 255;
+  const r = parseInt(result[1] ?? '0', 16) / 255;
+  const g = parseInt(result[2] ?? '0', 16) / 255;
+  const b = parseInt(result[3] ?? '0', 16) / 255;
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);

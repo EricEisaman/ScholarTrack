@@ -227,7 +227,7 @@ const generateReport = async () => {
 
         const contentDisposition = response.headers.get('Content-Disposition');
         const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-        const filename = filenameMatch?.[1] || `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.pdf`;
+        const filename = filenameMatch?.[1] ?? `report_${reportType.value}_${new Date().toISOString().split('T')[0]}.pdf`;
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);

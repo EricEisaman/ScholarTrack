@@ -989,7 +989,7 @@ const handleDataManagement = async () => {
     if (migrationResult && !migrationResult.success) {
       // Show error dialog
       showMigrationErrorDialog.value = true;
-      migrationError.value = migrationResult.error || 'Migration failed';
+      migrationError.value = migrationResult.error ?? 'Migration failed';
       migrationResultData.value = migrationResult;
       return;
     }

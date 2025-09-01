@@ -301,7 +301,7 @@ const studentStatuses = computed(() => {
   ];
 
   // Add custom status types from the store
-  const customStatuses = store.customStatusTypes.map(status => status.name as StudentStatus);
+  const customStatuses = store.customStatusTypes.map(status => status.name);
 
   return [...defaultStatuses, ...customStatuses];
 });

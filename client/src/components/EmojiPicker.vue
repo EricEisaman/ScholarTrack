@@ -111,7 +111,7 @@ const getCategoryDisplayName = (category: string): string => {
     animals: 'Animals',
     objects: 'Objects',
   };
-  return names[category] || category;
+  return names[category] ?? category;
 };
 
 const selectEmoji = (emoji: EmojiData) => {

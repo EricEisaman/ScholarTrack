@@ -109,37 +109,37 @@ export const emojis: EmojiData[] = [
   { emoji: '🗽', name: 'statue of liberty', category: 'travel' },
   { emoji: '🗼', name: 'tokyo tower', category: 'travel' },
   { emoji: '🏰', name: 'castle', category: 'travel' },
-  { emoji: '🏯', name: 'japanese castle', category: 'travel' }
-]
+  { emoji: '🏯', name: 'japanese castle', category: 'travel' },
+];
 
 // Create a map for quick emoji to name lookup
-export const emojiToName = new Map<string, string>()
+export const emojiToName = new Map<string, string>();
 emojis.forEach(emojiData => {
-  emojiToName.set(emojiData.emoji, emojiData.name)
-})
+  emojiToName.set(emojiData.emoji, emojiData.name);
+});
 
 // Create a map for quick name to emoji lookup
-export const nameToEmoji = new Map<string, string>()
+export const nameToEmoji = new Map<string, string>();
 emojis.forEach(emojiData => {
-  nameToEmoji.set(emojiData.name, emojiData.emoji)
-})
+  nameToEmoji.set(emojiData.name, emojiData.emoji);
+});
 
 // Get emoji by name
 export const getEmojiByName = (name: string): string | undefined => {
-  return nameToEmoji.get(name)
-}
+  return nameToEmoji.get(name);
+};
 
 // Get name by emoji
 export const getNameByEmoji = (emoji: string): string | undefined => {
-  return emojiToName.get(emoji)
-}
+  return emojiToName.get(emoji);
+};
 
 // Get emojis by category
 export const getEmojisByCategory = (category: string): EmojiData[] => {
-  return emojis.filter(emoji => emoji.category === category)
-}
+  return emojis.filter(emoji => emoji.category === category);
+};
 
 // Get all categories
 export const getCategories = (): string[] => {
-  return [...new Set(emojis.map(emoji => emoji.category))]
-}
+  return [...new Set(emojis.map(emoji => emoji.category))];
+};

@@ -74,7 +74,6 @@ import { componentLogger } from '../../services/logger';
 interface Props {
   modelValue: boolean
   statusOrEventName: string
-  type: 'status' | 'event'
 }
 
 interface Emits {
@@ -134,7 +133,9 @@ watch(showModal, async (newValue) => {
   if (newValue) {
     // Focus the memo input when modal opens
     await nextTick();
-    memoInput.value?.focus();
+    if (memoInput.value && typeof memoInput.value.focus === 'function') {
+      memoInput.value.focus();
+    }
   } else {
     resetForm();
   }

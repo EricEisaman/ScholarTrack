@@ -25,7 +25,7 @@ export interface Transaction {
   memo?: string // Optional memo for status/event types that require it
 }
 
-export type StudentStatus = 
+export type StudentStatus =
   | 'IN CLASS'
   | 'RESTROOM'
   | 'OFFICE'
@@ -34,14 +34,14 @@ export type StudentStatus =
   | 'TEACHER VISIT'
   | string // Allow custom status types
 
-export type TeacherEventType = 
+export type TeacherEventType =
   | 'PHONE VIOLATION'
   | 'BAD LANGUAGE'
   | 'SEATING VIOLATION'
   | 'HORSE PLAY'
   | string // Allow custom teacher event types
 
-export type AppMode = 
+export type AppMode =
   | 'STANDARD'
   | 'MANAGE CLASSES'
   | 'MANAGE STUDENTS'
@@ -130,10 +130,10 @@ export const DEFAULT_NAME_VALIDATION_OPTIONS: NameValidationOptions = {
     'PHONE VIOLATION',
     'BAD LANGUAGE',
     'SEATING VIOLATION',
-    'HORSE PLAY'
+    'HORSE PLAY',
   ],
-  caseSensitive: false
-}
+  caseSensitive: false,
+};
 
 // Database snapshot and migration types
 export interface DatabaseSnapshot {

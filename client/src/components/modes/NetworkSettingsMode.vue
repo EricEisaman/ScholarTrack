@@ -211,6 +211,67 @@
                     <p class="text-caption text-grey mt-2">
                       Warning: This will delete all local data and require a fresh sync
                     </p>
+
+                    <v-divider class="my-4" />
+
+                    <!-- Data Backup and Restore -->
+                    <v-card variant="outlined" class="mb-4">
+                      <v-card-title class="text-subtitle-1">
+                        <v-icon class="mr-2">mdi-database-export</v-icon>
+                        Data Backup & Restore
+                      </v-card-title>
+                      <v-card-text>
+                        <p class="text-body-2 mb-3">
+                          Download your entire local database for backup or transfer to another machine. 
+                          You can also restore data from a previously downloaded backup file.
+                        </p>
+
+                        <v-row>
+                          <v-col cols="12" md="6">
+                            <v-btn
+                              color="success"
+                              @click="downloadLocalStore"
+                              :loading="isDownloading"
+                              :disabled="isDownloading || isUploading"
+                              prepend-icon="mdi-download"
+                              block
+                              class="mb-2"
+                            >
+                              {{ isDownloading ? 'Downloading...' : 'Download Local Store' }}
+                            </v-btn>
+                            <p class="text-caption text-grey">
+                              Download complete database backup as JSON file
+                            </p>
+                          </v-col>
+
+                          <v-col cols="12" md="6">
+                            <v-btn
+                              color="info"
+                              @click="uploadLocalStore"
+                              :loading="isUploading"
+                              :disabled="isDownloading || isUploading"
+                              prepend-icon="mdi-upload"
+                              block
+                              class="mb-2"
+                            >
+                              {{ isUploading ? 'Uploading...' : 'Upload Backup File' }}
+                            </v-btn>
+                            <p class="text-caption text-grey">
+                              Restore data from a previously downloaded backup
+                            </p>
+                          </v-col>
+                        </v-row>
+
+                        <v-alert
+                          v-if="backupMessage"
+                          :type="backupMessageType"
+                          variant="tonal"
+                          class="mt-3"
+                        >
+                          {{ backupMessage }}
+                        </v-alert>
+                      </v-card-text>
+                    </v-card>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -239,6 +300,12 @@ const serverStatus = ref<'online' | 'offline'>('offline');
 const autoSync = ref(false);
 const syncOnStartup = ref(true);
 const lastSyncTime = ref('');
+
+// Backup and restore state
+const isDownloading = ref(false);
+const isUploading = ref(false);
+const backupMessage = ref('');
+const backupMessageType = ref<'success' | 'error' | 'info'>('info');
 
 // Computed properties
 const localDataCount = computed(() => {
@@ -323,6 +390,75 @@ const clearLocalData = async () => {
   }
 };
 
+const downloadLocalStore = async () => {
+  isDownloading.value = true;
+  backupMessage.value = 'Preparing database backup...';
+  backupMessageType.value = 'info';
+
+  try {
+    const backupData = await store.exportDatabaseBackup();
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `scholartrack-backup-${timestamp}.json`;
+    
+    // Create and download the file
+    const blob = new Blob([backupData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    backupMessage.value = `Database backup downloaded successfully as ${filename}`;
+    backupMessageType.value = 'success';
+  } catch (error: unknown) {
+    componentLogger.error('NetworkSettingsMode', 'Failed to download local store', error instanceof Error ? error : new Error('Unknown error'));
+    backupMessage.value = 'Failed to download database backup. Please try again.';
+    backupMessageType.value = 'error';
+  } finally {
+    isDownloading.value = false;
+  }
+};
+
+const uploadLocalStore = async () => {
+  // Create a file input element
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.style.display = 'none';
+  
+  input.onchange = async (event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+    
+    if (!file) return;
+    
+    isUploading.value = true;
+    backupMessage.value = 'Uploading and restoring backup...';
+    backupMessageType.value = 'info';
+
+    try {
+      const text = await file.text();
+      await store.importDatabaseBackup(text);
+      
+      backupMessage.value = 'Database backup restored successfully!';
+      backupMessageType.value = 'success';
+    } catch (error: unknown) {
+      componentLogger.error('NetworkSettingsMode', 'Failed to upload local store', error instanceof Error ? error : new Error('Unknown error'));
+      backupMessage.value = 'Failed to restore database backup. Please check the file format and try again.';
+      backupMessageType.value = 'error';
+    } finally {
+      isUploading.value = false;
+    }
+  };
+  
+  document.body.appendChild(input);
+  input.click();
+  document.body.removeChild(input);
+};
+
 // Check server status on mount
 onMounted(async () => {
   try {
@@ -335,10 +471,3 @@ onMounted(async () => {
   }
 });
 </script>
-
-<style scoped>
-.network-settings-mode {
-  max-width: 800px;
-  margin: 0 auto;
-}
-</style>

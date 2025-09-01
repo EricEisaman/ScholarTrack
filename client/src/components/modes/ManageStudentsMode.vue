@@ -101,21 +101,21 @@
             <v-list>
               <v-list-item>
                 <v-list-item-title>Total Students</v-list-item-title>
-                <template v-slot:append>
+                <template #append>
                   <v-chip color="primary">{{ students.length }}</v-chip>
                 </template>
               </v-list-item>
 
               <v-list-item>
                 <v-list-item-title>Total Classes</v-list-item-title>
-                <template v-slot:append>
+                <template #append>
                   <v-chip color="secondary">{{ classes.length }}</v-chip>
                 </template>
               </v-list-item>
 
               <v-list-item>
                 <v-list-item-title>Students in Current Class</v-list-item-title>
-                <template v-slot:append>
+                <template #append>
                   <v-chip color="success">{{ currentClassStudents.length }}</v-chip>
                 </template>
               </v-list-item>
@@ -150,11 +150,11 @@
               :items-per-page="10"
               class="elevation-1"
             >
-              <template v-slot:item.emoji="{ item }">
+              <template #item.emoji="{ item }">
                 <span class="text-h5">{{ item.emoji }}</span>
               </template>
 
-              <template v-slot:item.classes="{ item }">
+              <template #item.classes="{ item }">
                 <v-chip
                   v-for="className in item.classes"
                   :key="className"
@@ -165,7 +165,7 @@
                 </v-chip>
               </template>
 
-              <template v-slot:item.status="{ item }">
+              <template #item.status="{ item }">
                 <v-chip
                   :color="getStatusColor(item)"
                   size="small"
@@ -174,11 +174,11 @@
                 </v-chip>
               </template>
 
-              <template v-slot:item.createdAt="{ item }">
+              <template #item.createdAt="{ item }">
                 {{ new Date(item.createdAt).toLocaleDateString() }}
               </template>
 
-              <template v-slot:item.actions="{ item }">
+              <template #item.actions="{ item }">
                 <v-btn
                   color="primary"
                   variant="outlined"
@@ -478,7 +478,7 @@ const getStudentStatus = (student: Student): string => {
 
 const getStatusColor = (student: Student): string => {
   const status = getStudentStatus(student);
-  return store.statusColors[status as keyof typeof store.statusColors] || '#1976D2';
+  return store.statusColors[status] ?? '#1976D2';
 };
 
 const onEmojiSelect = (emoji: EmojiData) => {
