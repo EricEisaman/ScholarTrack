@@ -43,6 +43,34 @@ interface StudentData {
   createdAt: string
 }
 
+// Database result interfaces
+interface StudentRow {
+  id: string
+  label: string
+  code: string
+  emoji: string
+  classes: string
+  createdAt: string
+}
+
+interface ClassRow {
+  id: string
+  name: string
+  createdAt: string
+}
+
+interface TransactionRow {
+  id: number
+  studentLabel: string
+  studentCode?: string
+  studentIdentifier: string
+  status: string
+  timestamp: string
+  className: string
+  eventType?: string
+  memo?: string
+}
+
 interface ClassData {
   id: string
   name: string
@@ -62,6 +90,30 @@ interface TransactionData {
 }
 
 interface StyleSettingsData {
+  id: string
+  primaryColor: string
+  secondaryColor: string
+  tertiaryColor: string
+  quaternaryColor: string
+  schoolName: string
+  logoImage: string
+  updatedAt: string
+}
+
+interface CustomStatusTypeData {
+  id: string
+  name: string
+  color: string
+  createdAt: string
+}
+
+interface CustomTeacherEventTypeData {
+  id: string
+  name: string
+  createdAt: string
+}
+
+interface StyleSettingsRow {
   id: string
   primaryColor: string
   secondaryColor: string
@@ -379,23 +431,13 @@ app.get('/api/debug/schema', (_req, res) => {
 
 // Get all students
 app.get('/api/students', (_req, res) => {
-  db.all('SELECT * FROM students ORDER BY createdAt DESC', (err, rows) => {
+  db.all('SELECT * FROM students ORDER BY createdAt DESC', (err, rows: StudentRow[]) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
     if (Array.isArray(rows)) {
-      const studentRows = rows.filter((row): row is { id: string; label: string; code: string; emoji: string; classes: string; createdAt: string } =>
-        typeof row === 'object' &&
-        row !== null &&
-        'id' in row &&
-        'label' in row &&
-        'code' in row &&
-        'emoji' in row &&
-        'classes' in row &&
-        'createdAt' in row,
-      );
-      res.json(studentRows.map((row) => ({
+      res.json(rows.map((row) => ({
         ...row,
         classes: JSON.parse(row.classes),
       })));
@@ -458,7 +500,7 @@ app.put('/api/students/:id', (req, res) => {
     db.get(
       'SELECT * FROM students WHERE label = ? AND emoji = ? AND id != ?',
       [label.toUpperCase(), emoji, id],
-      (err, conflictingStudent) => {
+      (err, conflictingStudent: StudentRow | undefined) => {
         if (err) {
           console.error('Error checking for conflicts:', err);
           res.status(500).json({ error: err.message });
@@ -467,7 +509,7 @@ app.put('/api/students/:id', (req, res) => {
         if (conflictingStudent) {
           console.log(`❌ Conflict found: existing student with id="${conflictingStudent.id}", label="${conflictingStudent.label}", emoji="${conflictingStudent.emoji}"`);
           res.status(400).json({ 
-            error: `A student with label "${label.toUpperCase()}" and emoji "${emoji}" already exists` 
+            error: `A student with label "${label.toUpperCase()}" and emoji="${emoji}" already exists` 
           });
           return;
         }
@@ -477,7 +519,7 @@ app.put('/api/students/:id', (req, res) => {
         db.get(
           'SELECT * FROM students WHERE code = ? AND id != ?',
           [code, id],
-          (err, codeConflictStudent) => {
+          (err, codeConflictStudent: StudentRow | undefined) => {
             if (err) {
               res.status(500).json({ error: err.message });
               return;
@@ -531,7 +573,7 @@ app.delete('/api/students/:id', (req, res) => {
 
 // Get all classes
 app.get('/api/classes', (_req, res) => {
-  db.all('SELECT * FROM classes ORDER BY createdAt DESC', (err, rows) => {
+  db.all('SELECT * FROM classes ORDER BY createdAt DESC', (err, rows: ClassRow[]) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
@@ -764,8 +806,8 @@ app.post('/api/sync/up', (req, res) => {
     classes: ClassData[]
     transactions: TransactionData[]
     styleSettings?: StyleSettingsData
-    customStatusTypes?: any[]
-    customTeacherEventTypes?: any[]
+    customStatusTypes?: CustomStatusTypeData[]
+    customTeacherEventTypes?: CustomTeacherEventTypeData[]
   } = req.body;
 
   if (!students || !classes || !transactions) {
@@ -918,44 +960,44 @@ app.get('/api/sync/down', (_req, res) => {
   }
 
   db.serialize(() => {
-    db.all('SELECT * FROM students', (err, students) => {
+    db.all('SELECT * FROM students', (err, students: StudentRow[]) => {
       if (err) {
         console.error('Error fetching students for down sync:', err);
         res.status(500).json({ error: err.message });
         return;
       }
 
-      db.all('SELECT * FROM classes', (err, classes) => {
+      db.all('SELECT * FROM classes', (err, classes: ClassRow[]) => {
         if (err) {
           console.error('Error fetching classes for down sync:', err);
           res.status(500).json({ error: err.message });
           return;
         }
 
-        db.all('SELECT * FROM transactions', (err, transactions) => {
+        db.all('SELECT * FROM transactions', (err, transactions: TransactionRow[]) => {
           if (err) {
             console.error('Error fetching transactions for down sync:', err);
             res.status(500).json({ error: err.message });
             return;
           }
 
-          db.all('SELECT * FROM customStatusTypes', (err, customStatusTypes) => {
+          db.all('SELECT * FROM customStatusTypes', (err, customStatusTypes: CustomStatusTypeData[]) => {
             if (err) {
               console.error('Error fetching custom status types for down sync:', err);
               customStatusTypes = [];
             }
 
-            db.all('SELECT * FROM customTeacherEventTypes', (err, customTeacherEventTypes) => {
+            db.all('SELECT * FROM customTeacherEventTypes', (err, customTeacherEventTypes: CustomTeacherEventTypeData[]) => {
               if (err) {
                 console.error('Error fetching custom teacher event types for down sync:', err);
                 customTeacherEventTypes = [];
               }
 
-              db.get('SELECT * FROM styleSettings WHERE id = ?', ['default'], (err, styleSettings) => {
+              db.get('SELECT * FROM styleSettings WHERE id = ?', ['default'], (err, styleSettings: StyleSettingsRow | undefined) => {
                 if (err) {
                   console.error('Error fetching style settings for down sync:', err);
-                  // Don't fail the entire sync if style settings fail, just return null
-                  styleSettings = null;
+                  // Don't fail the entire sync if style settings fail, just return undefined
+                  styleSettings = undefined;
                 }
 
                 // Ensure style settings has all required fields with defaults
@@ -1030,8 +1072,8 @@ app.post('/api/sync/full', (req, res) => {
     students: StudentData[]
     classes: ClassData[]
     transactions: TransactionData[]
-    customStatusTypes?: any[]
-    customTeacherEventTypes?: any[]
+    customStatusTypes?: CustomStatusTypeData[]
+    customTeacherEventTypes?: CustomTeacherEventTypeData[]
   } = req.body;
 
   if (!students || !classes || !transactions) {
@@ -1094,7 +1136,7 @@ app.post('/api/sync/full', (req, res) => {
     studentStmt.finalize();
 
     // Insert or replace classes (upsert)
-    const classStmt = db.prepare('INSERT OR REPLACE INTO classes (id, name, createdAt) VALUES (?, ?, ?, ?)');
+    const classStmt = db.prepare('INSERT OR REPLACE INTO classes (id, name, createdAt) VALUES (?, ?, ?)');
     classes.forEach((cls: ClassData) => {
       classStmt.run([cls.id, cls.name, cls.createdAt]);
     });
@@ -1135,35 +1177,35 @@ app.post('/api/sync/full', (req, res) => {
       console.log('✅ Full Sync up phase completed');
 
       // Then, return the complete server state (down sync)
-      db.all('SELECT * FROM students', (err, serverStudents) => {
+      db.all('SELECT * FROM students', (err, serverStudents: StudentRow[]) => {
         if (err) {
           console.error('Error fetching students for full sync down phase:', err);
           res.status(500).json({ error: err.message });
           return;
         }
 
-        db.all('SELECT * FROM classes', (err, serverClasses) => {
+        db.all('SELECT * FROM classes', (err, serverClasses: ClassRow[]) => {
           if (err) {
             console.error('Error fetching classes for full sync down phase:', err);
             res.status(500).json({ error: err.message });
             return;
           }
 
-          db.all('SELECT * FROM transactions', (err, serverTransactions) => {
+          db.all('SELECT * FROM transactions', (err, serverTransactions: TransactionRow[]) => {
             if (err) {
               console.error('Error fetching transactions for full sync down phase:', err);
               res.status(500).json({ error: err.message });
               return;
             }
 
-            db.all('SELECT * FROM customStatusTypes', (err, serverCustomStatusTypes) => {
+            db.all('SELECT * FROM customStatusTypes', (err, serverCustomStatusTypes: CustomStatusTypeData[]) => {
               if (err) {
                 console.error('Error fetching custom status types for full sync down phase:', err);
                 res.status(500).json({ error: err.message });
                 return;
               }
 
-              db.all('SELECT * FROM customTeacherEventTypes', (err, serverCustomEventTypes) => {
+              db.all('SELECT * FROM customTeacherEventTypes', (err, serverCustomEventTypes: CustomTeacherEventTypeData[]) => {
                 if (err) {
                   console.error('Error fetching custom teacher event types for full sync down phase:', err);
                   res.status(500).json({ error: err.message });
