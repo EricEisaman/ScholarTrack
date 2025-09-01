@@ -137,7 +137,7 @@ export const useAppStore = defineStore('app', () => {
     if (!db) throw new Error('Database not initialized');
 
     try {
-      console.log('Restoring data to new database...');
+      storeLogger.info('Restoring data to new database');
 
       // Restore students
       for (const student of data.students) {
@@ -181,9 +181,9 @@ export const useAppStore = defineStore('app', () => {
       customStatusTypes.value = data.customStatusTypes;
       customTeacherEventTypes.value = data.customTeacherEventTypes;
 
-      console.log('Data restored successfully');
+      storeLogger.info('Data restored successfully');
     } catch (error) {
-      console.error('Error restoring data to new database:', error);
+      storeLogger.error('Error restoring data to new database', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
     }
   };
@@ -191,12 +191,12 @@ export const useAppStore = defineStore('app', () => {
   // Initialize IndexedDB
   const initDB = async (isRetry: boolean = false): Promise<void> => {
     try {
-      console.log('Initializing IndexedDB...');
+      storeLogger.info('Initializing IndexedDB');
 
       db = await openDB<DatabaseSchema>('scholartrack', 6, {
         upgrade(db: unknown, oldVersion: number, newVersion: number) {
           const database = db as IDBPDatabase<DatabaseSchema>;
-          console.log(`Upgrading database from version ${oldVersion} to ${newVersion}...`);
+          storeLogger.info(`Upgrading database from version ${oldVersion} to ${newVersion}`);
 
           // Students store
           if (!database.objectStoreNames.contains('students')) {
@@ -207,7 +207,7 @@ export const useAppStore = defineStore('app', () => {
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true });
           } else if (oldVersion < 4) {
             // Migration: Update to label+emoji unique constraint
-            console.log('IndexedDB migration: Updating to version 4 with label+emoji unique constraint');
+            storeLogger.info('IndexedDB migration: Updating to version 4 with label+emoji unique constraint');
             // The new schema will be created automatically for new databases
             // Existing databases will need to be cleared manually if they have conflicts
           }
@@ -245,15 +245,15 @@ export const useAppStore = defineStore('app', () => {
         },
       });
 
-      console.log('Database initialized, checking schema...');
+      storeLogger.info('Database initialized, checking schema');
 
       // Check if all required object stores exist
       const requiredStores = ['students', 'classes', 'transactions', 'styleSettings', 'customStatusTypes', 'customTeacherEventTypes'];
       const missingStores = requiredStores.filter(storeName => !db!.objectStoreNames.contains(storeName));
 
       if (missingStores.length > 0 && !isRetry) {
-        console.log('Missing object stores detected during initialization:', missingStores);
-        console.log('Recreating database with complete schema...');
+        storeLogger.warn('Missing object stores detected during initialization', { missingStores });
+        storeLogger.info('Recreating database with complete schema');
 
         // Close the current database connection
         db.close();
@@ -266,27 +266,27 @@ export const useAppStore = defineStore('app', () => {
       }
 
       if (missingStores.length > 0 && isRetry) {
-        console.error('Database schema is still incomplete after recreation');
+        storeLogger.error('Database schema is still incomplete after recreation', new Error('Schema recreation failed'));
         throw new Error(`Failed to create database with required object stores: ${missingStores.join(', ')}`);
       }
 
-      console.log('Database schema is complete, loading data...');
+      storeLogger.info('Database schema is complete, loading data');
       await loadData();
-      console.log('Data loaded successfully');
+      storeLogger.info('Data loaded successfully');
 
       // Try to load from server if we have no local data (but don't fail if server is down)
       if (students.value.length === 0 && classes.value.length === 0) {
-        console.log('No local data found, attempting to load from server...');
+        storeLogger.info('No local data found, attempting to load from server');
         try {
           await loadFromServer();
         } catch (error) {
-          console.warn('Server not available, continuing with local data only:', error);
+          storeLogger.warn('Server not available, continuing with local data only', error instanceof Error ? error : new Error('Unknown error'));
           // Don't fail the app initialization if server is down
         }
       }
 
     } catch (error) {
-      console.error('Error initializing database:', error);
+      storeLogger.error('Error initializing database', error instanceof Error ? error : new Error('Unknown error'));
       // Initialize with empty data if database fails
       students.value = [];
       classes.value = [];
@@ -300,7 +300,7 @@ export const useAppStore = defineStore('app', () => {
     if (!db) return;
 
     try {
-      console.log('Loading data from IndexedDB...');
+      storeLogger.info('Loading data from IndexedDB');
 
       // Use idb library's convenience methods - they handle transactions safely
       const studentsData = await db.getAll('students');
@@ -310,7 +310,7 @@ export const useAppStore = defineStore('app', () => {
       const customStatusData = await db.getAll('customStatusTypes');
       const customEventData = await db.getAll('customTeacherEventTypes');
 
-      console.log('Data loaded successfully:', {
+      storeLogger.info('Data loaded successfully', {
         students: studentsData.length,
         classes: classesData.length,
         transactions: transactionsData.length,
@@ -365,11 +365,11 @@ export const useAppStore = defineStore('app', () => {
         t.eventType === 'PHONE OUT IN CLASS' || t.eventType === 'OUT OF ASSIGNED SEAT',
       );
       if (needsMigration) {
-        console.log('Found transactions with old event type names, running migration...');
+        storeLogger.info('Found transactions with old event type names, running migration');
         await migrateEventTypeNames();
       }
     } catch (error) {
-      console.error('Error loading data from IndexedDB:', error);
+      storeLogger.error('Error loading data from IndexedDB', error instanceof Error ? error : new Error('Unknown error'));
       // Initialize with empty arrays if database is not ready
       students.value = [];
       classes.value = [];
@@ -432,7 +432,7 @@ export const useAppStore = defineStore('app', () => {
   // Actions
   const addStudent = async (student: NewStudent): Promise<void> => {
     if (!db) {
-      console.error('Database not initialized');
+      storeLogger.error('Database not initialized', new Error('Database not initialized'));
       throw new Error('Database not initialized');
     }
 
@@ -456,21 +456,21 @@ export const useAppStore = defineStore('app', () => {
         createdAt: newStudent.createdAt,
       };
 
-      console.log('Adding student:', { label: newStudent.label, emoji: newStudent.emoji, code: newStudent.code });
+      storeLogger.info('Adding student', { label: newStudent.label, emoji: newStudent.emoji, code: newStudent.code });
 
       // Use idb library's convenience method
       await db.add('students', dbStudent);
 
       students.value.push(newStudent);
 
-      console.log('Student added successfully, syncing to server...');
+      storeLogger.info('Student added successfully, syncing to server');
 
       // Sync to server
       await syncToServer();
 
-      console.log('Student added and synced successfully');
+      storeLogger.info('Student added and synced successfully');
     } catch (error) {
-      console.error('Error adding student:', error);
+      storeLogger.error('Error adding student', error instanceof Error ? error : new Error('Unknown error'));
       if (error instanceof Error && error.name === 'ConstraintError') {
         // Check what's actually causing the constraint error
         const existingStudentWithLabel = students.value.find(s => s.label === student.label);
@@ -478,7 +478,7 @@ export const useAppStore = defineStore('app', () => {
         const existingStudentWithCode = students.value.find(s => s.code === student.code);
         const existingStudentWithLabelAndEmoji = students.value.find(s => s.label === student.label && s.emoji === student.emoji);
 
-        console.log('Constraint error analysis:', {
+        storeLogger.debug('Constraint error analysis', {
           existingStudentWithLabel: existingStudentWithLabel ? { label: existingStudentWithLabel.label, emoji: existingStudentWithLabel.emoji } : null,
           existingStudentWithEmoji: existingStudentWithEmoji ? { label: existingStudentWithEmoji.label, emoji: existingStudentWithEmoji.emoji } : null,
           existingStudentWithCode: existingStudentWithCode ? { label: existingStudentWithCode.label, code: existingStudentWithCode.code } : null,
@@ -500,7 +500,7 @@ export const useAppStore = defineStore('app', () => {
 
   const updateStudent = async (student: Student): Promise<void> => {
     if (!db) {
-      console.error('Database not initialized');
+      storeLogger.error('Database not initialized', new Error('Database not initialized'));
       throw new Error('Database not initialized');
     }
 
@@ -515,7 +515,7 @@ export const useAppStore = defineStore('app', () => {
         createdAt: student.createdAt,
       };
 
-      console.log('Updating student:', { id: student.id, label: student.label, emoji: student.emoji });
+      storeLogger.info('Updating student', { id: student.id, label: student.label, emoji: student.emoji });
 
       // Use idb library's convenience method
       await db.put('students', dbStudent);
@@ -525,24 +525,30 @@ export const useAppStore = defineStore('app', () => {
         students.value[index] = student;
       }
 
-      console.log('Student updated successfully, syncing to server...');
+      storeLogger.info('Student updated successfully, syncing to server');
 
       // Sync to server
       await syncToServer();
 
-      console.log('Student updated and synced successfully');
+      storeLogger.info('Student updated and synced successfully');
     } catch (error) {
-      console.error('Error updating student:', error);
+      storeLogger.error('Error updating student', error instanceof Error ? error : new Error('Unknown error'));
       if (error instanceof Error && error.name === 'ConstraintError') {
-        // Check if it's a label+emoji combination conflict or just label conflict
-        const existingStudent = students.value.find(s => s.label === student.label && s.id !== student.id);
-        if (existingStudent) {
-          if (existingStudent.emoji === student.emoji) {
-            throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
-          } else {
-            throw new Error(`A student with label "${student.label}" already exists (with emoji "${existingStudent.emoji}"). Each student label must be unique.`);
-          }
+        // Check what's actually causing the constraint error
+        const existingStudentWithCode = students.value.find(s => s.code === student.code && s.id !== student.id);
+        const existingStudentWithLabelAndEmoji = students.value.find(s => s.label === student.label && s.emoji === student.emoji && s.id !== student.id);
+
+        storeLogger.debug('Constraint error analysis', {
+          existingStudentWithCode: existingStudentWithCode ? { label: existingStudentWithCode.label, code: existingStudentWithCode.code } : null,
+          existingStudentWithLabelAndEmoji: existingStudentWithLabelAndEmoji ? { label: existingStudentWithLabelAndEmoji.label, emoji: existingStudentWithLabelAndEmoji.emoji } : null,
+        });
+
+        if (existingStudentWithCode) {
+          throw new Error(`A student with code "${student.code}" already exists`);
+        } else if (existingStudentWithLabelAndEmoji) {
+          throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
         } else {
+          // Fallback error message
           throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
         }
       }
@@ -564,7 +570,7 @@ export const useAppStore = defineStore('app', () => {
 
   const addClass = async (className: string): Promise<void> => {
     if (!db) {
-      console.error('Database not initialized');
+      storeLogger.error('Database not initialized', new Error('Database not initialized'));
       throw new Error('Database not initialized');
     }
 
@@ -575,21 +581,21 @@ export const useAppStore = defineStore('app', () => {
         createdAt: new Date().toISOString(),
       };
 
-      console.log('Adding class:', newClass);
+      storeLogger.info('Adding class', newClass);
 
       // Use idb library's convenience method
       await db.add('classes', newClass);
 
       classes.value.push(newClass);
 
-      console.log('Class added successfully, syncing to server...');
+      storeLogger.info('Class added successfully, syncing to server');
 
       // Sync to server
       await syncToServer();
 
-      console.log('Class added and synced successfully');
+      storeLogger.info('Class added and synced successfully');
     } catch (error) {
-      console.error('Error adding class:', error);
+      storeLogger.error('Error adding class', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
     }
   };
@@ -687,18 +693,18 @@ export const useAppStore = defineStore('app', () => {
 
   const changeMode = async (mode: AppMode): Promise<void> => {
     if (tempCode.value === teacherCode.value) {
-      console.log(`Changing mode to: ${mode}`);
+      storeLogger.info(`Changing mode to: ${mode}`);
       currentMode.value = mode;
       showModeModal.value = false;
       tempCode.value = '';
       // Update authentication state
       if (isAuthMode(mode)) {
         isAuthenticated.value = true;
-        console.log('Set authenticated to true (via changeMode)');
+        storeLogger.debug('Set authenticated to true (via changeMode)');
       } else {
         // Switching to STANDARD mode clears authentication
         isAuthenticated.value = false;
-        console.log('Set authenticated to false (via changeMode)');
+        storeLogger.debug('Set authenticated to false (via changeMode)');
       }
 
       // Ensure database is ready for modes that require it
@@ -706,7 +712,7 @@ export const useAppStore = defineStore('app', () => {
         try {
           await ensureDBReady();
         } catch (error) {
-          console.error('Failed to ensure database readiness:', error);
+          storeLogger.error('Failed to ensure database readiness', error instanceof Error ? error : new Error('Unknown error'));
         }
       }
     }
@@ -742,21 +748,21 @@ export const useAppStore = defineStore('app', () => {
   const switchMode = async (newMode: AppMode): Promise<void> => {
     const currentModeValue = currentMode.value;
 
-    console.log(`Mode switch request: ${currentModeValue} -> ${newMode}`);
-    console.log(`Current auth state: ${isAuthenticated.value}`);
-    console.log(`Auth required: ${requiresAuthForModeSwitch(currentModeValue, newMode)}`);
+    storeLogger.debug(`Mode switch request: ${currentModeValue} -> ${newMode}`);
+    storeLogger.debug(`Current auth state: ${isAuthenticated.value}`);
+    storeLogger.debug(`Auth required: ${requiresAuthForModeSwitch(currentModeValue, newMode)}`);
 
     // If no auth required, switch directly
     if (!requiresAuthForModeSwitch(currentModeValue, newMode)) {
-      console.log('No auth required, switching directly');
+      storeLogger.debug('No auth required, switching directly');
       currentMode.value = newMode;
       // Update authentication state
       if (isAuthMode(newMode)) {
         isAuthenticated.value = true;
-        console.log('Set authenticated to true');
+        storeLogger.debug('Set authenticated to true');
       } else {
         isAuthenticated.value = false;
-        console.log('Set authenticated to false');
+        storeLogger.debug('Set authenticated to false');
       }
 
       // Ensure database is ready for modes that require it
@@ -764,14 +770,14 @@ export const useAppStore = defineStore('app', () => {
         try {
           await ensureDBReady();
         } catch (error) {
-          console.error('Failed to ensure database readiness:', error);
+          storeLogger.error('Failed to ensure database readiness', error instanceof Error ? error : new Error('Unknown error'));
         }
       }
       return;
     }
 
     // If auth required, show modal
-    console.log('Auth required, showing modal');
+    storeLogger.debug('Auth required, showing modal');
     tempMode.value = newMode;
     showModeModal.value = true;
   };
@@ -858,9 +864,9 @@ export const useAppStore = defineStore('app', () => {
       }
 
       const result = await response.json();
-      console.log('Up sync completed:', result);
+      storeLogger.info('Up sync completed', result);
     } catch (error) {
-      console.error('Failed to up sync to server:', error);
+      storeLogger.error('Failed to up sync to server', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
     }
   };
@@ -894,9 +900,9 @@ export const useAppStore = defineStore('app', () => {
         currentClass.value = result.data.classes[0];
       }
 
-      console.log('Down sync completed:', result);
+      storeLogger.info('Down sync completed', result);
     } catch (error) {
-      console.error('Failed to down sync from server:', error);
+      storeLogger.error('Failed to down sync from server', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
     }
   };
@@ -937,9 +943,9 @@ export const useAppStore = defineStore('app', () => {
         currentClass.value = result.data.classes[0];
       }
 
-      console.log('Full sync completed:', result);
+      storeLogger.info('Full sync completed', result);
     } catch (error) {
-      console.error('Failed to full sync with server:', error);
+      storeLogger.error('Failed to full sync with server', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
     }
   };
@@ -1166,7 +1172,7 @@ export const useAppStore = defineStore('app', () => {
     if (!db) throw new Error('Database not initialized');
 
     try {
-      console.log(`Cleaning up memo data for deleted ${type}: ${deletedTypeName}`);
+      storeLogger.info(`Cleaning up memo data for deleted ${type}: ${deletedTypeName}`);
 
       // Get all transactions that use this deleted type
       const allTransactions = await db.getAll('transactions');
@@ -1211,9 +1217,9 @@ export const useAppStore = defineStore('app', () => {
         return updated || t;
       });
 
-      console.log(`Cleaned up memo data from ${transactionsToUpdate.length} transactions`);
+      storeLogger.info(`Cleaned up memo data from ${transactionsToUpdate.length} transactions`);
     } catch (error) {
-      console.error('Error cleaning up memo data:', error);
+      storeLogger.error('Error cleaning up memo data', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
     }
   };
@@ -1504,7 +1510,7 @@ export const useAppStore = defineStore('app', () => {
       await syncToServer();
 
     } catch (error) {
-      console.error('Failed to import backup:', error);
+      storeLogger.error('Failed to import backup', error instanceof Error ? error : new Error('Unknown error'));
       throw new Error('Invalid backup data format');
     }
   };
@@ -1614,7 +1620,7 @@ export const useAppStore = defineStore('app', () => {
   const migrateEventTypeNames = async (): Promise<void> => {
     if (!db) throw new Error('Database not initialized');
 
-    console.log('Starting event type name migration...');
+    storeLogger.info('Starting event type name migration');
 
     // Create snapshot before migration
     const snapshot = await createDatabaseSnapshot(
@@ -1657,11 +1663,11 @@ export const useAppStore = defineStore('app', () => {
     }
 
     if (updatedCount > 0) {
-      console.log(`Migration completed: Updated ${updatedCount} transactions`);
+      storeLogger.info(`Migration completed: Updated ${updatedCount} transactions`);
       // Sync changes to server
       await syncToServer();
     } else {
-      console.log('No transactions found that need migration');
+      storeLogger.info('No transactions found that need migration');
     }
   };
 

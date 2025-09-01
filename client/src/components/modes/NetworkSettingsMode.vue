@@ -222,7 +222,7 @@
                       </v-card-title>
                       <v-card-text>
                         <p class="text-body-2 mb-3">
-                          Download your entire local database for backup or transfer to another machine. 
+                          Download your entire local database for backup or transfer to another machine.
                           You can also restore data from a previously downloaded backup file.
                         </p>
 
@@ -399,7 +399,7 @@ const downloadLocalStore = async () => {
     const backupData = await store.exportDatabaseBackup();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `scholartrack-backup-${timestamp}.json`;
-    
+
     // Create and download the file
     const blob = new Blob([backupData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -428,13 +428,13 @@ const uploadLocalStore = async () => {
   input.type = 'file';
   input.accept = '.json';
   input.style.display = 'none';
-  
+
   input.onchange = async (event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
-    
+
     if (!file) return;
-    
+
     isUploading.value = true;
     backupMessage.value = 'Uploading and restoring backup...';
     backupMessageType.value = 'info';
@@ -442,7 +442,7 @@ const uploadLocalStore = async () => {
     try {
       const text = await file.text();
       await store.importDatabaseBackup(text);
-      
+
       backupMessage.value = 'Database backup restored successfully!';
       backupMessageType.value = 'success';
     } catch (error: unknown) {
@@ -453,7 +453,7 @@ const uploadLocalStore = async () => {
       isUploading.value = false;
     }
   };
-  
+
   document.body.appendChild(input);
   input.click();
   document.body.removeChild(input);

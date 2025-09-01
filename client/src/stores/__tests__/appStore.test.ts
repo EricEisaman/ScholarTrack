@@ -186,6 +186,74 @@ describe('App Store', () => {
   });
 
   describe('Student Management', () => {
+    it('allows students with same label but different emoji', async () => {
+      const store = useAppStore();
+      await store.initDB();
+
+      const student1 = {
+        label: 'AD',
+        code: '1234',
+        emoji: '🏰',
+        classes: ['Math'],
+      };
+
+      const student2 = {
+        label: 'AD',
+        code: '5678',
+        emoji: '🎓',
+        classes: ['Science'],
+      };
+
+      mockTransaction.store.add.mockResolvedValue(undefined);
+
+      await store.addStudent(student1);
+      await store.addStudent(student2);
+
+      expect(store.students).toHaveLength(2);
+      expect(store.students[0].label).toBe('AD');
+      expect(store.students[0].emoji).toBe('🏰');
+      expect(store.students[1].label).toBe('AD');
+      expect(store.students[1].emoji).toBe('🎓');
+    });
+
+    it('prevents students with same label and emoji combination', async () => {
+      const store = useAppStore();
+      await store.initDB();
+
+      const student1 = {
+        label: 'AD',
+        code: '1234',
+        emoji: '🏰',
+        classes: ['Math'],
+      };
+
+      const student2 = {
+        label: 'AD',
+        code: '5678',
+        emoji: '🏰',
+        classes: ['Science'],
+      };
+
+      mockTransaction.store.add
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('ConstraintError'));
+
+      await store.addStudent(student1);
+
+      store.students = [{
+        id: '1',
+        label: 'AD',
+        code: '1234',
+        emoji: '🏰',
+        classes: ['Math'],
+        createdAt: '2023-01-01T00:00:00Z',
+      }];
+
+      await expect(store.addStudent(student2)).rejects.toThrow(
+        'A student with label "AD" and emoji "🏰" already exists',
+      );
+    });
+
     it('opens student modal correctly', () => {
       const store = useAppStore();
       const testStudent = {
