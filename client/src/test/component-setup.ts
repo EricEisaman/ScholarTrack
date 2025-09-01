@@ -217,138 +217,39 @@ Object.defineProperty(window, 'sessionStorage', {
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
 global.URL.revokeObjectURL = vi.fn();
 
+// Configure Vue Test Utils with Vuetify
+config.global.plugins = [vuetify];
+
+// Configure global stubs for components that don't need full rendering
+config.global.stubs = {
+  'router-link': true,
+  'router-view': true,
+  'transition': true,
+  'transition-group': true,
+  'teleport': true,
+};
+
+// Configure global mocks
+config.global.mocks = {
+  $t: (key: string) => key, // Mock i18n
+  $route: {
+    path: '/',
+    name: 'home',
+    params: {},
+    query: {},
+  },
+  $router: {
+    push: vi.fn(),
+    replace: vi.fn(),
+    go: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  },
+};
+
 // Mock Vue components for testing
 declare module '*.vue' {
   import type { DefineComponent } from 'vue';
   const component: DefineComponent<{}, {}, unknown>;
   export default component;
 }
-
-// Global test utilities
-export const createTestWrapper = (component: unknown, options: Record<string, unknown> = {}) => {
-  return mount(component, {
-    global: {
-      plugins: [vuetify],
-      stubs: {
-        'router-link': true,
-        'router-view': true,
-        'transition': true,
-        'transition-group': true,
-        'teleport': true,
-        ...(options.stubs as Record<string, unknown>),
-      },
-      mocks: {
-        $t: (key: string) => key,
-        $route: {
-          path: '/',
-          name: 'home',
-          params: {},
-          query: {},
-        },
-        $router: {
-          push: vi.fn(),
-          replace: vi.fn(),
-          go: vi.fn(),
-          back: vi.fn(),
-          forward: vi.fn(),
-        },
-        ...(options.mocks as Record<string, unknown>),
-      },
-    },
-    ...options,
-  });
-};
-
-// Mock Pinia store
-export const createMockStore = (storeData: Record<string, unknown> = {}) => {
-  return {
-    ...storeData,
-    $patch: vi.fn(),
-    $reset: vi.fn(),
-    $dispose: vi.fn(),
-  };
-};
-
-// Mock router
-export const createMockRouter = () => ({
-  push: vi.fn(),
-  replace: vi.fn(),
-  go: vi.fn(),
-  back: vi.fn(),
-  forward: vi.fn(),
-  currentRoute: {
-    value: {
-      path: '/',
-      name: 'home',
-      params: {},
-      query: {},
-    },
-  },
-});
-
-// Mock route
-export const createMockRoute = () => ({
-  path: '/',
-  name: 'home',
-  params: {},
-  query: {},
-  hash: '',
-  fullPath: '/',
-  matched: [],
-  meta: {},
-});
-
-// Utility for waiting for async operations
-export const waitFor = (condition: () => boolean, timeout = 1000): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const startTime = Date.now();
-    const check = () => {
-      if (condition()) {
-        resolve();
-      } else if (Date.now() - startTime > timeout) {
-        reject(new Error('Timeout waiting for condition'));
-      } else {
-        setTimeout(check, 10);
-      }
-    };
-    check();
-  });
-};
-
-// Utility for testing async component updates
-export const flushPromises = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 0));
-
-// Mock IntersectionObserver entries
-export const createIntersectionObserverEntry = (
-  target: Element,
-  isIntersecting = true
-): IntersectionObserverEntry => ({
-  target,
-  isIntersecting,
-  intersectionRatio: isIntersecting ? 1 : 0,
-  boundingClientRect: {} as DOMRectReadOnly,
-  rootBounds: {} as DOMRectReadOnly,
-  time: Date.now(),
-});
-
-// Mock ResizeObserver entries
-export const createResizeObserverEntry = (
-  target: Element,
-  contentRect: Partial<DOMRectReadOnly> = {}
-): ResizeObserverEntry => ({
-  target,
-  contentRect: {
-    x: 0,
-    y: 0,
-    width: 100,
-    height: 100,
-    top: 0,
-    right: 100,
-    bottom: 100,
-    left: 0,
-    ...contentRect,
-  } as DOMRectReadOnly,
-  borderBoxSize: [],
-  contentBoxSize: [],
-  devicePixelContentBoxSize: [],
-});

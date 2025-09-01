@@ -1,10 +1,15 @@
 <template>
   <div class="reports-mode">
     <v-row>
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <v-card>
           <v-card-title class="d-flex align-center">
-            <v-icon class="mr-2">mdi-chart-line</v-icon>
+            <v-icon class="mr-2">
+              mdi-chart-line
+            </v-icon>
             Generate Reports
           </v-card-title>
 
@@ -65,10 +70,10 @@
 
               <v-btn
                 color="primary"
-                @click="generateReport"
                 :disabled="!isFormValid"
                 :loading="isGenerating"
                 block
+                @click="generateReport"
               >
                 Generate Report
               </v-btn>
@@ -77,16 +82,23 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <v-card>
           <v-card-title class="d-flex align-center">
-            <v-icon class="mr-2">mdi-information</v-icon>
+            <v-icon class="mr-2">
+              mdi-information
+            </v-icon>
             Report Information
           </v-card-title>
 
           <v-card-text>
             <div v-if="reportType === 'student'">
-              <h4 class="text-h6 mb-2">Student Transaction Report</h4>
+              <h4 class="text-h6 mb-2">
+                Student Transaction Report
+              </h4>
               <p class="text-body-2">
                 This report shows all student status changes and their timestamps for the selected period.
                 It includes when students left and returned from various locations.
@@ -94,7 +106,9 @@
             </div>
 
             <div v-else-if="reportType === 'teacher'">
-              <h4 class="text-h6 mb-2">Teacher Event Report</h4>
+              <h4 class="text-h6 mb-2">
+                Teacher Event Report
+              </h4>
               <p class="text-body-2">
                 This report shows all teacher-recorded events and incidents for the selected period.
                 It includes behavioral incidents and rule violations.
@@ -103,7 +117,9 @@
 
             <v-divider class="my-4" />
 
-            <h4 class="text-h6 mb-2">Available Data</h4>
+            <h4 class="text-h6 mb-2">
+              Available Data
+            </h4>
             <ul class="text-body-2">
               <li>Total Students: {{ students.length }}</li>
               <li>Total Classes: {{ classes.length }}</li>
@@ -120,6 +136,7 @@
 import { ref, computed } from 'vue';
 import { useAppStore } from '../../stores/appStore';
 import { componentLogger } from '../../services/logger';
+import type { Student, Class, Transaction } from '../../types';
 
 const store = useAppStore();
 
@@ -132,9 +149,9 @@ const selectedClass = ref('');
 const isGenerating = ref(false);
 
 // Computed properties
-const students = computed(() => store.students);
-const classes = computed(() => store.classes);
-const transactions = computed(() => store.transactions);
+const students = computed((): Student[] => store.students);
+const classes = computed((): Class[] => store.classes);
+const transactions = computed((): Transaction[] => store.transactions);
 
 const reportTypes = [
   { title: 'Student Transactions', value: 'student' },
@@ -156,7 +173,7 @@ const isFormValid = computed(() =>
 );
 
 // Methods
-const generateReport = async () => {
+const generateReport = async (): Promise<void> => {
   if (!isFormValid.value) return;
 
   isGenerating.value = true;
@@ -289,7 +306,7 @@ const generateOfflineReport = (reportData: {
   report += `\n${'='.repeat(50)}\n\n`;
 
   // Filter transactions by date range and class
-  const filteredTransactions = transactions.value.filter(t => {
+  const filteredTransactions = transactions.value.filter((t: Transaction) => {
     const transactionDate = new Date(t.timestamp);
     const inDateRange = transactionDate >= start && transactionDate <= end;
     const inClass = !className || t.className === className;
@@ -300,12 +317,15 @@ const generateOfflineReport = (reportData: {
     report += 'STUDENT TRANSACTIONS:\n\n';
 
     // Group by student
-    const studentMap = new Map();
-    filteredTransactions.forEach(t => {
+    const studentMap = new Map<string, Transaction[]>();
+    filteredTransactions.forEach((t: Transaction) => {
       if (!studentMap.has(t.studentLabel)) {
         studentMap.set(t.studentLabel, []);
       }
-      studentMap.get(t.studentLabel).push(t);
+      const transactions = studentMap.get(t.studentLabel);
+      if (transactions) {
+        transactions.push(t);
+      }
     });
 
     studentMap.forEach((studentTransactions, studentLabel) => {
@@ -313,11 +333,11 @@ const generateOfflineReport = (reportData: {
       report += `${'-'.repeat(20)}\n`;
 
       studentTransactions
-        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-        .forEach((t: any) => {
+        .sort((a: Transaction, b: Transaction) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .forEach((t: Transaction) => {
           const time = new Date(t.timestamp).toLocaleString();
-          const studentIdentifier = t.studentIdentifier || t.studentLabel;
-          const memoInfo = t.memo ? ` (Memo: ${t.memo})` : '';
+          const studentIdentifier: string = t.studentIdentifier || t.studentLabel;
+          const memoInfo: string = t.memo ? ` (Memo: ${t.memo})` : '';
           report += `${time}: ${studentIdentifier} - ${t.status}${memoInfo}\n`;
         });
 
@@ -328,12 +348,12 @@ const generateOfflineReport = (reportData: {
     report += 'TEACHER EVENTS:\n\n';
 
     // Filter for transactions that have eventType (teacher events)
-    const teacherEvents = filteredTransactions.filter(t => t.eventType);
+    const teacherEvents = filteredTransactions.filter((t: Transaction): t is Transaction & { eventType: string } => !!t.eventType);
 
-    teacherEvents.forEach(t => {
+    teacherEvents.forEach((t: Transaction & { eventType: string }) => {
       const time = new Date(t.timestamp).toLocaleString();
-      const studentIdentifier = t.studentIdentifier || t.studentLabel;
-      const memoInfo = t.memo ? ` (Memo: ${t.memo})` : '';
+      const studentIdentifier: string = t.studentIdentifier || t.studentLabel;
+      const memoInfo: string = t.memo ? ` (Memo: ${t.memo})` : '';
       report += `${time} - ${studentIdentifier}: ${t.eventType}${memoInfo}\n`;
     });
   }
@@ -351,9 +371,9 @@ const generateJpgReport = async (reportData: {
   endDate: string
   className?: string | undefined
   data: {
-    students: any[]
-    classes: any[]
-    transactions: any[]
+    students: Student[]
+    classes: Class[]
+    transactions: Transaction[]
   }
 }): Promise<Blob> => {
   const { type, startDate, endDate, className, data } = reportData;
@@ -386,7 +406,7 @@ const generateJpgReport = async (reportData: {
   if (settings?.logoImage) {
     try {
       const logoImg = new Image();
-      logoImg.onload = () => {
+      logoImg.onload = (): void => {
         // Draw logo in top-left corner
         ctx.drawImage(logoImg, 100, 50, 80, 80);
       };
@@ -426,7 +446,7 @@ const generateJpgReport = async (reportData: {
   y += 40; // Add some space
 
   // Filter transactions
-  let filteredTransactions = transactions.filter(t => {
+  let filteredTransactions = transactions.filter((t: Transaction) => {
     const transactionDate = new Date(t.timestamp);
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -436,7 +456,7 @@ const generateJpgReport = async (reportData: {
   });
 
   if (type === 'teacher') {
-    filteredTransactions = filteredTransactions.filter(t => t.eventType);
+    filteredTransactions = filteredTransactions.filter((t: Transaction): t is Transaction & { eventType: string } => !!t.eventType);
   }
 
   // Sort by timestamp
@@ -483,7 +503,7 @@ const generateJpgReport = async (reportData: {
       }
 
       // Use stored studentIdentifier
-      const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel;
+      const studentIdentifier: string = transaction.studentIdentifier || transaction.studentLabel;
 
       ctx.textAlign = 'left';
       ctx.fillText(studentIdentifier, 100, y);

@@ -3,9 +3,14 @@
     <!-- Breakpoint Information Display -->
     <v-row>
       <v-col>
-        <v-card color="primary" dark>
+        <v-card
+          color="primary"
+          dark
+        >
           <v-card-title class="d-flex align-center">
-            <v-icon class="mr-2">mdi-responsive</v-icon>
+            <v-icon class="mr-2">
+              mdi-responsive
+            </v-icon>
             Vuetify Responsive Design Showcase
             <v-spacer />
             <v-chip
@@ -19,7 +24,11 @@
 
           <v-card-text>
             <v-row>
-              <v-col v-for="breakpoint in breakpoints" :key="breakpoint.name" cols="auto">
+              <v-col
+                v-for="breakpoint in breakpoints"
+                :key="breakpoint.name"
+                cols="auto"
+              >
                 <v-chip
                   :color="breakpoint.active ? 'white' : 'grey'"
                   :variant="breakpoint.active ? 'flat' : 'outlined'"
@@ -37,22 +46,39 @@
     <!-- Responsive Layout Demonstrations -->
     <v-row class="mt-4">
       <!-- Desktop Layout (md and up) -->
-      <v-col v-if="md" cols="12">
+      <v-col
+        v-if="md"
+        cols="12"
+      >
         <v-card variant="outlined">
           <v-card-title>
-            <v-icon class="mr-2">mdi-desktop-classic</v-icon>
+            <v-icon class="mr-2">
+              mdi-desktop-classic
+            </v-icon>
             Desktop Layout ({{ width }}px)
           </v-card-title>
           <v-card-text>
             <v-row>
               <v-col cols="3">
-                <v-card color="primary" dark>
+                <v-card
+                  color="primary"
+                  dark
+                >
                   <v-card-title>Sidebar</v-card-title>
                   <v-card-text>
                     <v-list>
-                      <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard" />
-                      <v-list-item prepend-icon="mdi-account-group" title="Students" />
-                      <v-list-item prepend-icon="mdi-chart-line" title="Reports" />
+                      <v-list-item
+                        prepend-icon="mdi-view-dashboard"
+                        title="Dashboard"
+                      />
+                      <v-list-item
+                        prepend-icon="mdi-account-group"
+                        title="Students"
+                      />
+                      <v-list-item
+                        prepend-icon="mdi-chart-line"
+                        title="Reports"
+                      />
                     </v-list>
                   </v-card-text>
                 </v-card>
@@ -63,10 +89,24 @@
                   <v-card-text>
                     <p>Full desktop experience with sidebar navigation and spacious content area.</p>
                     <v-row>
-                      <v-col v-for="i in 6" :key="i" cols="4">
-                        <v-card color="grey-lighten-4" class="pa-4 text-center">
-                          <v-icon size="32" color="primary">mdi-star</v-icon>
-                          <p class="mt-2">Feature {{ i }}</p>
+                      <v-col
+                        v-for="i in 6"
+                        :key="i"
+                        cols="4"
+                      >
+                        <v-card
+                          color="grey-lighten-4"
+                          class="pa-4 text-center"
+                        >
+                          <v-icon
+                            size="32"
+                            color="primary"
+                          >
+                            mdi-star
+                          </v-icon>
+                          <p class="mt-2">
+                            Feature {{ i }}
+                          </p>
                         </v-card>
                       </v-col>
                     </v-row>
@@ -79,22 +119,45 @@
       </v-col>
 
       <!-- Tablet Layout (sm only) -->
-      <v-col v-if="sm" cols="12">
+      <v-col
+        v-if="sm"
+        cols="12"
+      >
         <v-card variant="outlined">
           <v-card-title>
-            <v-icon class="mr-2">mdi-tablet</v-icon>
+            <v-icon class="mr-2">
+              mdi-tablet
+            </v-icon>
             Tablet Layout ({{ width }}px)
           </v-card-title>
           <v-card-text>
             <v-row>
-              <v-col v-for="i in 4" :key="i" cols="6">
-                <v-card color="grey-lighten-4" class="pa-4 text-center">
-                  <v-icon size="24" color="primary">mdi-star</v-icon>
-                  <p class="mt-2">Feature {{ i }}</p>
+              <v-col
+                v-for="i in 4"
+                :key="i"
+                cols="6"
+              >
+                <v-card
+                  color="grey-lighten-4"
+                  class="pa-4 text-center"
+                >
+                  <v-icon
+                    size="24"
+                    color="primary"
+                  >
+                    mdi-star
+                  </v-icon>
+                  <p class="mt-2">
+                    Feature {{ i }}
+                  </p>
                 </v-card>
               </v-col>
             </v-row>
-            <v-alert type="info" variant="tonal" class="mt-4">
+            <v-alert
+              type="info"
+              variant="tonal"
+              class="mt-4"
+            >
               Optimized for tablet interaction with touch-friendly buttons and responsive grid.
             </v-alert>
           </v-card-text>
@@ -102,22 +165,45 @@
       </v-col>
 
       <!-- Mobile Layout (xs only) -->
-      <v-col v-if="xs" cols="12">
+      <v-col
+        v-if="xs"
+        cols="12"
+      >
         <v-card variant="outlined">
           <v-card-title>
-            <v-icon class="mr-2">mdi-cellphone</v-icon>
+            <v-icon class="mr-2">
+              mdi-cellphone
+            </v-icon>
             Mobile Layout ({{ width }}px)
           </v-card-title>
           <v-card-text>
             <v-row>
-              <v-col v-for="i in 2" :key="i" cols="12">
-                <v-card color="grey-lighten-4" class="pa-3 text-center">
-                  <v-icon size="20" color="primary">mdi-star</v-icon>
-                  <p class="mt-2">Feature {{ i }}</p>
+              <v-col
+                v-for="i in 2"
+                :key="i"
+                cols="12"
+              >
+                <v-card
+                  color="grey-lighten-4"
+                  class="pa-3 text-center"
+                >
+                  <v-icon
+                    size="20"
+                    color="primary"
+                  >
+                    mdi-star
+                  </v-icon>
+                  <p class="mt-2">
+                    Feature {{ i }}
+                  </p>
                 </v-card>
               </v-col>
             </v-row>
-            <v-alert type="success" variant="tonal" class="mt-4">
+            <v-alert
+              type="success"
+              variant="tonal"
+              class="mt-4"
+            >
               Mobile-first design with full-screen modals and touch-optimized interactions.
             </v-alert>
           </v-card-text>
@@ -130,14 +216,18 @@
       <v-col>
         <v-card variant="outlined">
           <v-card-title>
-            <v-icon class="mr-2">mdi-puzzle</v-icon>
+            <v-icon class="mr-2">
+              mdi-puzzle
+            </v-icon>
             Responsive Component Examples
           </v-card-title>
           <v-card-text>
             <!-- Responsive Button Sizes -->
             <v-row class="mb-4">
               <v-col>
-                <h4 class="text-subtitle-1 mb-2">Button Sizes</h4>
+                <h4 class="text-subtitle-1 mb-2">
+                  Button Sizes
+                </h4>
                 <v-btn
                   v-for="size in buttonSizes"
                   :key="size"
@@ -153,7 +243,9 @@
             <!-- Responsive Grid -->
             <v-row class="mb-4">
               <v-col>
-                <h4 class="text-subtitle-1 mb-2">Responsive Grid</h4>
+                <h4 class="text-subtitle-1 mb-2">
+                  Responsive Grid
+                </h4>
                 <v-row>
                   <v-col
                     v-for="i in gridItems"
@@ -161,9 +253,15 @@
                     :cols="gridCols"
                     :class="{ 'pa-1': xs }"
                   >
-                    <v-card color="primary" dark class="pa-3 text-center">
+                    <v-card
+                      color="primary"
+                      dark
+                      class="pa-3 text-center"
+                    >
                       <v-icon>mdi-numeric-{{ i }}</v-icon>
-                      <p class="mt-1">Item {{ i }}</p>
+                      <p class="mt-1">
+                        Item {{ i }}
+                      </p>
                     </v-card>
                   </v-col>
                 </v-row>
@@ -173,12 +271,14 @@
             <!-- Responsive Typography -->
             <v-row class="mb-4">
               <v-col>
-                <h4 class="text-subtitle-1 mb-2">Responsive Typography</h4>
+                <h4 class="text-subtitle-1 mb-2">
+                  Responsive Typography
+                </h4>
                 <p :class="responsiveTextClass">
                   This text adapts its size based on screen size.
                   {{ xs ? 'Small mobile text' :
-                     sm ? 'Medium tablet text' :
-                     'Large desktop text' }}
+                    sm ? 'Medium tablet text' :
+                    'Large desktop text' }}
                 </p>
               </v-col>
             </v-row>
@@ -186,7 +286,9 @@
             <!-- Responsive Spacing -->
             <v-row>
               <v-col>
-                <h4 class="text-subtitle-1 mb-2">Responsive Spacing</h4>
+                <h4 class="text-subtitle-1 mb-2">
+                  Responsive Spacing
+                </h4>
                 <v-card
                   :class="spacingClass"
                   color="grey-lighten-4"
@@ -209,12 +311,19 @@
       <v-col>
         <v-card variant="outlined">
           <v-card-title>
-            <v-icon class="mr-2">mdi-code-braces</v-icon>
+            <v-icon class="mr-2">
+              mdi-code-braces
+            </v-icon>
             Breakpoint Helper Properties
           </v-card-title>
           <v-card-text>
             <v-row>
-              <v-col v-for="helper in breakpointHelpers" :key="helper.name" cols="6" md="3">
+              <v-col
+                v-for="helper in breakpointHelpers"
+                :key="helper.name"
+                cols="6"
+                md="3"
+              >
                 <v-card
                   :color="helper.active ? 'success' : 'grey-lighten-4'"
                   :class="helper.active ? 'text-white' : ''"
@@ -223,8 +332,12 @@
                     <v-icon :color="helper.active ? 'white' : 'grey'">
                       {{ helper.active ? 'mdi-check-circle' : 'mdi-circle-outline' }}
                     </v-icon>
-                    <p class="mt-2 text-caption">{{ helper.name }}</p>
-                    <p class="text-caption">{{ helper.description }}</p>
+                    <p class="mt-2 text-caption">
+                      {{ helper.name }}
+                    </p>
+                    <p class="text-caption">
+                      {{ helper.description }}
+                    </p>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -239,17 +352,33 @@
       <v-col>
         <v-card variant="outlined">
           <v-card-title>
-            <v-icon class="mr-2">mdi-speedometer</v-icon>
+            <v-icon class="mr-2">
+              mdi-speedometer
+            </v-icon>
             Responsive Performance
           </v-card-title>
           <v-card-text>
             <v-row>
-              <v-col v-for="metric in performanceMetrics" :key="metric.name" cols="6" md="3">
-                <v-card color="info" dark>
+              <v-col
+                v-for="metric in performanceMetrics"
+                :key="metric.name"
+                cols="6"
+                md="3"
+              >
+                <v-card
+                  color="info"
+                  dark
+                >
                   <v-card-text class="text-center">
-                    <v-icon size="32">mdi-{{ metric.icon }}</v-icon>
-                    <p class="text-h6 mt-2">{{ metric.value }}</p>
-                    <p class="text-caption">{{ metric.name }}</p>
+                    <v-icon size="32">
+                      mdi-{{ metric.icon }}
+                    </v-icon>
+                    <p class="text-h6 mt-2">
+                      {{ metric.value }}
+                    </p>
+                    <p class="text-caption">
+                      {{ metric.name }}
+                    </p>
                   </v-card-text>
                 </v-card>
               </v-col>

@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
-import { createPinia, setActivePinia } from 'pinia';
+import { mountWithVuetify, createMockStore, testUtils, dataFactories } from '../../../test/utils';
+import { TEST_DATA } from '../../../test/config';
 import StyleSettingsMode from '../StyleSettingsMode.vue';
 import { useAppStore } from '../../../stores/appStore';
 import type { StyleSettings } from '../../../types';
+import type { VueWrapper } from '@vue/test-utils';
 
 // Mock the store
 vi.mock('../../../stores/appStore', () => ({
@@ -11,85 +12,68 @@ vi.mock('../../../stores/appStore', () => ({
 }));
 
 describe('StyleSettingsMode', () => {
-  let store: any;
+  let store: ReturnType<typeof createMockStore>;
+  let wrapper: VueWrapper<unknown>;
 
   beforeEach(() => {
-    // Create a fresh Pinia instance for each test
-    setActivePinia(createPinia());
-
-    // Mock store methods
-    store = {
+    // Create a fresh mock store for each test
+    store = createMockStore({
       getStyleSettings: vi.fn(),
       updateStyleSettings: vi.fn(),
       styleSettings: null,
-    }
+    });
 
-    ;(useAppStore as any).mockReturnValue(store);
+    (useAppStore as ReturnType<typeof vi.fn>).mockReturnValue(store);
+
+    // Mount component with Vuetify
+    wrapper = mountWithVuetify(StyleSettingsMode);
   });
 
   it('renders the component correctly', () => {
-    const wrapper = mount(StyleSettingsMode);
-
+    testUtils.assertExists(wrapper);
     expect(wrapper.find('.style-settings-mode').exists()).toBe(true);
     expect(wrapper.find('h5').text()).toContain('Style Settings');
     expect(wrapper.find('button').text()).toContain('Save Settings');
   });
 
   it('loads existing style settings on mount', () => {
-    const mockSettings: StyleSettings = {
-      id: 'default',
+    const mockSettings: StyleSettings = dataFactories.createStyleSettings({
       primaryColor: '#FF0000',
       secondaryColor: '#00FF00',
-      tertiaryColor: '#000000',
-      quaternaryColor: '#121212',
-      schoolName: 'ScholarTrack',
       logoImage: 'data:image/png;base64,test-logo',
-      updatedAt: '2023-01-01T00:00:00Z',
-    };
+    });
 
     store.getStyleSettings.mockReturnValue(mockSettings);
 
-    const wrapper = mount(StyleSettingsMode);
+    const newWrapper = mountWithVuetify(StyleSettingsMode);
 
     expect(store.getStyleSettings).toHaveBeenCalled();
-    expect(wrapper.vm.primaryColor).toBe('#FF0000');
-    expect(wrapper.vm.secondaryColor).toBe('#00FF00');
-    expect(wrapper.vm.logoPreview).toBe('data:image/png;base64,test-logo');
+    expect(newWrapper.vm.primaryColor).toBe('#FF0000');
+    expect(newWrapper.vm.secondaryColor).toBe('#00FF00');
+    expect(newWrapper.vm.logoPreview).toBe('data:image/png;base64,test-logo');
   });
 
   it('updates primary color correctly', async () => {
-    const wrapper = mount(StyleSettingsMode);
-
     await wrapper.setData({ primaryColor: '#123456' });
-
     expect(wrapper.vm.primaryColor).toBe('#123456');
   });
 
   it('updates secondary color correctly', async () => {
-    const wrapper = mount(StyleSettingsMode);
-
     await wrapper.setData({ secondaryColor: '#654321' });
-
     expect(wrapper.vm.secondaryColor).toBe('#654321');
   });
 
   it('handles logo file upload', async () => {
-    const wrapper = mount(StyleSettingsMode);
-
     const file = new File(['test'], 'test.png', { type: 'image/png' });
 
     await wrapper.vm.handleLogoUpload(file);
 
-    // Wait for FileReader to complete - use nextTick since FileReader mock is async
     await wrapper.vm.$nextTick();
 
     expect(wrapper.vm.logoPreview).toBe('data:image/png;base64,test-base64-data');
   });
 
   it('removes logo when removeLogo is called', async () => {
-    const wrapper = mount(StyleSettingsMode);
-
-    // Set initial logo
     await wrapper.setData({
       logoPreview: 'data:image/png;base64,test-logo',
       logoFile: new File(['test'], 'test.png', { type: 'image/png' }),
@@ -102,9 +86,6 @@ describe('StyleSettingsMode', () => {
   });
 
   it('saves settings successfully', async () => {
-    const wrapper = mount(StyleSettingsMode);
-
-    // Set form data
     await wrapper.setData({
       primaryColor: '#FF0000',
       secondaryColor: '#00FF00',
@@ -124,11 +105,9 @@ describe('StyleSettingsMode', () => {
     expect(wrapper.vm.showSuccess).toBe(true);
   });
 
-  it('validates form correctly', () => {
-    const wrapper = mount(StyleSettingsMode);
-
+  it('validates form correctly', async () => {
     // Test with valid data
-    wrapper.setData({
+    await wrapper.setData({
       primaryColor: '#FF0000',
       secondaryColor: '#00FF00',
     });
@@ -136,7 +115,7 @@ describe('StyleSettingsMode', () => {
     expect(wrapper.vm.isValid).toBe(true);
 
     // Test with invalid data
-    wrapper.setData({
+    await wrapper.setData({
       primaryColor: '',
       secondaryColor: '',
     });
@@ -145,8 +124,6 @@ describe('StyleSettingsMode', () => {
   });
 
   it('validates image file size', () => {
-    const wrapper = mount(StyleSettingsMode);
-
     // Test valid file size
     const smallFile = new File(['test'], 'small.png', { type: 'image/png' });
     Object.defineProperty(smallFile, 'size', { value: 1024 * 1024 }); // 1MB
@@ -161,8 +138,6 @@ describe('StyleSettingsMode', () => {
   });
 
   it('validates image file type', () => {
-    const wrapper = mount(StyleSettingsMode);
-
     // Test valid file types
     const pngFile = new File(['test'], 'test.png', { type: 'image/png' });
     const jpgFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
@@ -177,10 +152,8 @@ describe('StyleSettingsMode', () => {
     expect(wrapper.vm.rules.imageType(txtFile)).toBe('Please upload a valid image file');
   });
 
-  it('computes preview styles correctly', () => {
-    const wrapper = mount(StyleSettingsMode);
-
-    wrapper.setData({
+  it('computes preview styles correctly', async () => {
+    await wrapper.setData({
       primaryColor: '#FF0000',
       secondaryColor: '#00FF00',
     });
@@ -192,9 +165,6 @@ describe('StyleSettingsMode', () => {
   });
 
   it('handles save error gracefully', async () => {
-    const wrapper = mount(StyleSettingsMode);
-
-    // Set form data
     await wrapper.setData({
       primaryColor: '#FF0000',
       secondaryColor: '#00FF00',
@@ -203,13 +173,73 @@ describe('StyleSettingsMode', () => {
     // Mock store error
     store.updateStyleSettings.mockRejectedValue(new Error('Save failed'));
 
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
     await wrapper.vm.saveSettings();
 
-    expect(consoleSpy).toHaveBeenCalledWith('Error saving style settings:', expect.any(Error));
+    expect(wrapper.vm.error).toBe('Save failed');
     expect(wrapper.vm.saving).toBe(false);
+  });
 
-    consoleSpy.mockRestore();
+  it('validates color inputs correctly', async () => {
+    // Test valid colors
+    const validColors = TEST_DATA.STYLE_SETTINGS.VALID_COLORS;
+    
+    for (const color of validColors) {
+      await wrapper.setData({ primaryColor: color });
+      expect(wrapper.vm.isPrimaryColorValid).toBe(true);
+    }
+
+    // Test invalid colors
+    const invalidColors = TEST_DATA.STYLE_SETTINGS.INVALID_COLORS;
+    
+    for (const color of invalidColors) {
+      await wrapper.setData({ primaryColor: color });
+      expect(wrapper.vm.isPrimaryColorValid).toBe(false);
+    }
+  });
+
+  it('applies theme changes correctly', async () => {
+    await wrapper.setData({
+      theme: 'dark',
+    });
+
+    await wrapper.vm.applyTheme();
+
+    expect(wrapper.vm.currentTheme).toBe('dark');
+    testUtils.assertHasClass(wrapper, 'theme-dark');
+  });
+
+  it('resets settings to defaults', async () => {
+    await wrapper.setData({
+      primaryColor: '#FF0000',
+      secondaryColor: '#00FF00',
+      logoPreview: 'data:image/png;base64,custom-logo',
+    });
+
+    await wrapper.vm.resetToDefaults();
+
+    expect(wrapper.vm.primaryColor).toBe(TEST_DATA.STYLE_SETTINGS.DEFAULT.primaryColor);
+    expect(wrapper.vm.secondaryColor).toBe(TEST_DATA.STYLE_SETTINGS.DEFAULT.secondaryColor);
+    expect(wrapper.vm.logoPreview).toBe('');
+  });
+
+  it('exports style configuration', async () => {
+    const mockSettings = dataFactories.createStyleSettings();
+    store.styleSettings = mockSettings;
+
+    const exportData = await wrapper.vm.exportConfiguration();
+
+    expect(exportData).toEqual(mockSettings);
+  });
+
+  it('imports style configuration', async () => {
+    const importData = dataFactories.createStyleSettings({
+      primaryColor: '#FF0000',
+      secondaryColor: '#00FF00',
+    });
+
+    await wrapper.vm.importConfiguration(importData);
+
+    expect(wrapper.vm.primaryColor).toBe('#FF0000');
+    expect(wrapper.vm.secondaryColor).toBe('#00FF00');
   });
 });

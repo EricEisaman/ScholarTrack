@@ -1,34 +1,42 @@
 <template>
   <div>
     <v-row>
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <!-- Custom Status Types Section -->
         <v-card class="mb-4">
           <v-card-title class="text-h5 d-flex align-center">
-            <v-icon class="mr-2">mdi-flag</v-icon>
+            <v-icon class="mr-2">
+              mdi-flag
+            </v-icon>
             Custom Status Types
           </v-card-title>
 
           <v-card-text>
-            <v-form ref="statusForm" v-model="statusFormValid">
+            <v-form
+              ref="statusForm"
+              v-model="statusFormValid"
+            >
               <v-text-field
                 v-model="newStatusName"
                 label="Status Name"
                 :rules="getStatusNameRules()"
                 required
                 clearable
-                @input="validateStatusName"
-                @keyup.enter="addStatusType"
                 :error-messages="statusValidation?.errors.join(', ') || null"
                 :hint="statusValidation?.warnings.join(', ') || undefined"
                 persistent-hint
-              ></v-text-field>
+                @input="validateStatusName"
+                @keyup.enter="addStatusType"
+              />
 
               <v-color-picker
                 v-model="newStatusColor"
                 mode="hex"
                 class="mb-4"
-              ></v-color-picker>
+              />
 
               <v-checkbox
                 v-model="newStatusIncludeMemo"
@@ -36,15 +44,15 @@
                 hint="If checked, students will be prompted to enter a memo when selecting this status"
                 persistent-hint
                 class="mb-4"
-              ></v-checkbox>
+              />
 
               <v-btn
                 color="primary"
                 variant="elevated"
                 :disabled="!statusFormValid"
                 :loading="isAddingStatus"
-                @click="addStatusType"
                 class="mt-4"
+                @click="addStatusType"
               >
                 Add Status Type
               </v-btn>
@@ -53,28 +61,36 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <!-- Custom Teacher Event Types Section -->
         <v-card class="mb-4">
           <v-card-title class="text-h5 d-flex align-center">
-            <v-icon class="mr-2">mdi-calendar-alert</v-icon>
+            <v-icon class="mr-2">
+              mdi-calendar-alert
+            </v-icon>
             Custom Teacher Event Types
           </v-card-title>
 
           <v-card-text>
-            <v-form ref="eventForm" v-model="eventFormValid">
+            <v-form
+              ref="eventForm"
+              v-model="eventFormValid"
+            >
               <v-text-field
                 v-model="newEventName"
                 label="Event Name"
                 :rules="getEventNameRules()"
                 required
                 clearable
-                @input="validateEventName"
-                @keyup.enter="addEventType"
                 :error-messages="eventValidation?.errors.join(', ') || null"
                 :hint="eventValidation?.warnings.join(', ') || undefined"
                 persistent-hint
-              ></v-text-field>
+                @input="validateEventName"
+                @keyup.enter="addEventType"
+              />
 
               <v-checkbox
                 v-model="newEventIncludeMemo"
@@ -82,15 +98,15 @@
                 hint="If checked, teachers will be prompted to enter a memo when recording this event"
                 persistent-hint
                 class="mb-4"
-              ></v-checkbox>
+              />
 
               <v-btn
                 color="secondary"
                 variant="elevated"
                 :disabled="!eventFormValid"
                 :loading="isAddingEvent"
-                @click="addEventType"
                 class="mt-4"
+                @click="addEventType"
               >
                 Add Event Type
               </v-btn>
@@ -102,7 +118,10 @@
 
     <!-- Custom Status Types List -->
     <v-row>
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <v-card>
           <v-card-title class="text-h6">
             Current Custom Status Types
@@ -129,7 +148,7 @@
                     :icon="'mdi-flag'"
                     :color="status.color"
                     size="large"
-                  ></v-icon>
+                  />
                 </template>
 
                 <v-list-item-title>{{ status.name }}</v-list-item-title>
@@ -143,14 +162,14 @@
                     variant="text"
                     size="small"
                     @click="editStatusType(status)"
-                  ></v-btn>
+                  />
                   <v-btn
                     icon="mdi-delete"
                     variant="text"
                     size="small"
                     color="error"
                     @click="removeStatusType(status.id)"
-                  ></v-btn>
+                  />
                 </template>
               </v-list-item>
             </v-list>
@@ -159,7 +178,10 @@
       </v-col>
 
       <!-- Custom Teacher Event Types List -->
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <v-card>
           <v-card-title class="text-h6">
             Current Custom Teacher Event Types
@@ -186,7 +208,7 @@
                     icon="mdi-calendar-alert"
                     color="secondary"
                     size="large"
-                  ></v-icon>
+                  />
                 </template>
 
                 <v-list-item-title>{{ event.name }}</v-list-item-title>
@@ -200,14 +222,14 @@
                     variant="text"
                     size="small"
                     @click="editEventType(event)"
-                  ></v-btn>
+                  />
                   <v-btn
                     icon="mdi-delete"
                     variant="text"
                     size="small"
                     color="error"
                     @click="removeEventType(event.id)"
-                  ></v-btn>
+                  />
                 </template>
               </v-list-item>
             </v-list>
@@ -221,22 +243,32 @@
       <v-col cols="12">
         <v-card>
           <v-card-title class="text-h6 d-flex align-center">
-            <v-icon class="mr-2">mdi-database</v-icon>
+            <v-icon class="mr-2">
+              mdi-database
+            </v-icon>
             Data Management
           </v-card-title>
 
           <v-card-text>
             <v-row>
-              <v-col cols="12" md="6">
-                <v-card variant="outlined" class="pa-4">
-                  <h4 class="text-h6 mb-3">Data Validation</h4>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <v-card
+                  variant="outlined"
+                  class="pa-4"
+                >
+                  <h4 class="text-h6 mb-3">
+                    Data Validation
+                  </h4>
 
                   <v-btn
                     color="primary"
                     variant="outlined"
-                    @click="validateData"
                     :loading="isValidating"
                     class="mb-3"
+                    @click="validateData"
                   >
                     Check Data Integrity
                   </v-btn>
@@ -260,7 +292,10 @@
                       ⚠️ Found orphaned data that needs attention
                     </v-alert>
 
-                    <div v-if="validationResults.orphanedStatuses.length > 0" class="mb-3">
+                    <div
+                      v-if="validationResults.orphanedStatuses.length > 0"
+                      class="mb-3"
+                    >
                       <strong>Orphaned Status Types:</strong>
                       <v-chip
                         v-for="status in validationResults.orphanedStatuses"
@@ -289,16 +324,24 @@
                 </v-card>
               </v-col>
 
-              <v-col cols="12" md="6">
-                <v-card variant="outlined" class="pa-4">
-                  <h4 class="text-h6 mb-3">Backup & Restore</h4>
+              <v-col
+                cols="12"
+                md="6"
+              >
+                <v-card
+                  variant="outlined"
+                  class="pa-4"
+                >
+                  <h4 class="text-h6 mb-3">
+                    Backup & Restore
+                  </h4>
 
                   <v-btn
                     color="secondary"
                     variant="outlined"
-                    @click="exportBackup"
                     :loading="isExporting"
                     class="mb-3 mr-2"
+                    @click="exportBackup"
                   >
                     Export Backup
                   </v-btn>
@@ -306,8 +349,8 @@
                   <v-btn
                     color="warning"
                     variant="outlined"
-                    @click="showImportDialog = true"
                     class="mb-3"
+                    @click="showImportDialog = true"
                   >
                     Import Backup
                   </v-btn>
@@ -317,15 +360,15 @@
                     accept=".json"
                     label="Backup File"
                     prepend-icon="mdi-file-upload"
-                    @change="handleBackupFileChange"
                     class="mb-3"
-                  ></v-file-input>
+                    @change="handleBackupFileChange"
+                  />
 
                   <v-btn
                     color="error"
                     variant="outlined"
-                    @click="showClearDataDialog = true"
                     class="mb-3"
+                    @click="showClearDataDialog = true"
                   >
                     Clear All Data
                   </v-btn>
@@ -338,7 +381,10 @@
     </v-row>
 
     <!-- Import Backup Dialog -->
-    <v-dialog v-model="showImportDialog" max-width="500px">
+    <v-dialog
+      v-model="showImportDialog"
+      max-width="500px"
+    >
       <v-card>
         <v-card-title>Import Backup</v-card-title>
         <v-card-text>
@@ -350,14 +396,14 @@
             accept=".json"
             label="Select Backup File"
             required
-          ></v-file-input>
+          />
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showImportDialog = false"
             size="large"
             min-width="100"
+            @click="showImportDialog = false"
           >
             Cancel
           </v-btn>
@@ -365,9 +411,9 @@
             color="primary"
             :loading="isImporting"
             :disabled="!importFile"
-            @click="importBackup"
             size="large"
             min-width="120"
+            @click="importBackup"
           >
             Import
           </v-btn>
@@ -376,10 +422,18 @@
     </v-dialog>
 
     <!-- Clear Data Dialog -->
-    <v-dialog v-model="showClearDataDialog" max-width="500px">
+    <v-dialog
+      v-model="showClearDataDialog"
+      max-width="500px"
+    >
       <v-card>
         <v-card-title class="text-h6">
-          <v-icon color="error" class="mr-2">mdi-delete-alert</v-icon>
+          <v-icon
+            color="error"
+            class="mr-2"
+          >
+            mdi-delete-alert
+          </v-icon>
           Clear All Data
         </v-card-title>
         <v-card-text>
@@ -392,20 +446,20 @@
           </p>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showClearDataDialog = false"
             size="large"
             min-width="100"
+            @click="showClearDataDialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
             color="error"
             :loading="isClearingData"
-            @click="clearAllData"
             size="large"
             min-width="160"
+            @click="clearAllData"
           >
             Clear All Data
           </v-btn>
@@ -414,10 +468,18 @@
     </v-dialog>
 
     <!-- Migration Error Dialog -->
-    <v-dialog v-model="showMigrationErrorDialog" max-width="600px">
+    <v-dialog
+      v-model="showMigrationErrorDialog"
+      max-width="600px"
+    >
       <v-card>
         <v-card-title class="text-h6">
-          <v-icon color="error" class="mr-2">mdi-alert-circle</v-icon>
+          <v-icon
+            color="error"
+            class="mr-2"
+          >
+            mdi-alert-circle
+          </v-icon>
           Migration Failed
         </v-card-title>
         <v-card-text>
@@ -429,7 +491,10 @@
             {{ migrationError }}
           </v-alert>
 
-          <div v-if="migrationResultData?.rollbackPerformed" class="mb-4">
+          <div
+            v-if="migrationResultData?.rollbackPerformed"
+            class="mb-4"
+          >
             <v-alert
               type="warning"
               variant="tonal"
@@ -440,7 +505,10 @@
             </v-alert>
           </div>
 
-          <div v-if="migrationResultData?.snapshotId" class="mt-4">
+          <div
+            v-if="migrationResultData?.snapshotId"
+            class="mt-4"
+          >
             <p class="text-caption">
               A snapshot was created before the migration (ID: {{ migrationResultData.snapshotId }}).
               You can manually restore from this snapshot if needed.
@@ -448,11 +516,11 @@
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showMigrationErrorDialog = false"
             size="large"
             min-width="100"
+            @click="showMigrationErrorDialog = false"
           >
             Close
           </v-btn>
@@ -461,10 +529,18 @@
     </v-dialog>
 
     <!-- Migration Success Dialog -->
-    <v-dialog v-model="showMigrationSuccessDialog" max-width="500px">
+    <v-dialog
+      v-model="showMigrationSuccessDialog"
+      max-width="500px"
+    >
       <v-card>
         <v-card-title class="text-h6">
-          <v-icon color="success" class="mr-2">mdi-check-circle</v-icon>
+          <v-icon
+            color="success"
+            class="mr-2"
+          >
+            mdi-check-circle
+          </v-icon>
           Migration Successful
         </v-card-title>
         <v-card-text>
@@ -484,11 +560,11 @@
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showMigrationSuccessDialog = false"
             size="large"
             min-width="100"
+            @click="showMigrationSuccessDialog = false"
           >
             Close
           </v-btn>
@@ -497,27 +573,33 @@
     </v-dialog>
 
     <!-- Edit Status Type Dialog -->
-    <v-dialog v-model="showEditStatusDialog" max-width="500px">
+    <v-dialog
+      v-model="showEditStatusDialog"
+      max-width="500px"
+    >
       <v-card>
         <v-card-title>Edit Status Type</v-card-title>
         <v-card-text>
-          <v-form ref="editStatusForm" v-model="editStatusFormValid">
+          <v-form
+            ref="editStatusForm"
+            v-model="editStatusFormValid"
+          >
             <v-text-field
               v-model="editingStatus.name"
               label="Status Name"
               :rules="getEditStatusNameRules()"
               required
-              @input="validateEditStatusName"
               :error-messages="editStatusValidation?.errors.join(', ') || null"
               :hint="editStatusValidation?.warnings.join(', ') || undefined"
               persistent-hint
-            ></v-text-field>
+              @input="validateEditStatusName"
+            />
 
             <v-color-picker
               v-model="editingStatus.color"
               mode="hex"
               class="mb-4"
-            ></v-color-picker>
+            />
 
             <v-checkbox
               v-model="editingStatus.includeMemo"
@@ -525,24 +607,24 @@
               hint="If checked, students will be prompted to enter a memo when selecting this status"
               persistent-hint
               class="mb-4"
-            ></v-checkbox>
+            />
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showEditStatusDialog = false"
             size="large"
             min-width="100"
+            @click="showEditStatusDialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
             color="primary"
             :disabled="!editStatusFormValid"
-            @click="updateStatusType"
             size="large"
             min-width="120"
+            @click="updateStatusType"
           >
             Update
           </v-btn>
@@ -551,17 +633,23 @@
     </v-dialog>
 
     <!-- Edit Event Type Dialog -->
-    <v-dialog v-model="showEditEventDialog" max-width="500px">
+    <v-dialog
+      v-model="showEditEventDialog"
+      max-width="500px"
+    >
       <v-card>
         <v-card-title>Edit Event Type</v-card-title>
         <v-card-text>
-          <v-form ref="editEventForm" v-model="editEventFormValid">
+          <v-form
+            ref="editEventForm"
+            v-model="editEventFormValid"
+          >
             <v-text-field
               v-model="editingEvent.name"
               label="Event Name"
               :rules="[v => !!v || 'Event name is required']"
               required
-            ></v-text-field>
+            />
 
             <v-checkbox
               v-model="editingEvent.includeMemo"
@@ -569,24 +657,24 @@
               hint="If checked, teachers will be prompted to enter a memo when recording this event"
               persistent-hint
               class="mb-4"
-            ></v-checkbox>
+            />
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showEditEventDialog = false"
             size="large"
             min-width="100"
+            @click="showEditEventDialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
             color="primary"
             :disabled="!editEventFormValid"
-            @click="updateEventType"
             size="large"
             min-width="120"
+            @click="updateEventType"
           >
             Update
           </v-btn>
@@ -595,26 +683,29 @@
     </v-dialog>
 
     <!-- Confirmation Dialog -->
-    <v-dialog v-model="showConfirmDialog" max-width="400px">
+    <v-dialog
+      v-model="showConfirmDialog"
+      max-width="400px"
+    >
       <v-card>
         <v-card-title>Confirm Deletion</v-card-title>
         <v-card-text>
           Are you sure you want to delete "{{ itemToDelete?.name }}"? This action cannot be undone.
         </v-card-text>
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showConfirmDialog = false"
             size="large"
             min-width="100"
+            @click="showConfirmDialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
             color="error"
-            @click="confirmDelete"
             size="large"
             min-width="120"
+            @click="confirmDelete"
           >
             Delete
           </v-btn>
@@ -623,10 +714,18 @@
     </v-dialog>
 
     <!-- Data Management Dialog -->
-    <v-dialog v-model="showDataManagementDialog" max-width="600px">
+    <v-dialog
+      v-model="showDataManagementDialog"
+      max-width="600px"
+    >
       <v-card>
         <v-card-title class="text-h6">
-          <v-icon color="warning" class="mr-2">mdi-alert</v-icon>
+          <v-icon
+            color="warning"
+            class="mr-2"
+          >
+            mdi-alert
+          </v-icon>
           Data Management Required
         </v-card-title>
 
@@ -638,8 +737,14 @@
             You must choose how to handle this data before deletion.
           </p>
 
-          <v-radio-group v-model="orphanedDataAction" class="mb-4">
-            <v-radio value="migrate" label="Migrate to another type">
+          <v-radio-group
+            v-model="orphanedDataAction"
+            class="mb-4"
+          >
+            <v-radio
+              value="migrate"
+              label="Migrate to another type"
+            >
               <template #label>
                 <div>
                   <strong>Migrate to another type</strong>
@@ -650,7 +755,10 @@
               </template>
             </v-radio>
 
-            <v-radio value="delete" label="Delete affected data">
+            <v-radio
+              value="delete"
+              label="Delete affected data"
+            >
               <template #label>
                 <div>
                   <strong>Delete affected data</strong>
@@ -661,7 +769,10 @@
               </template>
             </v-radio>
 
-            <v-radio value="keep" label="Keep the type">
+            <v-radio
+              value="keep"
+              label="Keep the type"
+            >
               <template #label>
                 <div>
                   <strong>Keep the type</strong>
@@ -673,14 +784,17 @@
             </v-radio>
           </v-radio-group>
 
-          <div v-if="orphanedDataAction === 'migrate'" class="mt-4">
+          <div
+            v-if="orphanedDataAction === 'migrate'"
+            class="mt-4"
+          >
             <v-select
               v-if="itemToDelete?.type === 'status'"
               v-model="migrationTargetStatus"
               :items="availableStatusTypes"
               label="Migrate to status type"
               required
-            ></v-select>
+            />
 
             <v-select
               v-else
@@ -688,25 +802,25 @@
               :items="availableEventTypes"
               label="Migrate to event type"
               required
-            ></v-select>
+            />
           </div>
         </v-card-text>
 
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
-            @click="showDataManagementDialog = false"
             size="large"
             min-width="100"
+            @click="showDataManagementDialog = false"
           >
             Cancel
           </v-btn>
           <v-btn
             color="primary"
             :loading="isProcessingData"
-            @click="handleDataManagement"
             size="large"
             min-width="160"
+            @click="handleDataManagement"
           >
             {{ orphanedDataAction === 'keep' ? 'Keep Type' : 'Process Data' }}
           </v-btn>
@@ -726,10 +840,10 @@ import { componentLogger } from '../../services/logger';
 const store = useAppStore();
 
 // Form refs and validation
-const statusForm = ref();
-const eventForm = ref();
-const editStatusForm = ref();
-const editEventForm = ref();
+const statusForm = ref<{ resetValidation: () => void } | null>(null);
+const eventForm = ref<{ resetValidation: () => void } | null>(null);
+const editStatusForm = ref<{ resetValidation: () => void } | null>(null);
+const editEventForm = ref<{ resetValidation: () => void } | null>(null);
 const statusFormValid = ref(false);
 const eventFormValid = ref(false);
 const editStatusFormValid = ref(false);
@@ -811,7 +925,7 @@ const availableStatusTypes = computed(() => [
   'LIBRARY',
   'TEACHER VISIT',
   ...customStatusTypes.value
-    .filter(s => s.name !== itemToDelete.value?.name)
+    .filter(s => s.name !== (itemToDelete.value?.name ?? ''))
     .map(s => s.name),
 ]);
 
@@ -821,12 +935,12 @@ const availableEventTypes = computed(() => [
   'SEATING VIOLATION',
   'HORSE PLAY',
   ...customTeacherEventTypes.value
-    .filter(e => e.name !== itemToDelete.value?.name)
+    .filter(e => e.name !== (itemToDelete.value?.name ?? ''))
     .map(e => e.name),
 ]);
 
 // Methods
-const addStatusType = async () => {
+const addStatusType = async (): Promise<void> => {
   if (!statusFormValid.value) return;
 
   isAddingStatus.value = true;
@@ -843,7 +957,7 @@ const addStatusType = async () => {
   }
 };
 
-const addEventType = async () => {
+const addEventType = async (): Promise<void> => {
   if (!eventFormValid.value) return;
 
   isAddingEvent.value = true;
@@ -859,17 +973,17 @@ const addEventType = async () => {
   }
 };
 
-const editStatusType = (status: CustomStatusType) => {
+const editStatusType = (status: CustomStatusType): void => {
   editingStatus.value = { ...status };
   showEditStatusDialog.value = true;
 };
 
-const editEventType = (event: CustomTeacherEventType) => {
+const editEventType = (event: CustomTeacherEventType): void => {
   editingEvent.value = { ...event };
   showEditEventDialog.value = true;
 };
 
-const updateStatusType = async () => {
+const updateStatusType = async (): Promise<void> => {
   if (!editStatusFormValid.value) return;
 
   try {
@@ -885,7 +999,7 @@ const updateStatusType = async () => {
   }
 };
 
-const updateEventType = async () => {
+const updateEventType = async (): Promise<void> => {
   if (!editEventFormValid.value) return;
 
   try {
@@ -900,7 +1014,7 @@ const updateEventType = async () => {
   }
 };
 
-const removeStatusType = async (id: string) => {
+const removeStatusType = (id: string): void => {
   const statusType = customStatusTypes.value.find(s => s.id === id);
   if (!statusType) return;
 
@@ -919,7 +1033,7 @@ const removeStatusType = async (id: string) => {
   }
 };
 
-const removeEventType = async (id: string) => {
+const removeEventType = (id: string): void => {
   const eventType = customTeacherEventTypes.value.find(e => e.id === id);
   if (!eventType) return;
 
@@ -938,7 +1052,7 @@ const removeEventType = async (id: string) => {
   }
 };
 
-const confirmDelete = async () => {
+const confirmDelete = async (): Promise<void> => {
   if (!itemToDelete.value) return;
 
   try {
@@ -955,7 +1069,7 @@ const confirmDelete = async () => {
   }
 };
 
-const handleDataManagement = async () => {
+const handleDataManagement = async (): Promise<void> => {
   if (!itemToDelete.value) return;
 
   isProcessingData.value = true;
@@ -1025,7 +1139,7 @@ const handleDataManagement = async () => {
 };
 
 // Data validation and backup methods
-const validateData = async () => {
+const validateData = (): void => {
   isValidating.value = true;
   try {
     validationResults.value = store.validateTransactionData();
@@ -1036,10 +1150,10 @@ const validateData = async () => {
   }
 };
 
-const exportBackup = async () => {
+const exportBackup = (): void => {
   isExporting.value = true;
   try {
-    const backupData = await store.exportDatabaseBackup();
+    const backupData = store.exportDatabaseBackup();
     const blob = new Blob([backupData], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1056,11 +1170,11 @@ const exportBackup = async () => {
   }
 };
 
-const handleBackupFileChange = (file: File | null) => {
+const handleBackupFileChange = (file: File | null): void => {
   backupFile.value = file;
 };
 
-const importBackup = async () => {
+const importBackup = async (): Promise<void> => {
   if (!importFile.value) return;
 
   isImporting.value = true;
@@ -1076,7 +1190,7 @@ const importBackup = async () => {
   }
 };
 
-const clearAllData = async () => {
+const clearAllData = async (): Promise<void> => {
   isClearingData.value = true;
   try {
     await store.clearAllData();
@@ -1089,25 +1203,25 @@ const clearAllData = async () => {
 };
 
 // Validation functions
-const getStatusNameRules = () => [
-  (v: string) => !!v || 'Status name is required',
-  (v: string) => v.length >= 2 || 'Status name must be at least 2 characters',
-  (v: string) => v.length <= 50 || 'Status name cannot exceed 50 characters',
+const getStatusNameRules = (): ((v: string) => boolean | string)[] => [
+  (v: string): boolean | string => !!v || 'Status name is required',
+  (v: string): boolean | string => v.length >= 2 || 'Status name must be at least 2 characters',
+  (v: string): boolean | string => v.length <= 50 || 'Status name cannot exceed 50 characters',
 ];
 
-const getEventNameRules = () => [
-  (v: string) => !!v || 'Event name is required',
-  (v: string) => v.length >= 2 || 'Event name must be at least 2 characters',
-  (v: string) => v.length <= 50 || 'Event name cannot exceed 50 characters',
+const getEventNameRules = (): ((v: string) => boolean | string)[] => [
+  (v: string): boolean | string => !!v || 'Event name is required',
+  (v: string): boolean | string => v.length >= 2 || 'Event name must be at least 2 characters',
+  (v: string): boolean | string => v.length <= 50 || 'Event name cannot exceed 50 characters',
 ];
 
-const getEditStatusNameRules = () => [
-  (v: string) => !!v || 'Status name is required',
-  (v: string) => v.length >= 2 || 'Status name must be at least 2 characters',
-  (v: string) => v.length <= 50 || 'Status name cannot exceed 50 characters',
+const getEditStatusNameRules = (): ((v: string) => boolean | string)[] => [
+  (v: string): boolean | string => !!v || 'Status name is required',
+  (v: string): boolean | string => v.length >= 2 || 'Status name must be at least 2 characters',
+  (v: string): boolean | string => v.length <= 50 || 'Status name cannot exceed 50 characters',
 ];
 
-const validateStatusName = () => {
+const validateStatusName = (): void => {
   const existingNames = [
     ...customStatusTypes.value.map(s => s.name),
     ...customTeacherEventTypes.value.map(e => e.name),
@@ -1115,7 +1229,7 @@ const validateStatusName = () => {
   statusValidation.value = validateCustomStatusType(newStatusName.value, '#1976D2', existingNames);
 };
 
-const validateEventName = () => {
+const validateEventName = (): void => {
   const existingNames = [
     ...customStatusTypes.value.map(s => s.name),
     ...customTeacherEventTypes.value.map(e => e.name),
@@ -1123,7 +1237,7 @@ const validateEventName = () => {
   eventValidation.value = validateCustomTeacherEventType(newEventName.value, existingNames);
 };
 
-const validateEditStatusName = () => {
+const validateEditStatusName = (): void => {
   const existingNames = [
     ...customStatusTypes.value.filter(s => s.id !== editingStatus.value.id).map(s => s.name),
     ...customTeacherEventTypes.value.map(e => e.name),
@@ -1132,12 +1246,14 @@ const validateEditStatusName = () => {
 };
 
 // Ensure database is ready when component mounts
-onMounted(async () => {
-  try {
-    // This will ensure the database is initialized and all object stores exist
-    await store.ensureDBReady();
-  } catch (error) {
-    componentLogger.error('ManageTransactionsMode', 'Failed to ensure database readiness', error instanceof Error ? error : new Error('Unknown error'));
-  }
+onMounted((): void => {
+  void (async (): Promise<void> => {
+    try {
+      // This will ensure the database is initialized and all object stores exist
+      await store.ensureDBReady();
+    } catch (error) {
+      componentLogger.error('ManageTransactionsMode', 'Failed to ensure database readiness', error instanceof Error ? error : new Error('Unknown error'));
+    }
+  })();
 });
 </script>

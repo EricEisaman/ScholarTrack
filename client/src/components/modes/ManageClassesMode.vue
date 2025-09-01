@@ -1,7 +1,10 @@
 <template>
   <div>
     <v-row>
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <!-- Add Class Section -->
         <v-card class="mb-4">
           <v-card-title class="text-h5">
@@ -9,7 +12,10 @@
           </v-card-title>
 
           <v-card-text>
-            <v-form ref="addForm" v-model="addFormValid">
+            <v-form
+              ref="addForm"
+              v-model="addFormValid"
+            >
               <v-text-field
                 v-model="newClassName"
                 label="Class Name"
@@ -17,15 +23,15 @@
                 required
                 clearable
                 @keyup.enter="addClass"
-              ></v-text-field>
+              />
 
               <v-btn
                 color="primary"
                 variant="elevated"
                 :disabled="!addFormValid"
                 :loading="isAdding"
-                @click="addClass"
                 class="mt-4"
+                @click="addClass"
               >
                 Add Class
               </v-btn>
@@ -34,7 +40,10 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <!-- Class Statistics -->
         <v-card class="mb-4">
           <v-card-title class="text-h5">
@@ -45,15 +54,19 @@
             <v-list>
               <v-list-item>
                 <v-list-item-title>Total Classes</v-list-item-title>
-                <template v-slot:append>
-                  <v-chip color="primary">{{ classes.length }}</v-chip>
+                <template #append>
+                  <v-chip color="primary">
+                    {{ classes.length }}
+                  </v-chip>
                 </template>
               </v-list-item>
 
               <v-list-item>
                 <v-list-item-title>Total Students</v-list-item-title>
-                <template v-slot:append>
-                  <v-chip color="secondary">{{ students.length }}</v-chip>
+                <template #append>
+                  <v-chip color="secondary">
+                    {{ students.length }}
+                  </v-chip>
                 </template>
               </v-list-item>
             </v-list>
@@ -126,32 +139,38 @@
     </v-row>
 
     <!-- Edit Class Dialog -->
-    <v-dialog v-model="showEditDialog" max-width="500">
+    <v-dialog
+      v-model="showEditDialog"
+      max-width="500"
+    >
       <v-card>
         <v-card-title class="text-h6">
           Edit Class
         </v-card-title>
 
         <v-card-text>
-          <v-form ref="editForm" v-model="editFormValid">
+          <v-form
+            ref="editForm"
+            v-model="editFormValid"
+          >
             <v-text-field
               v-model="editingClass!.name"
               label="Class Name"
               :rules="[v => !!v || 'Class name is required']"
               required
               clearable
-            ></v-text-field>
+            />
           </v-form>
         </v-card-text>
 
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
             color="grey"
             variant="text"
-            @click="cancelEdit"
             size="large"
             min-width="100"
+            @click="cancelEdit"
           >
             Cancel
           </v-btn>
@@ -160,9 +179,9 @@
             variant="elevated"
             :disabled="!editFormValid"
             :loading="isEditing"
-            @click="saveClass"
             size="large"
             min-width="140"
+            @click="saveClass"
           >
             Save Changes
           </v-btn>
@@ -171,7 +190,10 @@
     </v-dialog>
 
     <!-- Confirmation Dialog -->
-    <v-dialog v-model="showConfirmDialog" max-width="500">
+    <v-dialog
+      v-model="showConfirmDialog"
+      max-width="500"
+    >
       <v-card>
         <v-card-title class="text-h6">
           Confirm Class Removal
@@ -193,7 +215,10 @@
               <li v-if="exclusiveStudents.length > 0">
                 Remove {{ exclusiveStudents.length }} student(s) who belong exclusively to this class:
                 <ul class="mt-1">
-                  <li v-for="student in exclusiveStudents" :key="student.id">
+                  <li
+                    v-for="student in exclusiveStudents"
+                    :key="student.id"
+                  >
                     {{ student.label }} ({{ student.emoji }})
                   </li>
                 </ul>
@@ -206,13 +231,13 @@
         </v-card-text>
 
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
             color="grey"
             variant="text"
-            @click="cancelRemove"
             size="large"
             min-width="100"
+            @click="cancelRemove"
           >
             Cancel
           </v-btn>
@@ -220,9 +245,9 @@
             color="error"
             variant="elevated"
             :loading="isRemoving"
-            @click="removeClass"
             size="large"
             min-width="160"
+            @click="removeClass"
           >
             Remove Class
           </v-btn>
@@ -253,8 +278,8 @@ const editFormValid = ref(false);
 const isEditing = ref(false);
 
 // Form refs
-const addForm = ref();
-const editForm = ref();
+const addForm = ref<{ resetValidation: () => void } | null>(null);
+const editForm = ref<{ resetValidation: () => void } | null>(null);
 
 // Computed properties
 const classes = computed(() => store.classes);
@@ -272,7 +297,7 @@ const exclusiveStudents = computed(() => {
   if (!selectedClass.value) return [];
 
   return students.value.filter((student: Student) =>
-    student.classes.length === 1 && student.classes.includes(selectedClass.value!.name),
+    student.classes.length === 1 && student.classes.includes(selectedClass.value?.name ?? ''),
   );
 });
 
@@ -280,12 +305,12 @@ const sharedStudents = computed(() => {
   if (!selectedClass.value) return [];
 
   return students.value.filter((student: Student) =>
-    student.classes.length > 1 && student.classes.includes(selectedClass.value!.name),
+    student.classes.length > 1 && student.classes.includes(selectedClass.value?.name ?? ''),
   );
 });
 
 // Methods
-const addClass = async () => {
+const addClass = async (): Promise<void> => {
   if (!addFormValid.value) return;
 
   isAdding.value = true;
@@ -305,12 +330,12 @@ const addClass = async () => {
   }
 };
 
-const editClass = (item: any) => {
+const editClass = (item: Class): void => {
   editingClass.value = { ...item };
   showEditDialog.value = true;
 };
 
-const saveClass = async () => {
+const saveClass = async (): Promise<void> => {
   if (!editFormValid.value || !editingClass.value) return;
 
   isEditing.value = true;
@@ -328,19 +353,19 @@ const saveClass = async () => {
   }
 };
 
-const cancelEdit = () => {
+const cancelEdit = (): void => {
   showEditDialog.value = false;
   editingClass.value = null;
   editForm.value?.resetValidation();
   editFormValid.value = false;
 };
 
-const confirmRemove = (item: any) => {
+const confirmRemove = (item: Class): void => {
   selectedClass.value = item;
   showConfirmDialog.value = true;
 };
 
-const removeClass = async () => {
+const removeClass = async (): Promise<void> => {
   if (!selectedClass.value) return;
 
   isRemoving.value = true;
@@ -356,7 +381,7 @@ const removeClass = async () => {
   }
 };
 
-const cancelRemove = () => {
+const cancelRemove = (): void => {
   showConfirmDialog.value = false;
   selectedClass.value = null;
 };

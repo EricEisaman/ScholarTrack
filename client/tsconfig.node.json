@@ -5,6 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
+    "target": "ES2020",
     
     // Maximum Strict Type Checking
     "strict": true,
@@ -28,5 +29,8 @@
     "allowUnusedLabels": false,
     "allowUnreachableCode": false
   },
-  "include": ["vite.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts"
+  ]
 }

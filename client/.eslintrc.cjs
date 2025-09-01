@@ -7,7 +7,7 @@ module.exports = {
   },
   extends: [
     'eslint:recommended',
-    'plugin:vue/vue3-essential',
+    'plugin:vue/vue3-recommended',
     '@vue/eslint-config-typescript',
   ],
   parser: 'vue-eslint-parser',
@@ -15,10 +15,64 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
     parser: '@typescript-eslint/parser',
-    project: ['./client/tsconfig.json', './server/tsconfig.json'],
+    project: './tsconfig.json',
+    tsconfigRootDir: __dirname,
   },
-  ignorePatterns: ['**/vite.config.ts', '**/vitest.config.ts'],
-  plugins: ['vue'],
+  overrides: [
+    {
+      files: ['**/*.ts', '**/*.tsx'],
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: __dirname,
+      },
+    },
+    {
+      files: ['**/*.vue'],
+      parser: 'vue-eslint-parser',
+      parserOptions: {
+        parser: '@typescript-eslint/parser',
+        project: './tsconfig.json',
+        tsconfigRootDir: __dirname,
+      },
+    },
+    {
+      files: ['vite.config.ts', 'vitest.config.ts'],
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        project: './tsconfig.node.json',
+        tsconfigRootDir: __dirname,
+      },
+      rules: {
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/await-thenable': 'off',
+        '@typescript-eslint/no-misused-promises': 'off',
+        '@typescript-eslint/require-await': 'off',
+        '@typescript-eslint/explicit-function-return-type': 'off',
+        '@typescript-eslint/explicit-module-boundary-types': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        '@typescript-eslint/prefer-nullish-coalescing': 'off',
+        '@typescript-eslint/prefer-optional-chain': 'off',
+        '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+        'no-console': 'off',
+        'no-debugger': 'off',
+        'no-restricted-syntax': 'off',
+      },
+    },
+    {
+      files: ['src/services/logger.ts'],
+      rules: {
+        'no-restricted-syntax': 'off',
+        'no-console': 'off',
+      },
+    },
+  ],
+  plugins: ['vue', '@typescript-eslint'],
   rules: {
     // Microsoft-endorsed TypeScript rules
     '@typescript-eslint/no-explicit-any': 'error',
@@ -45,6 +99,7 @@ module.exports = {
     'vue/no-unused-properties': 'error',
     'vue/valid-template-root': 'error',
     'vue/no-parsing-error': 'error',
+    'vue/valid-v-slot': 'off', // Temporarily disabled due to false positives with destructured slots
     
     // General rules
     'no-console': 'warn',
@@ -72,29 +127,18 @@ module.exports = {
     'eol-last': 'error',
     'no-multiple-empty-lines': ['error', { max: 1 }],
   },
-  overrides: [
-    {
-      files: ['server/**/*.ts'],
-      env: {
-        node: true,
-      },
-      rules: {
-        '@typescript-eslint/no-var-requires': 'off',
-        'no-console': 'off', // Allow console in server code
-      },
-    },
-    {
-      files: ['client/src/stores/**/*.ts'],
-      rules: {
-        '@typescript-eslint/no-explicit-any': 'warn', // Allow some flexibility in stores
-      },
-    },
-  ],
   ignorePatterns: [
     'dist/',
     'node_modules/',
     '*.min.js',
     'coverage/',
     '.vite/',
+    'build-static.js',
+    '.eslintrc.cjs',
+    'public/sw.js',
+    '**/*.js',
+    '**/*.jsx',
+    '**/*.cjs',
+    '**/*.mjs',
   ],
 };

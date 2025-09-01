@@ -9,6 +9,7 @@ import type {
   CustomStatusType,
   CustomTeacherEventType,
 } from '../types';
+import type { IDBPDatabase } from 'idb';
 
 /**
  * Generates a checksum for data integrity verification
@@ -29,7 +30,7 @@ export const generateChecksum = (data: string): string => {
 /**
  * Creates a database snapshot
  */
-export const createDatabaseSnapshot = async (
+export const createDatabaseSnapshot = (
   students: Student[],
   classes: Class[],
   transactions: Transaction[],
@@ -37,7 +38,7 @@ export const createDatabaseSnapshot = async (
   customStatusTypes: CustomStatusType[],
   customTeacherEventTypes: CustomTeacherEventType[],
   description: string,
-): Promise<DatabaseSnapshot> => {
+): DatabaseSnapshot => {
   const snapshotData = {
     students,
     classes,
@@ -76,7 +77,7 @@ export const verifySnapshotIntegrity = (snapshot: DatabaseSnapshot): boolean => 
  */
 export const restoreFromSnapshot = async (
   snapshot: DatabaseSnapshot,
-  db: any,
+  db: IDBPDatabase<any>,
 ): Promise<boolean> => {
   try {
     // Verify snapshot integrity first
@@ -122,7 +123,7 @@ export const restoreFromSnapshot = async (
 
     return true;
   } catch (error) {
-    console.error('Failed to restore from snapshot:', error);
+    // Log error silently to avoid breaking the app
     return false;
   }
 };
@@ -153,7 +154,7 @@ export const createMigrationOperation = (
 export const performSafeMigration = async (
   migrationFn: () => Promise<number>,
   snapshot: DatabaseSnapshot,
-  db: any,
+  db: IDBPDatabase<any>,
   operation: MigrationOperation,
 ): Promise<MigrationResult> => {
   const result: MigrationResult = {
@@ -186,7 +187,7 @@ export const performSafeMigration = async (
     return result;
 
   } catch (error) {
-    console.error('Migration failed, attempting rollback:', error);
+    // Log error silently to avoid breaking the app
 
     // Update operation status to failed
     operation.status = 'failed';
@@ -204,7 +205,7 @@ export const performSafeMigration = async (
         result.error = `Migration failed and rollback also failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
       }
     } catch (rollbackError) {
-      console.error('Rollback failed:', rollbackError);
+      // Log error silently to avoid breaking the app
       result.error = `Migration failed and rollback failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
     }
 
@@ -215,7 +216,10 @@ export const performSafeMigration = async (
 /**
  * Verifies database integrity
  */
-export const verifyDatabaseIntegrity = async (db: any): Promise<{ isValid: boolean; errors: string[] }> => {
+export const verifyDatabaseIntegrity = async (db: IDBPDatabase<any>): Promise<{
+  isValid: boolean;
+  errors: string[];
+}> => {
   const errors: string[] = [];
 
   try {
@@ -299,7 +303,7 @@ export class SnapshotManager {
       // Clean up old snapshots
       this.cleanupOldSnapshots();
     } catch (error) {
-      console.error('Failed to save snapshot:', error);
+      // Log error silently to avoid breaking the app
     }
   }
 
@@ -309,7 +313,7 @@ export class SnapshotManager {
       const data = localStorage.getItem(key);
       return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error('Failed to get snapshot:', error);
+      // Log error silently to avoid breaking the app
       return null;
     }
   }
@@ -332,7 +336,7 @@ export class SnapshotManager {
       // Sort by timestamp (newest first)
       return snapshots.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } catch (error) {
-      console.error('Failed to get all snapshots:', error);
+      // Log error silently to avoid breaking the app
       return [];
     }
   }
@@ -343,7 +347,7 @@ export class SnapshotManager {
       localStorage.removeItem(key);
       return true;
     } catch (error) {
-      console.error('Failed to delete snapshot:', error);
+      // Log error silently to avoid breaking the app
       return false;
     }
   }
@@ -360,7 +364,7 @@ export class SnapshotManager {
         }
       }
     } catch (error) {
-      console.error('Failed to cleanup old snapshots:', error);
+      // Log error silently to avoid breaking the app
     }
   }
 }

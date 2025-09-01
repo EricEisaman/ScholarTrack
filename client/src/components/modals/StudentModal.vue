@@ -7,10 +7,15 @@
   >
     <v-card :class="{ 'fullscreen-modal': xs }">
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">mdi-account</v-icon>
+        <v-icon class="mr-2">
+          mdi-account
+        </v-icon>
         <span class="text-truncate">{{ selectedStudent?.label }} {{ selectedStudent?.emoji }}</span>
         <v-spacer />
-        <v-btn icon @click="closeModal">
+        <v-btn
+          icon
+          @click="closeModal"
+        >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -35,20 +40,25 @@
 
             <v-btn
               color="primary"
-              @click="submitCode"
               :disabled="!canSubmitCode"
               :size="xs ? 'large' : 'default'"
               :block="xs"
               class="mt-3"
+              @click="submitCode"
             >
               Submit Code
             </v-btn>
           </div>
 
           <!-- Teacher Mode Toggle (if teacher code matches) -->
-          <div v-if="isTeacherCode && codeSubmitted" class="mt-4">
+          <div
+            v-if="isTeacherCode && codeSubmitted"
+            class="mt-4"
+          >
             <div class="d-flex align-center mb-3">
-              <h3 class="text-h6 mb-0">Teacher Actions</h3>
+              <h3 class="text-h6 mb-0">
+                Teacher Actions
+              </h3>
               <v-spacer />
               <v-btn-toggle
                 v-model="teacherMode"
@@ -56,12 +66,22 @@
                 mandatory
                 density="compact"
               >
-                <v-btn value="event" size="small">
-                  <v-icon start>mdi-calendar-plus</v-icon>
+                <v-btn
+                  value="event"
+                  size="small"
+                >
+                  <v-icon start>
+                    mdi-calendar-plus
+                  </v-icon>
                   Record Event
                 </v-btn>
-                <v-btn value="status" size="small">
-                  <v-icon start>mdi-account-edit</v-icon>
+                <v-btn
+                  value="status"
+                  size="small"
+                >
+                  <v-icon start>
+                    mdi-account-edit
+                  </v-icon>
                   Change Status
                 </v-btn>
               </v-btn-toggle>
@@ -69,8 +89,13 @@
           </div>
 
           <!-- Student Status Section (if student code matches OR teacher in status mode) -->
-          <div v-if="(isStudentCode && !isTeacherCode && codeSubmitted) || (isTeacherCode && teacherMode === 'status' && codeSubmitted)" class="mt-4">
-            <h3 class="text-h6 mb-3">Select Status</h3>
+          <div
+            v-if="(isStudentCode && !isTeacherCode && codeSubmitted) || (isTeacherCode && teacherMode === 'status' && codeSubmitted)"
+            class="mt-4"
+          >
+            <h3 class="text-h6 mb-3">
+              Select Status
+            </h3>
             <div class="d-flex flex-wrap">
               <v-btn
                 v-for="status in studentStatuses"
@@ -80,8 +105,8 @@
                 :size="statusButtonSize"
                 :width="statusButtonWidth"
                 :height="xs ? '48px' : sm ? '48px' : '40px'"
-                @click="handleStatusSelection(status)"
                 class="mb-3 mr-3 text-wrap"
+                @click="handleStatusSelection(status)"
               >
                 {{ status }}
               </v-btn>
@@ -89,8 +114,13 @@
           </div>
 
           <!-- Teacher Event Section (if teacher code matches and in event mode) -->
-          <div v-if="isTeacherCode && teacherMode === 'event' && codeSubmitted" class="mt-4">
-            <h3 class="text-h6 mb-3">Record Event</h3>
+          <div
+            v-if="isTeacherCode && teacherMode === 'event' && codeSubmitted"
+            class="mt-4"
+          >
+            <h3 class="text-h6 mb-3">
+              Record Event
+            </h3>
             <div class="d-flex flex-wrap">
               <v-btn
                 v-for="event in store.teacherEvents"
@@ -100,8 +130,8 @@
                 :size="eventButtonSize"
                 :width="eventButtonWidth"
                 :height="xs ? '48px' : sm ? '48px' : '40px'"
-                @click="handleEventSelection(event)"
                 class="mb-3 mr-3 text-wrap"
+                @click="handleEventSelection(event)"
               >
                 {{ event }}
               </v-btn>
@@ -126,19 +156,19 @@
         <v-btn
           v-if="codeSubmitted"
           color="quaternary"
-          @click="handleSubmit"
           :disabled="!canSubmit"
           :loading="isSubmitting"
           :size="xs ? 'large' : 'default'"
           :block="xs"
+          @click="handleSubmit"
         >
           {{ getSubmitButtonText() }}
         </v-btn>
         <v-btn
-          @click="closeModal"
           :size="xs ? 'large' : 'default'"
           :block="xs"
           :class="{ 'mt-2': xs }"
+          @click="closeModal"
         >
           Cancel
         </v-btn>
@@ -172,7 +202,7 @@ const selectedStatus = ref<StudentStatus>('IN CLASS');
 const selectedEvent = ref<TeacherEventType | null>(null);
 const errorMessage = ref('');
 const isSubmitting = ref(false);
-const codeInput = ref();
+const codeInput = ref<{ focus: () => void } | null>(null);
 const codeSubmitted = ref(false);
 const teacherMode = ref<'status' | 'event'>('event'); // Teacher mode toggle
 
@@ -238,13 +268,13 @@ const maxCodeLength = computed(() => {
   return 6; // Allow up to 6 characters for both student and teacher codes
 });
 
-const codeInputLabel = computed(() => {
+const codeInputLabel = computed((): string => {
   return 'Enter code';
 });
 
-const codeValidationRules = computed(() => [
-  (v: string) => !!v || 'Code is required',
-  (v: string) => {
+const codeValidationRules = computed((): ((v: string) => boolean | string)[] => [
+  (v: string): boolean | string => !!v || 'Code is required',
+  (v: string): boolean | string => {
     // Only validate length when user is trying to submit
     if (v.length > 0 && v.length < 4) {
       return 'Code must be at least 4 digits';
@@ -256,22 +286,22 @@ const codeValidationRules = computed(() => [
   },
 ]);
 
-const canSubmitCode = computed(() => {
+const canSubmitCode = computed((): boolean => {
   if (!enteredCode.value) return false;
   return enteredCode.value.length >= 4 && enteredCode.value.length <= 6;
 });
 
-const isStudentCode = computed(() => {
+const isStudentCode = computed((): boolean => {
   if (!selectedStudent.value || !enteredCode.value || !codeSubmitted.value) return false;
   return enteredCode.value === selectedStudent.value.code;
 });
 
-const isTeacherCode = computed(() => {
+const isTeacherCode = computed((): boolean => {
   if (!enteredCode.value || !codeSubmitted.value) return false;
   return enteredCode.value === store.teacherCode;
 });
 
-const canSubmit = computed(() => {
+const canSubmit = computed((): boolean => {
   if (!codeSubmitted.value) return false;
 
   if (isStudentCode.value) {
@@ -290,7 +320,7 @@ const canSubmit = computed(() => {
 });
 
 // Computed property that includes both default and custom status types
-const studentStatuses = computed(() => {
+const studentStatuses = computed((): StudentStatus[] => {
   const defaultStatuses: StudentStatus[] = [
     'IN CLASS',
     'RESTROOM',
@@ -307,14 +337,14 @@ const studentStatuses = computed(() => {
 });
 
 // Methods
-const onCodeInput = () => {
+const onCodeInput = (): void => {
   // Clear error message when user starts typing
   if (errorMessage.value) {
     errorMessage.value = '';
   }
 };
 
-const submitCode = () => {
+const submitCode = (): void => {
   if (!enteredCode.value) return;
 
   // Check if it's a valid student code (4 digits)
@@ -332,7 +362,7 @@ const submitCode = () => {
   }
 };
 
-const handleStatusSelection = (status: StudentStatus) => {
+const handleStatusSelection = (status: StudentStatus): void => {
   selectedStatus.value = status;
 
   // Check if this status requires a memo
@@ -343,10 +373,10 @@ const handleStatusSelection = (status: StudentStatus) => {
   }
 };
 
-const handleEventSelection = (event: TeacherEventType) => {
+const handleEventSelection = (event: TeacherEventType): void => {
   selectedEvent.value = event;
 
-  // Check if this event requires a memo
+  // Check if this status requires a memo
   if (store.requiresMemo(event, 'event')) {
     memoStatusOrEventName.value = event;
     memoType.value = 'event';
@@ -354,7 +384,7 @@ const handleEventSelection = (event: TeacherEventType) => {
   }
 };
 
-const handleMemoSubmit = async (memo: string) => {
+const handleMemoSubmit = async (memo: string): Promise<void> => {
   if (!selectedStudent.value) return;
 
   isSubmitting.value = true;
@@ -409,7 +439,7 @@ const getSubmitButtonText = (): string => {
   return 'Submit';
 };
 
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (!selectedStudent.value) return;
 
   isSubmitting.value = true;
@@ -467,12 +497,12 @@ const handleSubmit = async () => {
   }
 };
 
-const closeModal = () => {
+const closeModal = (): void => {
   store.closeStudentModal();
   resetForm();
 };
 
-const resetForm = () => {
+const resetForm = (): void => {
   enteredCode.value = '';
   selectedStatus.value = 'IN CLASS';
   selectedEvent.value = null;

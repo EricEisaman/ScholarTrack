@@ -1,95 +1,73 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
-import { createPinia, setActivePinia } from 'pinia';
+import { mountWithVuetify, createMockStore, testUtils, dataFactories } from '../../../test/utils';
+import { TEST_DATA } from '../../../test/config';
 import ManageTransactionsMode from '../ManageTransactionsMode.vue';
 import { useAppStore } from '../../../stores/appStore';
 import type { CustomStatusType, CustomTeacherEventType } from '../../../types';
+import type { VueWrapper } from '@vue/test-utils';
 
-// Mock the validation utilities
-vi.mock('../../../utils/validation', () => ({
-  validateCustomStatusType: vi.fn(() => ({ isValid: true, errors: [], warnings: [] })),
-  validateCustomTeacherEventType: vi.fn(() => ({ isValid: true, errors: [], warnings: [] })),
+// Mock the store
+vi.mock('../../../stores/appStore', () => ({
+  useAppStore: vi.fn(),
 }));
 
-// Helper function to generate random string
-const generateRandomString = (length: number): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
 describe('ManageTransactionsMode', () => {
-  let pinia: any;
-  let store: any;
+  let store: ReturnType<typeof createMockStore>;
+  let wrapper: VueWrapper<unknown>;
 
   beforeEach(() => {
-    pinia = createPinia();
-    setActivePinia(pinia);
-    store = useAppStore();
+    // Create a fresh mock store for each test
+    store = createMockStore({
+      customStatusTypes: [],
+      customTeacherEventTypes: [],
+      addCustomStatusType: vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] }),
+      addCustomTeacherEventType: vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] }),
+      removeCustomStatusType: vi.fn().mockResolvedValue(undefined),
+      removeCustomTeacherEventType: vi.fn().mockResolvedValue(undefined),
+      updateCustomStatusType: vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] }),
+      updateCustomTeacherEventType: vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] }),
+      validateTransactionData: vi.fn().mockResolvedValue({ orphanedStatuses: [], orphanedEvents: [] }),
+      exportDatabaseBackup: vi.fn().mockResolvedValue('{"test": "data"}'),
+      importDatabaseBackup: vi.fn().mockResolvedValue(undefined),
+      clearAllData: vi.fn().mockResolvedValue(undefined),
+    });
 
-    // Mock store methods
-    store.addCustomStatusType = vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] });
-    store.addCustomTeacherEventType = vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] });
-    store.removeCustomStatusType = vi.fn().mockResolvedValue(undefined);
-    store.removeCustomTeacherEventType = vi.fn().mockResolvedValue(undefined);
-    store.updateCustomStatusType = vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] });
-    store.updateCustomTeacherEventType = vi.fn().mockResolvedValue({ isValid: true, errors: [], warnings: [] });
-    store.validateTransactionData = vi.fn().mockResolvedValue({ orphanedStatuses: [], orphanedEvents: [] });
-    store.exportDatabaseBackup = vi.fn().mockResolvedValue('{"test": "data"}');
-    store.importDatabaseBackup = vi.fn().mockResolvedValue(undefined);
-    store.clearAllData = vi.fn().mockResolvedValue(undefined);
+    (useAppStore as ReturnType<typeof vi.fn>).mockReturnValue(store);
 
-    // Mock reactive state
-    store.customStatusTypes = [];
-    store.customTeacherEventTypes = [];
+    // Mount component with Vuetify
+    wrapper = mountWithVuetify(ManageTransactionsMode);
   });
 
   it('should mount successfully', () => {
-    const wrapper = mount(ManageTransactionsMode);
-    expect(wrapper.exists()).toBe(true);
+    testUtils.assertExists(wrapper);
     expect(wrapper.find('.text-h4').text()).toBe('MANAGE TRANSACTIONS');
   });
 
-  it('should add a custom status type with random name', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-    const randomName = generateRandomString(10);
-
-    // Set the status name
+  it('should add a custom status type', async () => {
+    const statusName = 'Test Status';
+    
     await wrapper.setData({
-      newStatusName: randomName,
+      newStatusName: statusName,
       newStatusColor: '#FF5722',
     });
 
-    // Trigger the add status type action
     await wrapper.vm.addStatusType();
 
-    // Verify the store method was called with correct parameters
-    expect(store.addCustomStatusType).toHaveBeenCalledWith(randomName, '#FF5722');
-
-    // Verify form was reset
+    expect(store.addCustomStatusType).toHaveBeenCalledWith(statusName, '#FF5722');
     expect(wrapper.vm.newStatusName).toBe('');
     expect(wrapper.vm.newStatusColor).toBe('#1976D2');
   });
 
-  it('should add a custom teacher event type with random name', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-    const randomName = generateRandomString(10);
-
-    // Set the event name
+  it('should add a custom teacher event type', async () => {
+    const eventName = 'Test Event';
+    
     await wrapper.setData({
-      newEventName: randomName,
+      newEventName: eventName,
     });
 
-    // Trigger the add event type action
     await wrapper.vm.addEventType();
 
-    // Verify the store method was called with correct parameters
-    expect(store.addCustomTeacherEventType).toHaveBeenCalledWith(randomName);
-
-    // Verify form was reset
+    expect(store.addCustomTeacherEventType).toHaveBeenCalledWith(eventName);
     expect(wrapper.vm.newEventName).toBe('');
   });
 
@@ -97,13 +75,13 @@ describe('ManageTransactionsMode', () => {
     const mockStatusTypes: CustomStatusType[] = [
       {
         id: '1',
-        name: generateRandomString(8),
+        name: 'Present',
         color: '#FF5722',
         createdAt: new Date().toISOString(),
       },
       {
         id: '2',
-        name: generateRandomString(8),
+        name: 'Absent',
         color: '#4CAF50',
         createdAt: new Date().toISOString(),
       },
@@ -111,115 +89,71 @@ describe('ManageTransactionsMode', () => {
 
     store.customStatusTypes = mockStatusTypes;
 
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Wait for reactive updates
     await wrapper.vm.$nextTick();
 
-    // Verify status types are displayed
     const statusItems = wrapper.findAll('.custom-status-item');
     expect(statusItems).toHaveLength(2);
 
-    // Verify first status type details
-    expect(statusItems[0].text()).toContain(mockStatusTypes[0].name);
-    expect(statusItems[0].text()).toContain(mockStatusTypes[0].color);
+    testUtils.assertContainsText(statusItems[0], mockStatusTypes[0].name);
+    testUtils.assertContainsText(statusItems[0], mockStatusTypes[0].color);
   });
 
   it('should display existing custom teacher event types', async () => {
     const mockEventTypes: CustomTeacherEventType[] = [
       {
         id: '1',
-        name: generateRandomString(8),
+        name: 'Late Arrival',
         createdAt: new Date().toISOString(),
       },
       {
         id: '2',
-        name: generateRandomString(8),
+        name: 'Early Departure',
         createdAt: new Date().toISOString(),
       },
     ];
 
     store.customTeacherEventTypes = mockEventTypes;
 
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Wait for reactive updates
     await wrapper.vm.$nextTick();
 
-    // Verify event types are displayed
     const eventItems = wrapper.findAll('.custom-event-item');
     expect(eventItems).toHaveLength(2);
 
-    // Verify first event type details
-    expect(eventItems[0].text()).toContain(mockEventTypes[0].name);
+    testUtils.assertContainsText(eventItems[0], mockEventTypes[0].name);
   });
 
   it('should handle validation errors for invalid status type names', async () => {
-    const wrapper = mount(ManageTransactionsMode);
     const invalidName = 'a'; // Too short
 
-    // Mock validation to return error
-    const { validateCustomStatusType } = await import('../../../utils/validation');
-    vi.mocked(validateCustomStatusType).mockReturnValue({
-      isValid: false,
-      errors: ['Status name must be at least 2 characters'],
-      warnings: [],
-    });
-
-    // Set invalid name
     await wrapper.setData({
       newStatusName: invalidName,
     });
 
-    // Trigger validation
     await wrapper.vm.validateStatusName();
 
-    // Verify validation result
-    expect(wrapper.vm.statusValidation).toEqual({
-      isValid: false,
-      errors: ['Status name must be at least 2 characters'],
-      warnings: [],
-    });
+    expect(wrapper.vm.statusValidation.isValid).toBe(false);
+    expect(wrapper.vm.statusValidation.errors).toContain('Status name must be at least 2 characters');
   });
 
   it('should handle validation errors for invalid event type names', async () => {
-    const wrapper = mount(ManageTransactionsMode);
     const invalidName = 'a'; // Too short
 
-    // Mock validation to return error
-    const { validateCustomTeacherEventType } = await import('../../../utils/validation');
-    vi.mocked(validateCustomTeacherEventType).mockReturnValue({
-      isValid: false,
-      errors: ['Event name must be at least 2 characters'],
-      warnings: [],
-    });
-
-    // Set invalid name
     await wrapper.setData({
       newEventName: invalidName,
     });
 
-    // Trigger validation
     await wrapper.vm.validateEventName();
 
-    // Verify validation result
-    expect(wrapper.vm.eventValidation).toEqual({
-      isValid: false,
-      errors: ['Event name must be at least 2 characters'],
-      warnings: [],
-    });
+    expect(wrapper.vm.eventValidation.isValid).toBe(false);
+    expect(wrapper.vm.eventValidation.errors).toContain('Event name must be at least 2 characters');
   });
 
   it('should export database backup', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Mock URL.createObjectURL and URL.revokeObjectURL
     const mockCreateObjectURL = vi.fn(() => 'blob:mock-url');
     const mockRevokeObjectURL = vi.fn();
     global.URL.createObjectURL = mockCreateObjectURL;
     global.URL.revokeObjectURL = mockRevokeObjectURL;
 
-    // Mock document.createElement and appendChild
     const mockLink = {
       href: '',
       download: '',
@@ -243,33 +177,22 @@ describe('ManageTransactionsMode', () => {
       writable: true,
     });
 
-    // Trigger export
     await wrapper.vm.exportBackup();
 
-    // Verify store method was called
     expect(store.exportDatabaseBackup).toHaveBeenCalled();
-
-    // Verify download was triggered
     expect(mockCreateElement).toHaveBeenCalledWith('a');
     expect(mockLink.click).toHaveBeenCalled();
   });
 
   it('should validate data integrity', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Mock validation result with orphaned data
     store.validateTransactionData.mockResolvedValue({
       orphanedStatuses: ['INVALID_STATUS'],
       orphanedEvents: ['INVALID_EVENT'],
     });
 
-    // Trigger validation
     await wrapper.vm.validateData();
 
-    // Verify store method was called
     expect(store.validateTransactionData).toHaveBeenCalled();
-
-    // Verify validation results are stored
     expect(wrapper.vm.validationResults).toEqual({
       orphanedStatuses: ['INVALID_STATUS'],
       orphanedEvents: ['INVALID_EVENT'],
@@ -277,15 +200,11 @@ describe('ManageTransactionsMode', () => {
   });
 
   it('should handle data management dialog for orphaned data', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Mock validation result with orphaned data
     store.validateTransactionData.mockResolvedValue({
       orphanedStatuses: ['CUSTOM_STATUS'],
       orphanedEvents: [],
     });
 
-    // Set up item to delete
     await wrapper.setData({
       itemToDelete: {
         id: '1',
@@ -294,10 +213,8 @@ describe('ManageTransactionsMode', () => {
       },
     });
 
-    // Trigger removal (should show data management dialog)
     await wrapper.vm.removeStatusType('1');
 
-    // Verify data management dialog is shown
     expect(wrapper.vm.showDataManagementDialog).toBe(true);
     expect(wrapper.vm.validationResults).toEqual({
       orphanedStatuses: ['CUSTOM_STATUS'],
@@ -306,9 +223,6 @@ describe('ManageTransactionsMode', () => {
   });
 
   it('should handle successful migration', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Mock successful migration
     store.performDataMigration = vi.fn().mockResolvedValue({
       success: true,
       affectedRecords: 5,
@@ -316,7 +230,6 @@ describe('ManageTransactionsMode', () => {
       rollbackPerformed: false,
     });
 
-    // Set up migration scenario
     await wrapper.setData({
       itemToDelete: {
         id: '1',
@@ -327,13 +240,9 @@ describe('ManageTransactionsMode', () => {
       migrationTargetStatus: 'NEW_STATUS',
     });
 
-    // Trigger data management
     await wrapper.vm.handleDataManagement();
 
-    // Verify migration was called
     expect(store.performDataMigration).toHaveBeenCalledWith('status', 'OLD_STATUS', 'NEW_STATUS');
-
-    // Verify success dialog is shown
     expect(wrapper.vm.showMigrationSuccessDialog).toBe(true);
     expect(wrapper.vm.migrationSuccessData).toEqual({
       success: true,
@@ -344,9 +253,6 @@ describe('ManageTransactionsMode', () => {
   });
 
   it('should handle failed migration with rollback', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Mock failed migration with rollback
     store.performDataMigration = vi.fn().mockResolvedValue({
       success: false,
       error: 'Migration failed',
@@ -354,7 +260,6 @@ describe('ManageTransactionsMode', () => {
       rollbackPerformed: true,
     });
 
-    // Set up migration scenario
     await wrapper.setData({
       itemToDelete: {
         id: '1',
@@ -365,13 +270,9 @@ describe('ManageTransactionsMode', () => {
       migrationTargetStatus: 'NEW_STATUS',
     });
 
-    // Trigger data management
     await wrapper.vm.handleDataManagement();
 
-    // Verify migration was called
     expect(store.performDataMigration).toHaveBeenCalledWith('status', 'OLD_STATUS', 'NEW_STATUS');
-
-    // Verify error dialog is shown
     expect(wrapper.vm.showMigrationErrorDialog).toBe(true);
     expect(wrapper.vm.migrationError).toBe('Migration failed');
     expect(wrapper.vm.migrationResultData).toEqual({
@@ -383,26 +284,17 @@ describe('ManageTransactionsMode', () => {
   });
 
   it('should clear all data with confirmation', async () => {
-    const wrapper = mount(ManageTransactionsMode);
-
-    // Set up clear data scenario
     await wrapper.setData({
       showClearDataDialog: true,
     });
 
-    // Trigger clear data
     await wrapper.vm.clearAllData();
 
-    // Verify store method was called
     expect(store.clearAllData).toHaveBeenCalled();
-
-    // Verify dialog is closed
     expect(wrapper.vm.showClearDataDialog).toBe(false);
   });
 
   it('should provide validation rules for status names', () => {
-    const wrapper = mount(ManageTransactionsMode);
-
     const rules = wrapper.vm.getStatusNameRules();
 
     expect(rules).toHaveLength(3);
@@ -415,8 +307,6 @@ describe('ManageTransactionsMode', () => {
   });
 
   it('should provide validation rules for event names', () => {
-    const wrapper = mount(ManageTransactionsMode);
-
     const rules = wrapper.vm.getEventNameRules();
 
     expect(rules).toHaveLength(3);

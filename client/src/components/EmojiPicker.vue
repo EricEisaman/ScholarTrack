@@ -1,11 +1,19 @@
 <template>
-  <v-dialog v-model="showPicker" max-width="600">
+  <v-dialog
+    v-model="showPicker"
+    max-width="600"
+  >
     <v-card>
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">😀</v-icon>
+        <v-icon class="mr-2">
+          😀
+        </v-icon>
         Choose Emoji
-        <v-spacer></v-spacer>
-        <v-btn icon @click="closePicker">
+        <v-spacer />
+        <v-btn
+          icon
+          @click="closePicker"
+        >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -20,10 +28,13 @@
           clearable
           prepend-inner-icon="mdi-magnify"
           class="mb-4"
-        ></v-text-field>
+        />
 
         <!-- Category Tabs -->
-        <v-tabs v-model="selectedCategory" class="mb-4">
+        <v-tabs
+          v-model="selectedCategory"
+          class="mb-4"
+        >
           <v-tab
             v-for="category in categories"
             :key="category"
@@ -41,8 +52,8 @@
             variant="text"
             size="large"
             class="emoji-btn"
-            @click="selectEmoji(emoji)"
             :title="emoji.name"
+            @click="selectEmoji(emoji)"
           >
             <span class="emoji-display">{{ emoji.emoji }}</span>
           </v-btn>
@@ -114,12 +125,12 @@ const getCategoryDisplayName = (category: string): string => {
   return names[category] ?? category;
 };
 
-const selectEmoji = (emoji: EmojiData) => {
+const selectEmoji = (emoji: EmojiData): void => {
   emit('select', emoji);
   closePicker();
 };
 
-const closePicker = () => {
+const closePicker = (): void => {
   showPicker.value = false;
   searchQuery.value = '';
 };

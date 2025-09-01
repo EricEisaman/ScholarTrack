@@ -1,11 +1,20 @@
 <template>
-  <v-dialog v-model="showModal" max-width="400px" persistent>
+  <v-dialog
+    v-model="showModal"
+    max-width="400px"
+    persistent
+  >
     <v-card>
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">mdi-cog</v-icon>
+        <v-icon class="mr-2">
+          mdi-cog
+        </v-icon>
         Change Mode
         <v-spacer />
-        <v-btn icon @click="closeModal">
+        <v-btn
+          icon
+          @click="closeModal"
+        >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -41,17 +50,17 @@
         <v-spacer />
         <v-btn
           color="primary"
-          @click="handleSubmit"
           :disabled="!enteredCode || enteredCode.length !== 6"
           size="large"
           min-width="140"
+          @click="handleSubmit"
         >
           Change Mode
         </v-btn>
         <v-btn
-          @click="closeModal"
           size="large"
           min-width="100"
+          @click="closeModal"
         >
           Cancel
         </v-btn>
@@ -69,14 +78,14 @@ const store = useAppStore();
 // Local state
 const enteredCode = ref('');
 const errorMessage = ref('');
-const codeInput = ref();
+const codeInput = ref<{ focus: () => void } | null>(null);
 
 // Computed properties
 const showModal = computed(() => store.showModeModal);
 const tempMode = computed(() => store.tempMode);
 
 // Methods
-const handleSubmit = async () => {
+const handleSubmit = async (): Promise<void> => {
   if (enteredCode.value === store.teacherCode) {
     store.tempCode = enteredCode.value;
     await store.changeMode(tempMode.value);
@@ -86,12 +95,12 @@ const handleSubmit = async () => {
   }
 };
 
-const closeModal = () => {
+const closeModal = (): void => {
   store.showModeModal = false;
   resetForm();
 };
 
-const resetForm = () => {
+const resetForm = (): void => {
   enteredCode.value = '';
   errorMessage.value = '';
 };

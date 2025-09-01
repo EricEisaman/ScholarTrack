@@ -5,7 +5,9 @@
       <v-col>
         <v-card :color="cardBackgroundColor">
           <v-card-title class="d-flex align-center">
-            <v-icon class="mr-2">mdi-account-group</v-icon>
+            <v-icon class="mr-2">
+              mdi-account-group
+            </v-icon>
             <span class="text-truncate">{{ currentClass?.name ?? 'No Class Selected' }}</span>
             <v-spacer />
             <v-chip
@@ -18,19 +20,36 @@
           </v-card-title>
 
           <v-card-text>
-            <div v-if="currentClassStudents.length === 0" class="text-center py-8">
+            <div
+              v-if="currentClassStudents.length === 0"
+              class="text-center py-8"
+            >
               <v-icon
                 :size="xs ? '48' : '64'"
                 :color="accessibleTextColor === '#FFFFFF' ? 'white' : 'black'"
               >
                 mdi-account-group-outline
               </v-icon>
-              <p class="text-h6 mt-4" :class="accessibleTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">No students in this class</p>
-              <p class="text-body-2" :class="accessibleTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">Add students using the MANAGE STUDENTS mode</p>
+              <p
+                class="text-h6 mt-4"
+                :class="accessibleTextColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+              >
+                No students in this class
+              </p>
+              <p
+                class="text-body-2"
+                :class="accessibleTextColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+              >
+                Add students using the MANAGE STUDENTS mode
+              </p>
             </div>
 
             <!-- Responsive Student Grid -->
-            <div v-else class="student-grid" :class="gridClass">
+            <div
+              v-else
+              class="student-grid"
+              :class="gridClass"
+            >
               <div
                 v-for="student in currentClassStudents"
                 :key="student.id"
@@ -39,10 +58,21 @@
                 @click="openStudentModal(student)"
               >
                 <div class="student-content">
-                  <div class="student-label">{{ student.label }}</div>
-                  <div class="student-emoji">{{ student.emoji }}</div>
-                  <div class="student-status">{{ getStudentStatus(student.code) }}</div>
-                  <div v-if="getStudentMemo(student.code)" class="student-memo">{{ getStudentMemo(student.code) }}</div>
+                  <div class="student-label">
+                    {{ student.label }}
+                  </div>
+                  <div class="student-emoji">
+                    {{ student.emoji }}
+                  </div>
+                  <div class="student-status">
+                    {{ getStudentStatus(student.code) }}
+                  </div>
+                  <div
+                    v-if="getStudentMemo(student.code)"
+                    class="student-memo"
+                  >
+                    {{ getStudentMemo(student.code) }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -52,11 +82,16 @@
     </v-row>
 
     <!-- Responsive Quick Actions (Desktop Only) -->
-    <v-row v-if="md" class="mt-4">
+    <v-row
+      v-if="md"
+      class="mt-4"
+    >
       <v-col>
         <v-card variant="outlined">
           <v-card-title class="text-subtitle-1">
-            <v-icon class="mr-2">mdi-lightning-bolt</v-icon>
+            <v-icon class="mr-2">
+              mdi-lightning-bolt
+            </v-icon>
             Quick Actions
           </v-card-title>
           <v-card-text>
@@ -81,7 +116,6 @@
                   View Reports
                 </v-btn>
               </v-col>
-
             </v-row>
           </v-card-text>
         </v-card>
@@ -102,7 +136,10 @@
 
     <!-- Mobile Actions Menu -->
     <v-fab-transition>
-      <div v-if="showMobileActions && mobile" class="mobile-actions">
+      <div
+        v-if="showMobileActions && mobile"
+        class="mobile-actions"
+      >
         <v-btn
           color="quaternary"
           icon="mdi-account-plus"
@@ -210,17 +247,17 @@ const getStudentSquareColorClass = (studentCode: string): string => {
   }
 };
 
-const openStudentModal = (student: Student) => {
+const openStudentModal = (student: Student): void => {
   store.openStudentModal(student);
 };
 
 // Quick actions
-const quickAddStudent = async () => {
+const quickAddStudent = async (): Promise<void> => {
   await store.switchMode('MANAGE STUDENTS');
   showMobileActions.value = false;
 };
 
-const quickViewReports = async () => {
+const quickViewReports = async (): Promise<void> => {
   await store.switchMode('REPORTS');
   showMobileActions.value = false;
 };

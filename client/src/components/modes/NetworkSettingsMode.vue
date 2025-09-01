@@ -4,7 +4,9 @@
       <v-col>
         <v-card>
           <v-card-title class="d-flex align-center">
-            <v-icon class="mr-2">mdi-wifi</v-icon>
+            <v-icon class="mr-2">
+              mdi-wifi
+            </v-icon>
             Network Settings
           </v-card-title>
 
@@ -23,7 +25,9 @@
               <v-col>
                 <v-card variant="outlined">
                   <v-card-title class="text-subtitle-1">
-                    <v-icon class="mr-2">mdi-sync</v-icon>
+                    <v-icon class="mr-2">
+                      mdi-sync
+                    </v-icon>
                     Data Synchronization
                   </v-card-title>
                   <v-card-text>
@@ -32,15 +36,18 @@
                     </p>
 
                     <v-row>
-                      <v-col cols="12" md="6">
+                      <v-col
+                        cols="12"
+                        md="6"
+                      >
                         <v-btn
                           color="primary"
-                          @click="upSync"
                           :loading="isUpSyncing"
                           :disabled="isUpSyncing || isDownSyncing"
                           prepend-icon="mdi-upload"
                           block
                           class="mb-2"
+                          @click="upSync"
                         >
                           {{ isUpSyncing ? 'Up Syncing...' : 'Up Sync' }}
                         </v-btn>
@@ -49,15 +56,18 @@
                         </p>
                       </v-col>
 
-                      <v-col cols="12" md="6">
+                      <v-col
+                        cols="12"
+                        md="6"
+                      >
                         <v-btn
                           color="secondary"
-                          @click="downSync"
                           :loading="isDownSyncing"
                           :disabled="isUpSyncing || isDownSyncing"
                           prepend-icon="mdi-download"
                           block
                           class="mb-2"
+                          @click="downSync"
                         >
                           {{ isDownSyncing ? 'Down Syncing...' : 'Down Sync' }}
                         </v-btn>
@@ -71,11 +81,11 @@
 
                     <v-btn
                       color="info"
-                      @click="fullSync"
                       :loading="isFullSyncing"
                       :disabled="isUpSyncing || isDownSyncing || isFullSyncing"
                       prepend-icon="mdi-sync"
                       block
+                      @click="fullSync"
                     >
                       {{ isFullSyncing ? 'Full Syncing...' : 'Full Sync (Up + Down)' }}
                     </v-btn>
@@ -101,7 +111,9 @@
               <v-col>
                 <v-card variant="outlined">
                   <v-card-title class="text-subtitle-1">
-                    <v-icon class="mr-2">mdi-information</v-icon>
+                    <v-icon class="mr-2">
+                      mdi-information
+                    </v-icon>
                     Network Information
                   </v-card-title>
                   <v-card-text>
@@ -152,8 +164,8 @@
                             size="small"
                           >
                             {{ isUpSyncing ? 'Up Syncing...' :
-                               isDownSyncing ? 'Down Syncing...' :
-                               isFullSyncing ? 'Full Syncing...' : 'Ready' }}
+                              isDownSyncing ? 'Down Syncing...' :
+                              isFullSyncing ? 'Full Syncing...' : 'Ready' }}
                           </v-chip>
                         </v-list-item-subtitle>
                       </v-list-item>
@@ -168,12 +180,17 @@
               <v-col>
                 <v-card variant="outlined">
                   <v-card-title class="text-subtitle-1">
-                    <v-icon class="mr-2">mdi-cog</v-icon>
+                    <v-icon class="mr-2">
+                      mdi-cog
+                    </v-icon>
                     Advanced Settings
                   </v-card-title>
                   <v-card-text>
                     <v-row>
-                      <v-col cols="12" md="6">
+                      <v-col
+                        cols="12"
+                        md="6"
+                      >
                         <v-switch
                           v-model="autoSync"
                           label="Auto Sync"
@@ -185,7 +202,10 @@
                         </p>
                       </v-col>
 
-                      <v-col cols="12" md="6">
+                      <v-col
+                        cols="12"
+                        md="6"
+                      >
                         <v-switch
                           v-model="syncOnStartup"
                           label="Sync on Startup"
@@ -203,8 +223,8 @@
                     <v-btn
                       color="warning"
                       variant="outlined"
-                      @click="clearLocalData"
                       prepend-icon="mdi-delete"
+                      @click="clearLocalData"
                     >
                       Clear Local Data
                     </v-btn>
@@ -215,9 +235,14 @@
                     <v-divider class="my-4" />
 
                     <!-- Data Backup and Restore -->
-                    <v-card variant="outlined" class="mb-4">
+                    <v-card
+                      variant="outlined"
+                      class="mb-4"
+                    >
                       <v-card-title class="text-subtitle-1">
-                        <v-icon class="mr-2">mdi-database-export</v-icon>
+                        <v-icon class="mr-2">
+                          mdi-database-export
+                        </v-icon>
                         Data Backup & Restore
                       </v-card-title>
                       <v-card-text>
@@ -227,15 +252,18 @@
                         </p>
 
                         <v-row>
-                          <v-col cols="12" md="6">
+                          <v-col
+                            cols="12"
+                            md="6"
+                          >
                             <v-btn
                               color="success"
-                              @click="downloadLocalStore"
                               :loading="isDownloading"
                               :disabled="isDownloading || isUploading"
                               prepend-icon="mdi-download"
                               block
                               class="mb-2"
+                              @click="downloadLocalStore"
                             >
                               {{ isDownloading ? 'Downloading...' : 'Download Local Store' }}
                             </v-btn>
@@ -244,15 +272,18 @@
                             </p>
                           </v-col>
 
-                          <v-col cols="12" md="6">
+                          <v-col
+                            cols="12"
+                            md="6"
+                          >
                             <v-btn
                               color="info"
-                              @click="uploadLocalStore"
                               :loading="isUploading"
                               :disabled="isDownloading || isUploading"
                               prepend-icon="mdi-upload"
                               block
                               class="mb-2"
+                              @click="uploadLocalStore"
                             >
                               {{ isUploading ? 'Uploading...' : 'Upload Backup File' }}
                             </v-btn>
@@ -313,7 +344,7 @@ const localDataCount = computed(() => {
 });
 
 // Methods
-const upSync = async () => {
+const upSync = async (): Promise<void> => {
   isUpSyncing.value = true;
   syncMessage.value = 'Uploading local changes to server...';
   syncMessageType.value = 'info';
@@ -334,7 +365,7 @@ const upSync = async () => {
   }
 };
 
-const downSync = async () => {
+const downSync = async (): Promise<void> => {
   isDownSyncing.value = true;
   syncMessage.value = 'Downloading server data to local...';
   syncMessageType.value = 'info';
@@ -355,7 +386,7 @@ const downSync = async () => {
   }
 };
 
-const fullSync = async () => {
+const fullSync = async (): Promise<void> => {
   isFullSyncing.value = true;
   syncMessage.value = 'Performing full bidirectional sync...';
   syncMessageType.value = 'info';
@@ -376,7 +407,7 @@ const fullSync = async () => {
   }
 };
 
-const clearLocalData = async () => {
+const clearLocalData = (): void => {
   if (confirm('Are you sure you want to clear all local data? This action cannot be undone.')) {
     try {
       // Clear local data (this would need to be implemented in the store)
@@ -390,13 +421,13 @@ const clearLocalData = async () => {
   }
 };
 
-const downloadLocalStore = async () => {
+const downloadLocalStore = (): void => {
   isDownloading.value = true;
   backupMessage.value = 'Preparing database backup...';
   backupMessageType.value = 'info';
 
   try {
-    const backupData = await store.exportDatabaseBackup();
+    const backupData = store.exportDatabaseBackup();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `scholartrack-backup-${timestamp}.json`;
 
@@ -422,14 +453,14 @@ const downloadLocalStore = async () => {
   }
 };
 
-const uploadLocalStore = async () => {
+const uploadLocalStore = (): void => {
   // Create a file input element
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.json';
   input.style.display = 'none';
 
-  input.onchange = async (event) => {
+  input.onchange = async (event: Event): Promise<void> => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
 
@@ -460,7 +491,7 @@ const uploadLocalStore = async () => {
 };
 
 // Check server status on mount
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
   try {
     const response = await fetch('/api/health');
     if (response.ok) {

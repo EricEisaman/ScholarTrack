@@ -1,7 +1,10 @@
 <template>
   <div>
     <v-row>
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <!-- Add Student Section -->
         <v-card class="mb-4">
           <v-card-title class="text-h5">
@@ -9,7 +12,10 @@
           </v-card-title>
 
           <v-card-text>
-            <v-form ref="addForm" v-model="addFormValid">
+            <v-form
+              ref="addForm"
+              v-model="addFormValid"
+            >
               <v-text-field
                 v-model="newStudent.label"
                 label="Student Label (2 letters)"
@@ -22,7 +28,7 @@
                 required
                 clearable
                 @keyup.enter="addStudent"
-              ></v-text-field>
+              />
 
               <v-text-field
                 v-model="newStudent.code"
@@ -35,7 +41,7 @@
                 required
                 clearable
                 @keyup.enter="addStudent"
-              ></v-text-field>
+              />
 
               <v-text-field
                 v-model="newStudent.emoji"
@@ -44,10 +50,10 @@
                 required
                 clearable
                 readonly
+                prepend-inner-icon="mdi-emoticon"
                 @click="showEmojiPicker = true"
                 @keyup.enter="addStudent"
-                prepend-inner-icon="mdi-emoticon"
-              ></v-text-field>
+              />
 
               <v-select
                 v-model="newStudent.classes"
@@ -58,7 +64,7 @@
                 :rules="[v => v.length > 0 || 'At least one class must be selected']"
                 required
                 @keyup.enter="addStudent"
-              ></v-select>
+              />
 
               <!-- Student Preview -->
               <v-card
@@ -67,8 +73,12 @@
                 class="mt-4 pa-3"
               >
                 <div class="text-center">
-                  <div class="text-h4 mb-2">{{ newStudent.emoji }}</div>
-                  <div class="text-h6">{{ newStudent.label }}</div>
+                  <div class="text-h4 mb-2">
+                    {{ newStudent.emoji }}
+                  </div>
+                  <div class="text-h6">
+                    {{ newStudent.label }}
+                  </div>
                   <div class="text-caption text-grey">
                     Status: IN CLASS
                   </div>
@@ -80,8 +90,8 @@
                 variant="elevated"
                 :disabled="!addFormValid"
                 :loading="isAdding"
-                @click="addStudent"
                 class="mt-4"
+                @click="addStudent"
               >
                 Add Student
               </v-btn>
@@ -90,7 +100,10 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" md="6">
+      <v-col
+        cols="12"
+        md="6"
+      >
         <!-- Student Statistics -->
         <v-card class="mb-4">
           <v-card-title class="text-h5">
@@ -102,21 +115,27 @@
               <v-list-item>
                 <v-list-item-title>Total Students</v-list-item-title>
                 <template #append>
-                  <v-chip color="primary">{{ students.length }}</v-chip>
+                  <v-chip color="primary">
+                    {{ students.length }}
+                  </v-chip>
                 </template>
               </v-list-item>
 
               <v-list-item>
                 <v-list-item-title>Total Classes</v-list-item-title>
                 <template #append>
-                  <v-chip color="secondary">{{ classes.length }}</v-chip>
+                  <v-chip color="secondary">
+                    {{ classes.length }}
+                  </v-chip>
                 </template>
               </v-list-item>
 
               <v-list-item>
                 <v-list-item-title>Students in Current Class</v-list-item-title>
                 <template #append>
-                  <v-chip color="success">{{ currentClassStudents.length }}</v-chip>
+                  <v-chip color="success">
+                    {{ currentClassStudents.length }}
+                  </v-chip>
                 </template>
               </v-list-item>
             </v-list>
@@ -204,14 +223,20 @@
     </v-row>
 
     <!-- Edit Student Dialog -->
-    <v-dialog v-model="showEditDialog" max-width="500">
+    <v-dialog
+      v-model="showEditDialog"
+      max-width="500"
+    >
       <v-card>
         <v-card-title class="text-h6">
           Edit Student
         </v-card-title>
 
         <v-card-text>
-          <v-form ref="editForm" v-model="editFormValid">
+          <v-form
+            ref="editForm"
+            v-model="editFormValid"
+          >
             <v-text-field
               v-model="editingStudent!.label"
               label="Student Label"
@@ -222,7 +247,7 @@
               ]"
               maxlength="2"
               required
-            ></v-text-field>
+            />
 
             <v-text-field
               v-model="editingStudent!.code"
@@ -233,17 +258,17 @@
               ]"
               maxlength="4"
               required
-            ></v-text-field>
+            />
 
-                          <v-text-field
-                v-model="editingStudent!.emoji"
-                label="Emoji"
-                :rules="[v => !!v || 'Emoji is required']"
-                required
-                readonly
-                @click="showEditEmojiPicker = true"
-                prepend-inner-icon="mdi-emoticon"
-              ></v-text-field>
+            <v-text-field
+              v-model="editingStudent!.emoji"
+              label="Emoji"
+              :rules="[v => !!v || 'Emoji is required']"
+              required
+              readonly
+              prepend-inner-icon="mdi-emoticon"
+              @click="showEditEmojiPicker = true"
+            />
 
             <v-select
               v-model="editingStudent!.classes"
@@ -253,18 +278,18 @@
               chips
               :rules="[v => v.length > 0 || 'At least one class must be selected']"
               required
-            ></v-select>
+            />
           </v-form>
         </v-card-text>
 
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
             color="grey"
             variant="text"
-            @click="cancelEdit"
             size="large"
             min-width="100"
+            @click="cancelEdit"
           >
             Cancel
           </v-btn>
@@ -273,9 +298,9 @@
             variant="elevated"
             :disabled="!editFormValid"
             :loading="isEditing"
-            @click="saveStudent"
             size="large"
             min-width="140"
+            @click="saveStudent"
           >
             Save Changes
           </v-btn>
@@ -284,7 +309,10 @@
     </v-dialog>
 
     <!-- Confirmation Dialog -->
-    <v-dialog v-model="showConfirmDialog" max-width="400">
+    <v-dialog
+      v-model="showConfirmDialog"
+      max-width="400"
+    >
       <v-card>
         <v-card-title class="text-h6">
           Confirm Student Removal
@@ -300,7 +328,7 @@
         </v-card-text>
 
         <v-card-actions>
-          <v-spacer></v-spacer>
+          <v-spacer />
           <v-btn
             color="grey"
             variant="text"
@@ -363,8 +391,8 @@ const showEmojiPicker = ref(false);
 const showEditEmojiPicker = ref(false);
 
 // Form refs
-const addForm = ref();
-const editForm = ref();
+const addForm = ref<{ resetValidation: () => void } | null>(null);
+const editForm = ref<{ resetValidation: () => void } | null>(null);
 
 // Computed properties
 const students = computed(() => store.students);
@@ -386,7 +414,7 @@ const headers = [
 ];
 
 // Methods
-const addStudent = async () => {
+const addStudent = async (): Promise<void> => {
   if (!addFormValid.value) return;
 
   isAdding.value = true;
@@ -412,12 +440,12 @@ const addStudent = async () => {
   }
 };
 
-const editStudent = (student: Student) => {
+const editStudent = (student: Student): void => {
   editingStudent.value = { ...student };
   showEditDialog.value = true;
 };
 
-const saveStudent = async () => {
+const saveStudent = async (): Promise<void> => {
   if (!editFormValid.value || !editingStudent.value) return;
 
   isEditing.value = true;
@@ -439,24 +467,24 @@ const saveStudent = async () => {
   }
 };
 
-const cancelEdit = () => {
+const cancelEdit = (): void => {
   showEditDialog.value = false;
   editingStudent.value = null;
   editForm.value?.resetValidation();
   editFormValid.value = false;
 };
 
-const cancelRemove = () => {
+const cancelRemove = (): void => {
   showConfirmDialog.value = false;
   selectedStudent.value = null;
 };
 
-const confirmRemove = (student: Student) => {
+const confirmRemove = (student: Student): void => {
   selectedStudent.value = student;
   showConfirmDialog.value = true;
 };
 
-const removeStudent = async () => {
+const removeStudent = async (): Promise<void> => {
   if (!selectedStudent.value) return;
 
   isRemoving.value = true;
@@ -481,11 +509,11 @@ const getStatusColor = (student: Student): string => {
   return store.statusColors[status] ?? '#1976D2';
 };
 
-const onEmojiSelect = (emoji: EmojiData) => {
+const onEmojiSelect = (emoji: EmojiData): void => {
   newStudent.value.emoji = emoji.emoji;
 };
 
-const onEditEmojiSelect = (emoji: EmojiData) => {
+const onEditEmojiSelect = (emoji: EmojiData): void => {
   if (editingStudent.value) {
     editingStudent.value.emoji = emoji.emoji;
   }

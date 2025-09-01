@@ -22,10 +22,16 @@ const mockTransaction = {
 };
 
 // Mock openDB
-vi.mock('idb', () => ({
-  openDB: vi.fn().mockResolvedValue(mockDB),
+vi.mock('idb', () => ({ 
+  openDB: vi.fn().mockResolvedValue({ 
+    transaction: vi.fn(), 
+    add: vi.fn(), 
+    put: vi.fn(), 
+    delete: vi.fn(), 
+    close: vi.fn(), 
+  }), 
+  deleteDB: vi.fn().mockResolvedValue(undefined), 
 }));
-
 describe('App Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());

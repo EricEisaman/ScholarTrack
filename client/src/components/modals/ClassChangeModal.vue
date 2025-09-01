@@ -1,11 +1,20 @@
 <template>
-  <v-dialog v-model="showModal" max-width="400px" persistent>
+  <v-dialog
+    v-model="showModal"
+    max-width="400px"
+    persistent
+  >
     <v-card>
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">mdi-school</v-icon>
+        <v-icon class="mr-2">
+          mdi-school
+        </v-icon>
         Change Class
         <v-spacer />
-        <v-btn icon @click="closeModal">
+        <v-btn
+          icon
+          @click="closeModal"
+        >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -41,17 +50,17 @@
         <v-spacer />
         <v-btn
           color="primary"
-          @click="handleSubmit"
           :disabled="!enteredCode || enteredCode.length !== 4"
           size="large"
           min-width="140"
+          @click="handleSubmit"
         >
           Change Class
         </v-btn>
         <v-btn
-          @click="closeModal"
           size="large"
           min-width="100"
+          @click="closeModal"
         >
           Cancel
         </v-btn>
@@ -69,14 +78,14 @@ const store = useAppStore();
 // Local state
 const enteredCode = ref('');
 const errorMessage = ref('');
-const codeInput = ref();
+const codeInput = ref<{ focus: () => void } | null>(null);
 
 // Computed properties
 const showModal = computed(() => store.showClassModal);
 const tempClass = computed(() => store.tempClass);
 
 // Methods
-const handleSubmit = () => {
+const handleSubmit = (): void => {
   if (enteredCode.value === store.teacherCode) {
     store.tempCode = enteredCode.value;
     store.changeClass(tempClass.value);
@@ -86,12 +95,12 @@ const handleSubmit = () => {
   }
 };
 
-const closeModal = () => {
+const closeModal = (): void => {
   store.showClassModal = false;
   resetForm();
 };
 
-const resetForm = () => {
+const resetForm = (): void => {
   enteredCode.value = '';
   errorMessage.value = '';
 };

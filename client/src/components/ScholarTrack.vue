@@ -1,9 +1,15 @@
 <template>
   <div class="h-100 d-flex flex-column">
     <!-- Responsive Header with Dynamic Layout -->
-    <v-app-bar color="primary" dark>
+    <v-app-bar
+      color="primary"
+      dark
+    >
       <!-- Desktop Layout (md and up) -->
-      <div v-if="!smAndDown" class="d-flex align-center w-100 px-4 py-2">
+      <div
+        v-if="!smAndDown"
+        class="d-flex align-center w-100 px-4 py-2"
+      >
         <!-- Left Slot: Mode Selector -->
         <div class="d-flex align-center">
           <v-select
@@ -40,7 +46,7 @@
               :src="appLogo"
               alt="ScholarTrack Logo"
               class="mr-3 logo-image"
-            />
+            >
             <div class="d-flex flex-column">
               <span class="text-h5 font-weight-bold">{{ schoolName }}</span>
               <span class="text-caption text-medium-emphasis">ScholarTrack</span>
@@ -71,7 +77,10 @@
             </template>
           </v-select>
 
-          <v-chip color="secondary" class="text-caption mr-2">
+          <v-chip
+            color="secondary"
+            class="text-caption mr-2"
+          >
             {{ store.currentMode }}
           </v-chip>
 
@@ -81,14 +90,22 @@
             color="success"
             size="small"
           >
-            <v-icon size="small" class="mr-1">mdi-shield-check</v-icon>
+            <v-icon
+              size="small"
+              class="mr-1"
+            >
+              mdi-shield-check
+            </v-icon>
             Auth
           </v-chip>
         </div>
       </div>
 
       <!-- Mobile Layout (sm and down) -->
-      <div v-else class="d-flex align-center w-100 px-2">
+      <div
+        v-else
+        class="d-flex align-center w-100 px-2"
+      >
         <!-- Left Slot: Mobile Navigation Menu -->
         <div class="d-flex align-center">
           <v-app-bar-nav-icon @click="mobileMenuOpen = !mobileMenuOpen" />
@@ -101,7 +118,7 @@
               :src="appLogo"
               alt="ScholarTrack Logo"
               class="logo-image-mobile"
-            />
+            >
           </div>
         </div>
 
@@ -113,7 +130,11 @@
             :close-on-content-click="false"
             :max-height="400"
           >
-            <v-card min-width="280" max-height="400" class="overflow-y-auto">
+            <v-card
+              min-width="280"
+              max-height="400"
+              class="overflow-y-auto"
+            >
               <v-list>
                 <!-- Current Class Display -->
                 <v-list-item>
@@ -131,8 +152,8 @@
                 <v-list-item
                   v-for="mode in availableModesWithIcons"
                   :key="mode.value"
-                  @click="showModeChangeModal(mode.value as AppMode)"
                   :active="store.currentMode === mode.value"
+                  @click="showModeChangeModal(mode.value as AppMode)"
                 >
                   <template #prepend>
                     <v-icon :icon="mode.prependIcon" />
@@ -147,8 +168,8 @@
                 <v-list-item
                   v-for="classItem in classNamesWithIcons"
                   :key="classItem.value"
-                  @click="showClassChangeModal(classItem.value)"
                   :active="store.currentClass?.name === classItem.value"
+                  @click="showClassChangeModal(classItem.value)"
                 >
                   <template #prepend>
                     <v-icon :icon="classItem.prependIcon" />
@@ -276,7 +297,7 @@ const currentModeComponent = computed(() => {
 });
 
 // Show mode change modal
-const showModeChangeModal = async (mode: AppMode) => {
+const showModeChangeModal = async (mode: AppMode): Promise<void> => {
   // Close mobile menu
   mobileMenuOpen.value = false;
 
@@ -285,7 +306,7 @@ const showModeChangeModal = async (mode: AppMode) => {
 };
 
 // Show class change modal
-const showClassChangeModal = (className: string) => {
+const showClassChangeModal = (className: string): void => {
   // Close mobile menu
   mobileMenuOpen.value = false;
 

@@ -75,7 +75,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Verify all required object stores exist
     const requiredStores = ['students', 'classes', 'transactions', 'styleSettings', 'customStatusTypes', 'customTeacherEventTypes'];
-    const missingStores = requiredStores.filter(storeName => !db!.objectStoreNames.contains(storeName));
+    const missingStores = requiredStores.filter(storeName => !(db?.objectStoreNames.contains(storeName) ?? false));
 
     if (missingStores.length > 0) {
       storeLogger.error('Missing object stores', new Error('Database schema mismatch'), { missingStores });
@@ -102,7 +102,7 @@ export const useAppStore = defineStore('app', () => {
       await initDB();
 
       // Verify the recreation worked
-      const newMissingStores = requiredStores.filter(storeName => !db!.objectStoreNames.contains(storeName));
+      const newMissingStores = requiredStores.filter(storeName => !(db?.objectStoreNames.contains(storeName) ?? false));
       if (newMissingStores.length > 0) {
         throw new Error(`Database schema is still missing required object stores after recreation: ${newMissingStores.join(', ')}`);
       }
@@ -249,7 +249,7 @@ export const useAppStore = defineStore('app', () => {
 
       // Check if all required object stores exist
       const requiredStores = ['students', 'classes', 'transactions', 'styleSettings', 'customStatusTypes', 'customTeacherEventTypes'];
-      const missingStores = requiredStores.filter(storeName => !db!.objectStoreNames.contains(storeName));
+      const missingStores = requiredStores.filter(storeName => !(db?.objectStoreNames.contains(storeName) ?? false));
 
       if (missingStores.length > 0 && !isRetry) {
         storeLogger.warn('Missing object stores detected during initialization', { missingStores });
@@ -516,6 +516,15 @@ export const useAppStore = defineStore('app', () => {
       };
 
       storeLogger.info('Updating student', { id: student.id, label: student.label, emoji: student.emoji });
+      
+      // Debug: Log the exact data being updated
+      storeLogger.debug('Student update data', {
+        id: student.id,
+        label: student.label,
+        emoji: student.emoji,
+        code: student.code,
+        classes: student.classes
+      });
 
       // Use idb library's convenience method
       await db.put('students', dbStudent);
@@ -671,7 +680,7 @@ export const useAppStore = defineStore('app', () => {
 
     // Find the student by their unique code for precise identification
     const student = students.value.find((s: Student) => s.code === transaction.studentCode);
-    const emojiName = student ? getNameByEmoji(student.emoji) || student.emoji : '';
+    const emojiName = student ? getNameByEmoji(student.emoji) ?? student.emoji : '';
     const studentIdentifier = student ? `${student.label}-${emojiName}` : transaction.studentLabel;
 
     const newTransaction: Transaction = {
@@ -679,7 +688,7 @@ export const useAppStore = defineStore('app', () => {
       studentCode: transaction.studentCode,
       studentIdentifier,
       timestamp: new Date().toISOString(),
-      className: currentClass.value?.name || '',
+      className: currentClass.value?.name ?? '',
     };
 
     // Use idb library's convenience method
@@ -844,6 +853,12 @@ export const useAppStore = defineStore('app', () => {
   // Enhanced sync methods for Up Sync, Down Sync, and Full Sync
   const syncToServer = async (): Promise<void> => {
     try {
+      // Debug: Log what's being synced
+      storeLogger.debug('Syncing to server', {
+        studentCount: students.value.length,
+        students: students.value.map(s => ({ id: s.id, label: s.label, emoji: s.emoji, code: s.code }))
+      });
+      
       const response = await fetch('/api/sync/up', {
         method: 'POST',
         headers: {
@@ -888,12 +903,12 @@ export const useAppStore = defineStore('app', () => {
       const result = await response.json();
 
       // Update local state with server data
-      students.value = result.data.students || [];
-      classes.value = result.data.classes || [];
-      transactions.value = result.data.transactions || [];
-      styleSettings.value = result.data.styleSettings || null;
-      customStatusTypes.value = result.data.customStatusTypes || [];
-      customTeacherEventTypes.value = result.data.customTeacherEventTypes || [];
+      students.value = result.data.students ?? [];
+      classes.value = result.data.classes ?? [];
+      transactions.value = result.data.transactions ?? [];
+      styleSettings.value = result.data.styleSettings ?? null;
+      customStatusTypes.value = result.data.customStatusTypes ?? [];
+      customTeacherEventTypes.value = result.data.customTeacherEventTypes ?? [];
 
       // Set current class if available
       if (result.data.classes && result.data.classes.length > 0 && !currentClass.value) {
@@ -931,12 +946,12 @@ export const useAppStore = defineStore('app', () => {
       const result = await response.json();
 
       // Update local state with server data from full sync
-      students.value = result.data.students || [];
-      classes.value = result.data.classes || [];
-      transactions.value = result.data.transactions || [];
-      styleSettings.value = result.data.styleSettings || null;
-      customStatusTypes.value = result.data.customStatusTypes || [];
-      customTeacherEventTypes.value = result.data.customTeacherEventTypes || [];
+      students.value = result.data.students ?? [];
+      classes.value = result.data.classes ?? [];
+      transactions.value = result.data.transactions ?? [];
+      styleSettings.value = result.data.styleSettings ?? null;
+      customStatusTypes.value = result.data.customStatusTypes ?? [];
+      customTeacherEventTypes.value = result.data.customTeacherEventTypes ?? [];
 
       // Set current class if available
       if (result.data.classes && result.data.classes.length > 0 && !currentClass.value) {
@@ -1035,7 +1050,7 @@ export const useAppStore = defineStore('app', () => {
       name: normalizedName,
       color: sanitizedColor,
       includeMemo,
-      createdAt: customStatusTypes.value.find(s => s.id === id)?.createdAt || new Date().toISOString(),
+      createdAt: customStatusTypes.value.find(s => s.id === id)?.createdAt ?? new Date().toISOString(),
     };
 
     if (!db) throw new Error('Database not initialized');
@@ -1132,7 +1147,7 @@ export const useAppStore = defineStore('app', () => {
       id,
       name: normalizedName,
       includeMemo,
-      createdAt: customTeacherEventTypes.value.find(e => e.id === id)?.createdAt || new Date().toISOString(),
+      createdAt: customTeacherEventTypes.value.find(e => e.id === id)?.createdAt ?? new Date().toISOString(),
     };
 
     await db.put('customTeacherEventTypes', updatedEventType);
@@ -1155,11 +1170,11 @@ export const useAppStore = defineStore('app', () => {
 
       // Check custom status types
       const customStatus = customStatusTypes.value.find(s => s.name === statusOrEvent);
-      return customStatus?.includeMemo || false;
+      return customStatus?.includeMemo ?? false;
     } else {
       // Check custom event types
       const customEvent = customTeacherEventTypes.value.find(e => e.name === statusOrEvent);
-      return customEvent?.includeMemo || false;
+      return customEvent?.includeMemo ?? false;
     }
   };
 
@@ -1214,7 +1229,7 @@ export const useAppStore = defineStore('app', () => {
       // Update reactive state
       transactions.value = transactions.value.map(t => {
         const updated = transactionsToUpdate.find(ut => ut.id === t.id);
-        return updated || t;
+        return updated ?? t;
       });
 
       storeLogger.info(`Cleaned up memo data from ${transactionsToUpdate.length} transactions`);
@@ -1291,7 +1306,7 @@ export const useAppStore = defineStore('app', () => {
       snapshot.id,
       {
         oldValue: 'orphaned_data',
-        newValue: options.migrationStatus || options.migrationEvent || 'cleaned',
+        newValue: options.migrationStatus ?? options.migrationEvent ?? 'cleaned',
       },
     );
 
@@ -1372,7 +1387,7 @@ export const useAppStore = defineStore('app', () => {
         return affected;
       },
       snapshot,
-      db,
+      db as IDBPDatabase<any>,
       operation,
     );
 
@@ -1439,14 +1454,14 @@ export const useAppStore = defineStore('app', () => {
         return migrated;
       },
       snapshot,
-      db,
+      db as IDBPDatabase<any>,
       operation,
     );
 
     return result;
   };
 
-  const exportDatabaseBackup = async (): Promise<string> => {
+  const exportDatabaseBackup = (): string => {
     const backup = {
       students: students.value,
       classes: classes.value,
@@ -1476,18 +1491,18 @@ export const useAppStore = defineStore('app', () => {
       await db.clear('customTeacherEventTypes');
 
       // Import data
-      for (const student of backup.students || []) {
+      for (const student of backup.students ?? []) {
         await db.add('students', {
           ...student,
           classes: typeof student.classes === 'string' ? JSON.parse(student.classes) : student.classes,
         });
       }
 
-      for (const classData of backup.classes || []) {
+      for (const classData of backup.classes ?? []) {
         await db.add('classes', classData);
       }
 
-      for (const transaction of backup.transactions || []) {
+      for (const transaction of backup.transactions ?? []) {
         await db.add('transactions', transaction);
       }
 
@@ -1495,11 +1510,11 @@ export const useAppStore = defineStore('app', () => {
         await db.add('styleSettings', backup.styleSettings);
       }
 
-      for (const statusType of backup.customStatusTypes || []) {
+      for (const statusType of backup.customStatusTypes ?? []) {
         await db.add('customStatusTypes', statusType);
       }
 
-      for (const eventType of backup.customTeacherEventTypes || []) {
+      for (const eventType of backup.customTeacherEventTypes ?? []) {
         await db.add('customTeacherEventTypes', eventType);
       }
 
@@ -1595,7 +1610,7 @@ export const useAppStore = defineStore('app', () => {
       throw new Error('Snapshot not found');
     }
 
-    const success = await restoreFromSnapshotUtil(snapshot, db);
+    const success = await restoreFromSnapshotUtil(snapshot, db as IDBPDatabase<any>);
 
     if (success) {
       // Reload data from database

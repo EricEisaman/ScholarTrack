@@ -73,7 +73,7 @@ interface StyleSettingsData {
 }
 
 const app = express();
-const PORT = process.env['PORT'] || 5000;
+const PORT = process.env['PORT'] ?? 5000;
 
 // Middleware
 app.use(helmet());
@@ -93,9 +93,9 @@ const validateIcon = async (filePath: string): Promise<void> => {
     if (stats.size === 0) {
       throw new Error(`Empty icon file: ${filePath}`);
     }
-    console.log(`✅ Icon validated: ${filePath} (${stats.size} bytes)`);
+    // Icon validated successfully
   } catch (error) {
-    console.error(`❌ Icon validation failed: ${filePath}`, error);
+    // Icon validation failed
     throw error;
   }
 };
@@ -106,11 +106,11 @@ const validatePWAIcons = async (): Promise<void> => {
     const iconPath = path.join(__dirname, '../../client/dist/icons');
     const requiredIcons = ['icon-192x192.png', 'icon-512x512.png'];
 
-    console.log('🔍 Validating PWA icons...');
+    // Validating PWA icons...
     for (const icon of requiredIcons) {
       await validateIcon(path.join(iconPath, icon));
     }
-    console.log('✅ All PWA icons validated successfully');
+    // All PWA icons validated successfully
   }
 };
 
@@ -263,7 +263,7 @@ const initDatabase = (): void => {
       // Check if we need to migrate (only if old table exists with different schema)
       db.get('PRAGMA table_info(students)', (err, _rows) => {
         if (err) {
-          console.log('Students table does not exist, will be created with new schema');
+          // Students table does not exist, will be created with new schema
           return;
         }
 
@@ -278,7 +278,7 @@ const initDatabase = (): void => {
           const tableInfo = result as TableInfo;
           const tableSql = tableInfo.sql;
           if (tableSql.includes('label TEXT UNIQUE')) {
-            console.log('Migrating students table to new schema...');
+            // Migrating students table to new schema...
 
             // Copy data with conflict resolution
             db.run(`
@@ -291,39 +291,26 @@ const initDatabase = (): void => {
                 return;
               }
 
-              // Get count of migrated records
-              db.get('SELECT COUNT(*) as count FROM students_temp', (err, result) => {
+              // Successfully migrated students to new schema
+
+              // Drop old table and rename new table
+              db.run('DROP TABLE students', (err) => {
                 if (err) {
-                  console.error('Error counting migrated records:', err);
+                  console.error('Error dropping old students table:', err);
                   return;
                 }
 
-                interface CountResult {
-                  count: number
-                }
-
-                const countResult = result as CountResult | undefined;
-                console.log(`Successfully migrated ${countResult?.count || 0} students to new schema`);
-
-                // Drop old table and rename new table
-                db.run('DROP TABLE students', (err) => {
+                db.run('ALTER TABLE students_temp RENAME TO students', (err) => {
                   if (err) {
-                    console.error('Error dropping old students table:', err);
-                    return;
+                    console.error('Error renaming students table:', err);
+                  } else {
+                    // Successfully migrated students table to use label+emoji unique constraint
                   }
-
-                  db.run('ALTER TABLE students_temp RENAME TO students', (err) => {
-                    if (err) {
-                      console.error('Error renaming students table:', err);
-                    } else {
-                      console.log('Successfully migrated students table to use label+emoji unique constraint');
-                    }
-                  });
                 });
               });
             });
           } else {
-            console.log('Students table already has correct schema');
+            // Students table already has correct schema
           }
         });
       });
@@ -339,6 +326,54 @@ app.get('/api/health', (_req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     database: 'connected',
+  });
+});
+
+// Debug endpoint to check current students
+app.get('/api/debug/students', (_req, res) => {
+  db.all('SELECT id, label, emoji, code FROM students ORDER BY label, emoji', (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ 
+      count: rows.length, 
+      students: rows,
+      timestamp: new Date().toISOString()
+    });
+  });
+});
+
+// Debug endpoint to check specific label conflicts
+app.get('/api/debug/students/:label', (req, res) => {
+  const { label } = req.params;
+  const upperLabel = label.toUpperCase();
+  
+  db.all('SELECT id, label, emoji, code FROM students WHERE label = ? ORDER BY emoji', [upperLabel], (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ 
+      label: upperLabel,
+      count: rows.length, 
+      students: rows,
+      timestamp: new Date().toISOString()
+    });
+  });
+});
+
+// Debug endpoint to check database schema
+app.get('/api/debug/schema', (_req, res) => {
+  db.all("SELECT sql FROM sqlite_master WHERE type='table' AND name='students'", (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    res.json({ 
+      schema: rows,
+      timestamp: new Date().toISOString()
+    });
   });
 });
 
@@ -406,21 +441,75 @@ app.put('/api/students/:id', (req, res) => {
   const { id } = req.params;
   const { label, code, emoji, classes } = req.body;
 
-  db.run(
-    'UPDATE students SET label = ?, code = ?, emoji = ?, classes = ? WHERE id = ?',
-    [label.toUpperCase(), code, emoji, JSON.stringify(classes), id],
-    function(err) {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+  // First, check if the student exists
+  db.get('SELECT * FROM students WHERE id = ?', [id], (err, existingStudent) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (!existingStudent) {
+      res.status(404).json({ error: 'Student not found' });
+      return;
+    }
+
+    // Check for uniqueness conflicts with other students
+    console.log(`🔍 Checking for conflicts: label="${label.toUpperCase()}", emoji="${emoji}", currentId="${id}"`);
+    
+    db.get(
+      'SELECT * FROM students WHERE label = ? AND emoji = ? AND id != ?',
+      [label.toUpperCase(), emoji, id],
+      (err, conflictingStudent) => {
+        if (err) {
+          console.error('Error checking for conflicts:', err);
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        if (conflictingStudent) {
+          console.log(`❌ Conflict found: existing student with id="${conflictingStudent.id}", label="${conflictingStudent.label}", emoji="${conflictingStudent.emoji}"`);
+          res.status(400).json({ 
+            error: `A student with label "${label.toUpperCase()}" and emoji "${emoji}" already exists` 
+          });
+          return;
+        }
+        console.log(`✅ No conflicts found for label="${label.toUpperCase()}" and emoji="${emoji}"`);
+
+        // Check for code conflicts with other students
+        db.get(
+          'SELECT * FROM students WHERE code = ? AND id != ?',
+          [code, id],
+          (err, codeConflictStudent) => {
+            if (err) {
+              res.status(500).json({ error: err.message });
+              return;
+            }
+            if (codeConflictStudent) {
+              res.status(400).json({ 
+                error: `A student with code "${code}" already exists` 
+              });
+              return;
+            }
+
+            // All validations passed, proceed with update
+            db.run(
+              'UPDATE students SET label = ?, code = ?, emoji = ?, classes = ? WHERE id = ?',
+              [label.toUpperCase(), code, emoji, JSON.stringify(classes), id],
+              function(err) {
+                if (err) {
+                  res.status(500).json({ error: err.message });
+                  return;
+                }
+                if (this.changes === 0) {
+                  res.status(404).json({ error: 'Student not found' });
+                  return;
+                }
+                res.json({ message: 'Student updated successfully' });
+              },
+            );
+          }
+        );
       }
-      if (this.changes === 0) {
-        res.status(404).json({ error: 'Student not found' });
-        return;
-      }
-      res.json({ message: 'Student updated successfully' });
-    },
-  );
+    );
+  });
 });
 
 // Delete student
@@ -585,7 +674,7 @@ app.post('/api/reports', (req, res) => {
   }
 
   // Use data from frontend IndexedDB instead of SQLite
-  const { transactions = [] } = data || {};
+  const { transactions = [] } = data ?? {};
 
   // Filter transactions by date range and class
   let filteredTransactions = transactions.filter((t: TransactionRow) => {
@@ -685,6 +774,11 @@ app.post('/api/sync/up', (req, res) => {
   }
 
   console.log(`🔼 Up Sync: Received ${students.length} students, ${classes.length} classes, ${transactions.length} transactions`);
+  
+  // Debug: Log all student data being synced
+  students.forEach((student, index) => {
+    console.log(`📚 Student ${index + 1}: id="${student.id}", label="${student.label}", emoji="${student.emoji}", code="${student.code}"`);
+  });
 
   // Clear existing data and sync from client (same as current sync)
   db.serialize(() => {
@@ -730,27 +824,28 @@ app.post('/api/sync/up', (req, res) => {
       }
     });
 
-    // Insert students
-    const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)');
+    // Insert or replace students (upsert)
+    const studentStmt = db.prepare('INSERT OR REPLACE INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)');
     students.forEach((student) => {
       const classesJson = JSON.stringify(student.classes);
+      console.log(`💾 Syncing student: id="${student.id}", label="${student.label}", emoji="${student.emoji}", code="${student.code}"`);
       studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt]);
     });
     studentStmt.finalize();
 
-    // Insert classes
-    const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)');
+    // Insert or replace classes (upsert)
+    const classStmt = db.prepare('INSERT OR REPLACE INTO classes (id, name, createdAt) VALUES (?, ?, ?)');
     classes.forEach((cls) => {
       classStmt.run([cls.id, cls.name, cls.createdAt]);
     });
     classStmt.finalize();
 
-    // Insert transactions
-    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentIdentifier, status, timestamp, className, eventType, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    // Insert or replace transactions (upsert)
+    const transactionStmt = db.prepare('INSERT OR REPLACE INTO transactions (id, studentLabel, studentCode, studentIdentifier, status, timestamp, className, eventType, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     transactions.forEach((transaction) => {
       // Handle legacy transactions that don't have studentIdentifier
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel;
-      transactionStmt.run([transaction.id, transaction.studentLabel, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType, transaction.memo || null]);
+      transactionStmt.run([transaction.id, transaction.studentLabel, transaction.studentCode || null, studentIdentifier, transaction.status, transaction.timestamp, transaction.className, transaction.eventType, transaction.memo || null]);
     });
     transactionStmt.finalize((err) => {
       if (err) {
@@ -766,9 +861,9 @@ app.post('/api/sync/up', (req, res) => {
           styleSettings.id,
           styleSettings.primaryColor,
           styleSettings.secondaryColor,
-          styleSettings.tertiaryColor || '#000000',
-          styleSettings.quaternaryColor || '#121212',
-          styleSettings.schoolName || 'ScholarTrack',
+          styleSettings.tertiaryColor ?? '#000000',
+          styleSettings.quaternaryColor ?? '#121212',
+          styleSettings.schoolName ?? 'ScholarTrack',
           styleSettings.logoImage,
           styleSettings.updatedAt,
         ]);
@@ -990,23 +1085,23 @@ app.post('/api/sync/full', (req, res) => {
       }
     });
 
-    // Insert students
-    const studentStmt = db.prepare('INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)');
+    // Insert or replace students (upsert)
+    const studentStmt = db.prepare('INSERT OR REPLACE INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)');
     students.forEach((student: StudentData) => {
       const classesJson = JSON.stringify(student.classes);
       studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt]);
     });
     studentStmt.finalize();
 
-    // Insert classes
-    const classStmt = db.prepare('INSERT INTO classes (id, name, createdAt) VALUES (?, ?, ?)');
+    // Insert or replace classes (upsert)
+    const classStmt = db.prepare('INSERT OR REPLACE INTO classes (id, name, createdAt) VALUES (?, ?, ?, ?)');
     classes.forEach((cls: ClassData) => {
       classStmt.run([cls.id, cls.name, cls.createdAt]);
     });
     classStmt.finalize();
 
-    // Insert transactions - EMERGENCY FIX: Handle missing studentCode
-    const transactionStmt = db.prepare('INSERT INTO transactions (id, studentLabel, studentCode, studentIdentifier, status, timestamp, className, eventType, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    // Insert or replace transactions (upsert)
+    const transactionStmt = db.prepare('INSERT OR REPLACE INTO transactions (id, studentLabel, studentCode, studentIdentifier, status, timestamp, className, eventType, memo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
     transactions.forEach((transaction: TransactionData) => {
       const studentCode = transaction.studentCode || null;
       const studentIdentifier = transaction.studentIdentifier || transaction.studentLabel;
@@ -1019,18 +1114,18 @@ app.post('/api/sync/full', (req, res) => {
         return;
       }
 
-      // Insert custom status types if provided
+      // Insert or replace custom status types if provided
       if (customStatusTypes && customStatusTypes.length > 0) {
-        const statusStmt = db.prepare('INSERT INTO customStatusTypes (id, name, color, createdAt) VALUES (?, ?, ?, ?)');
+        const statusStmt = db.prepare('INSERT OR REPLACE INTO customStatusTypes (id, name, color, createdAt) VALUES (?, ?, ?, ?)');
         customStatusTypes.forEach((statusType) => {
           statusStmt.run([statusType.id, statusType.name, statusType.color, statusType.createdAt]);
         });
         statusStmt.finalize();
       }
 
-      // Insert custom teacher event types if provided
+      // Insert or replace custom teacher event types if provided
       if (customTeacherEventTypes && customTeacherEventTypes.length > 0) {
-        const eventStmt = db.prepare('INSERT INTO customTeacherEventTypes (id, name, createdAt) VALUES (?, ?, ?)');
+        const eventStmt = db.prepare('INSERT OR REPLACE INTO customTeacherEventTypes (id, name, createdAt) VALUES (?, ?, ?)');
         customTeacherEventTypes.forEach((eventType) => {
           eventStmt.run([eventType.id, eventType.name, eventType.createdAt]);
         });
@@ -1584,4 +1679,4 @@ const startServer = async (): Promise<void> => {
   }
 };
 
-startServer();
+void startServer();

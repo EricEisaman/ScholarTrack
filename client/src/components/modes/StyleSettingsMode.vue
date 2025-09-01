@@ -1,8 +1,20 @@
 <template>
-  <div class="style-settings-mode" :style="{ backgroundColor: designMode === 'advanced' ? pageBackgroundColor : undefined }">
-    <v-card class="mx-auto" max-width="800" :color="designMode === 'advanced' ? tertiaryColor : undefined">
-      <v-card-title class="text-h5" :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }">
-        <v-icon class="mr-2">mdi-palette</v-icon>
+  <div
+    class="style-settings-mode"
+    :style="{ backgroundColor: designMode === 'advanced' ? pageBackgroundColor : undefined }"
+  >
+    <v-card
+      class="mx-auto"
+      max-width="800"
+      :color="designMode === 'advanced' ? tertiaryColor : undefined"
+    >
+      <v-card-title
+        class="text-h5"
+        :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }"
+      >
+        <v-icon class="mr-2">
+          mdi-palette
+        </v-icon>
         Style Settings
       </v-card-title>
 
@@ -10,26 +22,53 @@
       <v-card-text>
         <v-row>
           <v-col cols="12">
-            <v-card :color="designMode === 'advanced' ? tertiaryColor : undefined" class="pa-4">
-              <v-card-title class="text-h6" :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }">
-                <v-icon class="mr-2">mdi-tune</v-icon>
+            <v-card
+              :color="designMode === 'advanced' ? tertiaryColor : undefined"
+              class="pa-4"
+            >
+              <v-card-title
+                class="text-h6"
+                :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }"
+              >
+                <v-icon class="mr-2">
+                  mdi-tune
+                </v-icon>
                 Design Mode
               </v-card-title>
               <v-card-text>
-                <v-radio-group v-model="designMode" inline>
-                  <v-radio value="smart" label="Smart Design Mode">
+                <v-radio-group
+                  v-model="designMode"
+                  inline
+                >
+                  <v-radio
+                    value="smart"
+                    label="Smart Design Mode"
+                  >
                     <template #label>
                       <div class="d-flex align-center">
-                        <v-icon class="mr-2">mdi-magic-staff</v-icon>
+                        <v-icon class="mr-2">
+                          mdi-magic-staff
+                        </v-icon>
                         <span>Smart Design Mode</span>
-                        <v-chip size="small" :color="designMode === 'advanced' ? primaryColor : 'primary'" class="ml-2">Recommended</v-chip>
+                        <v-chip
+                          size="small"
+                          :color="designMode === 'advanced' ? primaryColor : 'primary'"
+                          class="ml-2"
+                        >
+                          Recommended
+                        </v-chip>
                       </div>
                     </template>
                   </v-radio>
-                  <v-radio value="advanced" label="Advanced Color Design">
+                  <v-radio
+                    value="advanced"
+                    label="Advanced Color Design"
+                  >
                     <template #label>
                       <div class="d-flex align-center">
-                        <v-icon class="mr-2">mdi-palette-advanced</v-icon>
+                        <v-icon class="mr-2">
+                          mdi-palette-advanced
+                        </v-icon>
                         <span>Advanced Color Design</span>
                       </div>
                     </template>
@@ -46,14 +85,22 @@
         <v-form @submit.prevent="saveSettings">
           <v-row>
             <v-col cols="12">
-              <v-card variant="outlined" class="pa-4">
+              <v-card
+                variant="outlined"
+                class="pa-4"
+              >
                 <v-card-title class="text-h6">
-                  <v-icon class="mr-2">mdi-magic-staff</v-icon>
+                  <v-icon class="mr-2">
+                    mdi-magic-staff
+                  </v-icon>
                   Smart Palette Generation
                 </v-card-title>
                 <v-card-text>
                   <v-row>
-                    <v-col cols="12" md="6">
+                    <v-col
+                      cols="12"
+                      md="6"
+                    >
                       <v-select
                         v-model="colorScheme"
                         :items="[
@@ -70,7 +117,10 @@
                         @update:model-value="generateSmartColors"
                       />
                     </v-col>
-                    <v-col cols="12" md="6">
+                    <v-col
+                      cols="12"
+                      md="6"
+                    >
                       <v-color-picker
                         v-model="baseColor"
                         mode="hex"
@@ -94,21 +144,44 @@
           <!-- Swatches Preview -->
           <v-row v-if="showSwatchesPreview">
             <v-col cols="12">
-              <v-card variant="outlined" class="pa-4">
+              <v-card
+                variant="outlined"
+                class="pa-4"
+              >
                 <v-card-title class="text-h6">
-                  <v-icon class="mr-2">mdi-palette-swatch</v-icon>
+                  <v-icon class="mr-2">
+                    mdi-palette-swatch
+                  </v-icon>
                   Generated Color Palette
                 </v-card-title>
                 <v-card-text>
                   <v-row>
-                    <v-col cols="12" sm="6" md="2" v-for="(swatch, index) in colorSwatches" :key="index">
-                      <v-card class="swatch-card" :color="swatch.color" height="120">
+                    <v-col
+                      v-for="(swatch, index) in colorSwatches"
+                      :key="index"
+                      cols="12"
+                      sm="6"
+                      md="2"
+                    >
+                      <v-card
+                        class="swatch-card"
+                        :color="swatch.color"
+                        height="120"
+                      >
                         <v-card-text class="text-center pa-2">
-                          <div class="text-h6 mb-2">{{ swatch.emoji }}</div>
-                          <div class="text-caption font-weight-bold" :class="swatch.textColor === '#FFFFFF' ? 'text-white' : 'text-black'">
+                          <div class="text-h6 mb-2">
+                            {{ swatch.emoji }}
+                          </div>
+                          <div
+                            class="text-caption font-weight-bold"
+                            :class="swatch.textColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+                          >
                             {{ swatch.name }}
                           </div>
-                          <div class="text-caption" :class="swatch.textColor === '#FFFFFF' ? 'text-white' : 'text-black'">
+                          <div
+                            class="text-caption"
+                            :class="swatch.textColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+                          >
                             {{ swatch.color }}
                           </div>
                         </v-card-text>
@@ -127,8 +200,14 @@
         <v-form @submit.prevent="saveSettings">
           <!-- Color Settings -->
           <v-row>
-            <v-col cols="12" md="6">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+            <v-col
+              cols="12"
+              md="6"
+            >
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-color-picker
                   v-model="primaryColor"
                   mode="hex"
@@ -145,8 +224,14 @@
               </v-card>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+            <v-col
+              cols="12"
+              md="6"
+            >
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-color-picker
                   v-model="secondaryColor"
                   mode="hex"
@@ -165,8 +250,14 @@
           </v-row>
 
           <v-row>
-            <v-col cols="12" md="6">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+            <v-col
+              cols="12"
+              md="6"
+            >
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-color-picker
                   v-model="tertiaryColor"
                   mode="hex"
@@ -183,8 +274,14 @@
               </v-card>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+            <v-col
+              cols="12"
+              md="6"
+            >
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-color-picker
                   v-model="quaternaryColor"
                   mode="hex"
@@ -203,8 +300,14 @@
           </v-row>
 
           <v-row>
-            <v-col cols="12" md="6">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+            <v-col
+              cols="12"
+              md="6"
+            >
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-color-picker
                   v-model="pageBackgroundColor"
                   mode="hex"
@@ -225,29 +328,40 @@
           <!-- Accessibility Validation -->
           <v-row v-if="accessibilityValidation.hasIssues">
             <v-col cols="12">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-alert
                   type="warning"
                   variant="tonal"
                   class="mb-4"
                 >
-                <template #title>
-                  <v-icon class="mr-2">mdi-accessibility</v-icon>
-                  Accessibility Warning
-                </template>
-                <template #text>
-                  <div class="text-body-2">
-                    <p class="mb-2">Some color combinations may not meet accessibility standards:</p>
-                    <ul class="mb-2">
-                      <li v-for="issue in accessibilityValidation.issues" :key="issue" class="text-caption">
-                        {{ issue }}
-                      </li>
-                    </ul>
-                    <p class="text-caption">
-                      <strong>Recommendation:</strong> Adjust colors to ensure sufficient contrast for users with visual impairments.
-                    </p>
-                  </div>
-                </template>
+                  <template #title>
+                    <v-icon class="mr-2">
+                      mdi-accessibility
+                    </v-icon>
+                    Accessibility Warning
+                  </template>
+                  <template #text>
+                    <div class="text-body-2">
+                      <p class="mb-2">
+                        Some color combinations may not meet accessibility standards:
+                      </p>
+                      <ul class="mb-2">
+                        <li
+                          v-for="issue in accessibilityValidation.issues"
+                          :key="issue"
+                          class="text-caption"
+                        >
+                          {{ issue }}
+                        </li>
+                      </ul>
+                      <p class="text-caption">
+                        <strong>Recommendation:</strong> Adjust colors to ensure sufficient contrast for users with visual impairments.
+                      </p>
+                    </div>
+                  </template>
                 </v-alert>
               </v-card>
             </v-col>
@@ -255,19 +369,26 @@
 
           <v-row v-else-if="primaryColor && secondaryColor && tertiaryColor && quaternaryColor">
             <v-col cols="12">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-alert
                   type="success"
                   variant="tonal"
                   class="mb-4"
                 >
                   <template #title>
-                    <v-icon class="mr-2">mdi-check-circle</v-icon>
+                    <v-icon class="mr-2">
+                      mdi-check-circle
+                    </v-icon>
                     Accessibility Compliant
                   </template>
                   <template #text>
                     <div class="text-body-2">
-                      <p class="mb-0">All color combinations meet WCAG AA accessibility standards for sufficient contrast.</p>
+                      <p class="mb-0">
+                        All color combinations meet WCAG AA accessibility standards for sufficient contrast.
+                      </p>
                     </div>
                   </template>
                 </v-alert>
@@ -278,7 +399,10 @@
           <!-- School Name -->
           <v-row>
             <v-col cols="12">
-              <v-card :color="tertiaryColor" class="pa-4 mb-4">
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4 mb-4"
+              >
                 <v-text-field
                   v-model="schoolName"
                   label="School Name"
@@ -294,9 +418,17 @@
           <!-- Logo Upload -->
           <v-row>
             <v-col cols="12">
-              <v-card :color="tertiaryColor" class="pa-4">
-                <v-card-title class="text-h6" :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }">
-                  <v-icon class="mr-2">mdi-image</v-icon>
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4"
+              >
+                <v-card-title
+                  class="text-h6"
+                  :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }"
+                >
+                  <v-icon class="mr-2">
+                    mdi-image
+                  </v-icon>
                   School Logo
                 </v-card-title>
 
@@ -307,13 +439,19 @@
                     label="Upload Logo (PNG, JPG, SVG)"
                     variant="outlined"
                     prepend-icon="mdi-camera"
-                    @change="handleLogoUpload"
                     :rules="[rules.imageSize, rules.imageType]"
+                    @change="handleLogoUpload"
                   />
 
                   <!-- Logo Preview -->
-                  <div v-if="logoPreview" class="mt-4">
-                    <v-card :color="tertiaryColor" class="pa-4 text-center">
+                  <div
+                    v-if="logoPreview"
+                    class="mt-4"
+                  >
+                    <v-card
+                      :color="tertiaryColor"
+                      class="pa-4 text-center"
+                    >
                       <v-img
                         :src="logoPreview"
                         max-width="200"
@@ -341,16 +479,31 @@
           <!-- Preview -->
           <v-row>
             <v-col cols="12">
-              <v-card :color="tertiaryColor" class="pa-4">
-                <v-card-title class="text-h6" :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }">
-                  <v-icon class="mr-2">mdi-eye</v-icon>
+              <v-card
+                :color="tertiaryColor"
+                class="pa-4"
+              >
+                <v-card-title
+                  class="text-h6"
+                  :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }"
+                >
+                  <v-icon class="mr-2">
+                    mdi-eye
+                  </v-icon>
                   Application Preview
                 </v-card-title>
 
                 <v-card-text>
-                  <v-card class="preview-container" :color="designMode === 'advanced' ? pageBackgroundColor : tertiaryColor" max-height="800">
+                  <v-card
+                    class="preview-container"
+                    :color="designMode === 'advanced' ? pageBackgroundColor : tertiaryColor"
+                    max-height="800"
+                  >
                     <!-- App Bar Preview -->
-                    <v-app-bar :color="primaryColor" dark>
+                    <v-app-bar
+                      :color="primaryColor"
+                      dark
+                    >
                       <v-select
                         model-value="Standard Mode"
                         :items="['Standard Mode']"
@@ -361,7 +514,12 @@
                         readonly
                       >
                         <template #prepend-inner>
-                          <v-icon size="small" class="mr-2">mdi-account-group</v-icon>
+                          <v-icon
+                            size="small"
+                            class="mr-2"
+                          >
+                            mdi-account-group
+                          </v-icon>
                         </template>
                       </v-select>
 
@@ -378,8 +536,14 @@
                           bg-color="transparent"
                         />
                         <div class="d-flex flex-column align-center">
-                          <span class="text-h6 font-weight-bold" :class="adaptivePrimaryLargeTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">{{ schoolName }}</span>
-                          <span class="text-caption" :class="adaptivePrimaryTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">ScholarTrack</span>
+                          <span
+                            class="text-h6 font-weight-bold"
+                            :class="adaptivePrimaryLargeTextColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+                          >{{ schoolName }}</span>
+                          <span
+                            class="text-caption"
+                            :class="adaptivePrimaryTextColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+                          >ScholarTrack</span>
                         </div>
                       </div>
 
@@ -395,11 +559,19 @@
                         readonly
                       >
                         <template #prepend-inner>
-                          <v-icon size="small" class="mr-2">mdi-account-group</v-icon>
+                          <v-icon
+                            size="small"
+                            class="mr-2"
+                          >
+                            mdi-account-group
+                          </v-icon>
                         </template>
                       </v-select>
 
-                      <v-chip :color="secondaryColor" class="text-caption">
+                      <v-chip
+                        :color="secondaryColor"
+                        class="text-caption"
+                      >
                         Standard
                       </v-chip>
                     </v-app-bar>
@@ -407,12 +579,23 @@
                     <!-- Main Content Preview -->
                     <v-container class="pa-6">
                       <!-- Header Card -->
-                      <v-card class="mb-3" :color="designMode === 'advanced' ? tertiaryColor : undefined">
+                      <v-card
+                        class="mb-3"
+                        :color="designMode === 'advanced' ? tertiaryColor : undefined"
+                      >
                         <v-card-title class="d-flex align-center">
-                          <v-icon class="mr-2">mdi-account-group</v-icon>
-                          <span class="text-truncate" :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }">Math 101</span>
+                          <v-icon class="mr-2">
+                            mdi-account-group
+                          </v-icon>
+                          <span
+                            class="text-truncate"
+                            :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }"
+                          >Math 101</span>
                           <v-spacer />
-                          <v-chip :color="primaryColor" variant="outlined">
+                          <v-chip
+                            :color="primaryColor"
+                            variant="outlined"
+                          >
                             24 Students
                           </v-chip>
                         </v-card-title>
@@ -420,17 +603,34 @@
                         <v-card-text>
                           <!-- Student Grid Preview -->
                           <v-row>
-                            <v-col cols="6" sm="3" v-for="(student, index) in previewStudents" :key="index">
+                            <v-col
+                              v-for="(student, index) in previewStudents"
+                              :key="index"
+                              cols="6"
+                              sm="3"
+                            >
                               <v-card
                                 :color="student.color"
                                 class="student-preview-card"
                                 @click="() => {}"
                               >
-                                                              <v-card-text class="text-center pa-2">
-                                <div class="text-body-2 font-weight-bold" :class="adaptiveTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">{{ student.name }}</div>
-                                <div class="text-h6 mb-1">{{ student.emoji }}</div>
-                                <div class="text-caption" :class="adaptiveTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">{{ student.status }}</div>
-                              </v-card-text>
+                                <v-card-text class="text-center pa-2">
+                                  <div
+                                    class="text-body-2 font-weight-bold"
+                                    :class="adaptiveTextColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+                                  >
+                                    {{ student.name }}
+                                  </div>
+                                  <div class="text-h6 mb-1">
+                                    {{ student.emoji }}
+                                  </div>
+                                  <div
+                                    class="text-caption"
+                                    :class="adaptiveTextColor === '#FFFFFF' ? 'text-white' : 'text-black'"
+                                  >
+                                    {{ student.status }}
+                                  </div>
+                                </v-card-text>
                               </v-card>
                             </v-col>
                           </v-row>
@@ -438,9 +638,14 @@
                       </v-card>
 
                       <!-- Data Table Preview -->
-                      <v-card class="mb-3" :color="designMode === 'advanced' ? tertiaryColor : undefined">
+                      <v-card
+                        class="mb-3"
+                        :color="designMode === 'advanced' ? tertiaryColor : undefined"
+                      >
                         <v-card-title class="d-flex align-center">
-                          <v-icon class="mr-2">mdi-account</v-icon>
+                          <v-icon class="mr-2">
+                            mdi-account
+                          </v-icon>
                           <span :style="{ color: designMode === 'advanced' ? secondaryColor : undefined }">Student Management</span>
                         </v-card-title>
 
@@ -456,13 +661,19 @@
                           </template>
 
                           <template #item.classes="{ item }">
-                            <v-chip size="small" :color="secondaryColor">
+                            <v-chip
+                              size="small"
+                              :color="secondaryColor"
+                            >
                               {{ item.classes }}
                             </v-chip>
                           </template>
 
                           <template #item.status="{ item }">
-                            <v-chip size="small" color="success">
+                            <v-chip
+                              size="small"
+                              color="success"
+                            >
                               {{ item.status }}
                             </v-chip>
                           </template>
@@ -480,9 +691,14 @@
                       </v-card>
 
                       <!-- Form Preview -->
-                      <v-card class="mb-4" :color="designMode === 'advanced' ? tertiaryColor : undefined">
+                      <v-card
+                        class="mb-4"
+                        :color="designMode === 'advanced' ? tertiaryColor : undefined"
+                      >
                         <v-card-title class="d-flex align-center">
-                          <v-icon class="mr-2">mdi-plus</v-icon>
+                          <v-icon class="mr-2">
+                            mdi-plus
+                          </v-icon>
                           <span>Add New Student</span>
                         </v-card-title>
 
@@ -517,13 +733,22 @@
                       </v-card>
 
                       <!-- Dialog Preview -->
-                      <v-dialog v-model="showPreviewDialog" max-width="400" persistent>
+                      <v-dialog
+                        v-model="showPreviewDialog"
+                        max-width="400"
+                        persistent
+                      >
                         <v-card :color="quaternaryColor">
                           <v-card-title class="d-flex align-center">
-                            <v-icon class="mr-2">mdi-account</v-icon>
+                            <v-icon class="mr-2">
+                              mdi-account
+                            </v-icon>
                             <span :class="adaptiveTextColor === '#FFFFFF' ? 'text-white' : 'text-black'">Edit Student</span>
                             <v-spacer />
-                            <v-btn icon @click="showPreviewDialog = false">
+                            <v-btn
+                              icon
+                              @click="showPreviewDialog = false"
+                            >
                               <v-icon>mdi-close</v-icon>
                             </v-btn>
                           </v-card-title>
@@ -542,7 +767,10 @@
                             <v-btn @click="showPreviewDialog = false">
                               Cancel
                             </v-btn>
-                            <v-btn :color="primaryColor" variant="elevated">
+                            <v-btn
+                              :color="primaryColor"
+                              variant="elevated"
+                            >
                               Save Changes
                             </v-btn>
                           </v-card-actions>
@@ -552,7 +780,9 @@
                       <!-- Quick Actions -->
                       <v-card :color="designMode === 'advanced' ? tertiaryColor : undefined">
                         <v-card-title class="text-subtitle-1">
-                          <v-icon class="mr-2">mdi-lightning-bolt</v-icon>
+                          <v-icon class="mr-2">
+                            mdi-lightning-bolt
+                          </v-icon>
                           Quick Actions
                         </v-card-title>
                         <v-card-text>
@@ -593,20 +823,24 @@
           v-if="designMode === 'smart'"
           :color="primaryColor"
           variant="outlined"
-          @click="toggleSwatchesPreview"
           class="mr-2"
+          @click="toggleSwatchesPreview"
         >
-          <v-icon class="mr-2">mdi-palette-swatch</v-icon>
+          <v-icon class="mr-2">
+            mdi-palette-swatch
+          </v-icon>
           {{ showSwatchesPreview ? 'Hide' : 'Show' }} Swatches Preview
         </v-btn>
         <v-btn
           :color="designMode === 'advanced' ? primaryColor : 'primary'"
           variant="elevated"
-          @click="saveSettings"
           :loading="saving"
           :disabled="!isValid"
+          @click="saveSettings"
         >
-          <v-icon class="mr-2">mdi-content-save</v-icon>
+          <v-icon class="mr-2">
+            mdi-content-save
+          </v-icon>
           Save Settings
         </v-btn>
       </v-card-actions>
@@ -681,13 +915,13 @@ const showSwatchesPreview = ref(false);
 
 // Validation rules
 const rules = {
-  required: (value: string) => !!value || 'This field is required',
-  imageSize: (value: File | null) => {
+  required: (value: string): boolean | string => !!value || 'This field is required',
+  imageSize: (value: File | null): boolean | string => {
     if (!value) return true;
     const maxSize = 2 * 1024 * 1024; // 2MB
     return value.size <= maxSize || 'Image must be less than 2MB';
   },
-  imageType: (value: File | null) => {
+  imageType: (value: File | null): boolean | string => {
     if (!value) return true;
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
     const fileExtension = value.name.toLowerCase().split('.').pop();
@@ -713,11 +947,11 @@ const adaptivePrimaryLargeTextColor = computed(() => getAccessibleLargeTextColor
 // Color swatches for preview
 const colorSwatches = computed(() => {
   // Ensure all colors have valid fallback values and are not undefined
-  const primary = primaryColor.value && primaryColor.value.trim() ? primaryColor.value : '#1976D2';
-  const secondary = secondaryColor.value && secondaryColor.value.trim() ? secondaryColor.value : '#212121';
-  const tertiary = tertiaryColor.value && tertiaryColor.value.trim() ? tertiaryColor.value : '#FFFFFF';
-  const quaternary = quaternaryColor.value && quaternaryColor.value.trim() ? quaternaryColor.value : '#FF9800';
-  const background = pageBackgroundColor.value && pageBackgroundColor.value.trim() ? pageBackgroundColor.value : '#F5F5F5';
+  const primary = primaryColor.value?.trim() ? primaryColor.value : '#1976D2';
+  const secondary = secondaryColor.value?.trim() ? secondaryColor.value : '#212121';
+  const tertiary = tertiaryColor.value?.trim() ? tertiaryColor.value : '#FFFFFF';
+  const quaternary = quaternaryColor.value?.trim() ? quaternaryColor.value : '#FF9800';
+  const background = pageBackgroundColor.value?.trim() ? pageBackgroundColor.value : '#F5F5F5';
 
   const swatches = [
     {
@@ -803,7 +1037,7 @@ const accessibilityValidation = computed(() => {
 watch(designMode, (newMode) => {
   if (newMode === 'advanced') {
     // When switching to advanced mode, apply all colors to the theme
-    if (theme.themes.value['light']) {
+    if (theme.themes.value?.['light']) {
       theme.themes.value['light'].colors.background = pageBackgroundColor.value;
       theme.themes.value['light'].colors.primary = primaryColor.value;
       theme.themes.value['light'].colors.secondary = secondaryColor.value;
@@ -852,57 +1086,57 @@ onMounted(() => {
 });
 
 // Update colors with real-time theme updates
-const updatePrimaryColor = (color: string) => {
+const updatePrimaryColor = (color: string): void => {
   primaryColor.value = color;
 
   // Real-time updates for primary color in Advanced Mode
   if (designMode.value === 'advanced') {
-    if (theme.themes.value['light']) {
+    if (theme.themes.value?.['light']) {
       theme.themes.value['light'].colors.primary = color;
     }
   }
 };
 
-const updateSecondaryColor = (color: string) => {
+const updateSecondaryColor = (color: string): void => {
   secondaryColor.value = color;
 
   // Real-time updates for secondary color in Advanced Mode
   if (designMode.value === 'advanced') {
-    if (theme.themes.value['light']) {
+    if (theme.themes.value?.['light']) {
       theme.themes.value['light'].colors.secondary = color;
     }
   }
 };
 
-const updateTertiaryColor = (color: string) => {
+const updateTertiaryColor = (color: string): void => {
   tertiaryColor.value = color;
 
   // Real-time updates for tertiary color in Advanced Mode
   if (designMode.value === 'advanced') {
-    if (theme.themes.value['light']) {
+    if (theme.themes.value?.['light']) {
       theme.themes.value['light'].colors.surface = color;
     }
   }
 };
 
-const updateQuaternaryColor = (color: string) => {
+const updateQuaternaryColor = (color: string): void => {
   quaternaryColor.value = color;
 
   // Real-time updates for quaternary color in Advanced Mode
   if (designMode.value === 'advanced') {
-    if (theme.themes.value['light']) {
+    if (theme.themes.value?.['light']) {
       theme.themes.value['light'].colors['accent'] = color;
     }
   }
 };
 
-const updatePageBackgroundColor = (color: string) => {
+const updatePageBackgroundColor = (color: string): void => {
   pageBackgroundColor.value = color;
 
   // Real-time updates for page background color in Advanced Mode
   if (designMode.value === 'advanced') {
     // 1) Update Vuetify theme for Style Settings page background
-    if (theme.themes.value['light']) {
+    if (theme.themes.value?.['light']) {
       theme.themes.value['light'].colors.background = color;
     }
 
@@ -910,7 +1144,7 @@ const updatePageBackgroundColor = (color: string) => {
     // (pageBackgroundColor.value is used in the preview template)
 
     // 3) Force reactivity by triggering a small delay update
-    nextTick(() => {
+    void nextTick(() => {
       // This ensures the template updates are applied immediately
       pageBackgroundColor.value = color;
     });
@@ -918,7 +1152,7 @@ const updatePageBackgroundColor = (color: string) => {
 };
 
 // Smart color generation functions
-const generateSmartColors = () => {
+const generateSmartColors = (): void => {
   const colors = generateColorPalette(baseColor.value, colorScheme.value);
   primaryColor.value = colors.primary;
   secondaryColor.value = colors.secondary;
@@ -928,7 +1162,7 @@ const generateSmartColors = () => {
 
   // If in advanced mode, update all theme colors immediately
   if (designMode.value === 'advanced') {
-    if (theme.themes.value['light']) {
+    if (theme.themes.value?.['light']) {
       theme.themes.value['light'].colors.background = pageBackgroundColor.value;
       theme.themes.value['light'].colors.primary = primaryColor.value;
       theme.themes.value['light'].colors.secondary = secondaryColor.value;
@@ -938,7 +1172,13 @@ const generateSmartColors = () => {
   }
 };
 
-const generateColorPalette = (baseColor: string, scheme: string) => {
+const generateColorPalette = (baseColor: string, scheme: string): {
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  quaternary: string;
+  pageBackground: string;
+} => {
   const hsl = hexToHsl(baseColor);
 
   switch (scheme) {
@@ -955,7 +1195,7 @@ const generateColorPalette = (baseColor: string, scheme: string) => {
   }
 };
 
-const hexToHsl = (hex: string) => {
+const hexToHsl = (hex: string): { h: number; s: number; l: number } => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return { h: 0, s: 0, l: 50 };
 
@@ -983,12 +1223,12 @@ const hexToHsl = (hex: string) => {
   return { h: h * 360, s: s * 100, l: l * 100 };
 };
 
-const hslToHex = (h: number, s: number, l: number) => {
+const hslToHex = (h: number, s: number, l: number): string => {
   h = h / 360;
   s = s / 100;
   l = l / 100;
 
-  const hue2rgb = (p: number, q: number, t: number) => {
+  const hue2rgb = (p: number, q: number, t: number): number => {
     if (t < 0) t += 1;
     if (t > 1) t -= 1;
     if (t < 1/6) return p + (q - p) * 6 * t;
@@ -1008,7 +1248,7 @@ const hslToHex = (h: number, s: number, l: number) => {
     b = hue2rgb(p, q, h - 1/3);
   }
 
-  const toHex = (c: number) => {
+  const toHex = (c: number): string => {
     const hex = Math.round(c * 255).toString(16);
     return hex.length === 1 ? `0${hex}` : hex;
   };
@@ -1016,11 +1256,17 @@ const hslToHex = (h: number, s: number, l: number) => {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
-const generateMonochromaticPalette = (baseHsl: { h: number; s: number; l: number }) => {
+const generateMonochromaticPalette = (baseHsl: { h: number; s: number; l: number }): {
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  quaternary: string;
+  pageBackground: string;
+} => {
   // Ensure HSL values are within valid ranges
-  const h = Math.max(0, Math.min(360, baseHsl.h || 0));
-  const s = Math.max(0, Math.min(100, baseHsl.s || 50));
-  const l = Math.max(0, Math.min(100, baseHsl.l || 50));
+  const h = Math.max(0, Math.min(360, baseHsl.h ?? 0));
+  const s = Math.max(0, Math.min(100, baseHsl.s ?? 50));
+  const l = Math.max(0, Math.min(100, baseHsl.l ?? 50));
 
   // Generate colors with proper background-to-foreground relationships
   const palette = {
@@ -1039,7 +1285,13 @@ const generateMonochromaticPalette = (baseHsl: { h: number; s: number; l: number
   return palette;
 };
 
-const generateAdjacentPalette = (baseHsl: { h: number; s: number; l: number }) => {
+const generateAdjacentPalette = (baseHsl: { h: number; s: number; l: number }): {
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  quaternary: string;
+  pageBackground: string;
+} => {
   const adjacentHue = (baseHsl.h + 30) % 360;
 
   // Generate colors with proper background-to-foreground relationships
@@ -1059,7 +1311,13 @@ const generateAdjacentPalette = (baseHsl: { h: number; s: number; l: number }) =
   return palette;
 };
 
-const generateTriadicPalette = (baseHsl: { h: number; s: number; l: number }) => {
+const generateTriadicPalette = (baseHsl: { h: number; s: number; l: number }): {
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  quaternary: string;
+  pageBackground: string;
+} => {
   const triadic1 = (baseHsl.h + 120) % 360;
   const triadic2 = (baseHsl.h + 240) % 360;
 
@@ -1080,7 +1338,13 @@ const generateTriadicPalette = (baseHsl: { h: number; s: number; l: number }) =>
   return palette;
 };
 
-const generateTetradPalette = (baseHsl: { h: number; s: number; l: number }) => {
+const generateTetradPalette = (baseHsl: { h: number; s: number; l: number }): {
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  quaternary: string;
+  pageBackground: string;
+} => {
   const tetrad1 = (baseHsl.h + 90) % 360;
   const tetrad2 = (baseHsl.h + 180) % 360;
 
@@ -1102,7 +1366,7 @@ const generateTetradPalette = (baseHsl: { h: number; s: number; l: number }) => 
 };
 
 // Handle logo upload
-const handleLogoUpload = (event: Event | File | null) => {
+const handleLogoUpload = (event: Event | File | null): void => {
   // Handle different event types
   let file: File | null = null;
 
@@ -1110,7 +1374,7 @@ const handleLogoUpload = (event: Event | File | null) => {
     file = event;
   } else if (event && 'target' in event && event.target) {
     const target = event.target as HTMLInputElement;
-    file = target.files?.[0] || null;
+    file = target.files?.[0] ?? null;
   } else {
     file = null;
   }
@@ -1140,7 +1404,7 @@ const handleLogoUpload = (event: Event | File | null) => {
       const ctx = canvas.getContext('2d');
       const img = new Image();
 
-      img.onload = () => {
+      img.onload = (): void => {
         // Calculate new dimensions (max 512x512)
         const maxSize = 512;
         let { width, height } = img;
@@ -1186,24 +1450,24 @@ const handleLogoUpload = (event: Event | File | null) => {
   };
 
   // Compress and set the logo
-  compressImage(file).then((compressedDataUrl) => {
+  void compressImage(file).then((compressedDataUrl) => {
     logoPreview.value = compressedDataUrl;
   });
 };
 
 // Remove logo
-const removeLogo = () => {
+const removeLogo = (): void => {
   logoFile.value = null;
   logoPreview.value = '';
 };
 
 // Toggle swatches preview
-const toggleSwatchesPreview = () => {
+const toggleSwatchesPreview = (): void => {
   showSwatchesPreview.value = !showSwatchesPreview.value;
 };
 
 // Save settings
-const saveSettings = async () => {
+const saveSettings = async (): Promise<void> => {
   if (!isValid.value) return;
 
   saving.value = true;

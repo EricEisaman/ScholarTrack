@@ -1,11 +1,20 @@
 <template>
-  <v-dialog v-model="showModal" max-width="400px" persistent>
+  <v-dialog
+    v-model="showModal"
+    max-width="400px"
+    persistent
+  >
     <v-card>
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2">mdi-text</v-icon>
+        <v-icon class="mr-2">
+          mdi-text
+        </v-icon>
         Enter Memo
         <v-spacer />
-        <v-btn icon @click="closeModal">
+        <v-btn
+          icon
+          @click="closeModal"
+        >
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
@@ -47,18 +56,18 @@
         <v-spacer />
         <v-btn
           color="quaternary"
-          @click="submitMemo"
           :disabled="!memoText || memoText.length > 15"
           :loading="isSubmitting"
           size="large"
           min-width="120"
+          @click="submitMemo"
         >
           Submit Memo
         </v-btn>
         <v-btn
-          @click="closeModal"
           size="large"
           min-width="100"
+          @click="closeModal"
         >
           Cancel
         </v-btn>
@@ -88,7 +97,7 @@ const emit = defineEmits<Emits>();
 const memoText = ref('');
 const errorMessage = ref('');
 const isSubmitting = ref(false);
-const memoInput = ref();
+const memoInput = ref<{ focus: () => void } | null>(null);
 
 // Computed properties
 const showModal = computed({
@@ -97,7 +106,7 @@ const showModal = computed({
 });
 
 // Methods
-const submitMemo = () => {
+const submitMemo = (): void => {
   if (!memoText.value || memoText.value.length > 15) {
     errorMessage.value = 'Please enter a valid memo (1-15 characters)';
     return;
@@ -117,12 +126,12 @@ const submitMemo = () => {
   }
 };
 
-const closeModal = () => {
+const closeModal = (): void => {
   showModal.value = false;
   resetForm();
 };
 
-const resetForm = () => {
+const resetForm = (): void => {
   memoText.value = '';
   errorMessage.value = '';
   isSubmitting.value = false;

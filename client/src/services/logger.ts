@@ -120,7 +120,7 @@ class Logger {
 
   private async sendToRemote(entry: LogEntry): Promise<void> {
     try {
-      await fetch(this.config.remoteEndpoint!, {
+      await fetch(this.config.remoteEndpoint ?? '', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,31 +216,31 @@ export const logger = new Logger();
 
 // Convenience functions for common categories
 export const apiLogger = {
-  debug: (message: string, data?: unknown) => logger.debug('API', message, data),
-  info: (message: string, data?: unknown) => logger.info('API', message, data),
-  warn: (message: string, data?: unknown) => logger.warn('API', message, data),
-  error: (message: string, error?: Error, data?: unknown) => logger.error('API', message, error, data),
+  debug: (message: string, data?: unknown): void => logger.debug('API', message, data),
+  info: (message: string, data?: unknown): void => logger.info('API', message, data),
+  warn: (message: string, data?: unknown): void => logger.warn('API', message, data),
+  error: (message: string, error?: Error, data?: unknown): void => logger.error('API', message, error, data),
 };
 
 export const storeLogger = {
-  debug: (message: string, data?: unknown) => logger.debug('STORE', message, data),
-  info: (message: string, data?: unknown) => logger.info('STORE', message, data),
-  warn: (message: string, data?: unknown) => logger.warn('STORE', message, data),
-  error: (message: string, error?: Error, data?: unknown) => logger.error('STORE', message, error, data),
+  debug: (message: string, data?: unknown): void => logger.debug('STORE', message, data),
+  info: (message: string, data?: unknown): void => logger.info('STORE', message, data),
+  warn: (message: string, data?: unknown): void => logger.warn('STORE', message, data),
+  error: (message: string, error?: Error, data?: unknown): void => logger.error('STORE', message, error, data),
 };
 
 export const componentLogger = {
-  debug: (component: string, message: string, data?: unknown) => logger.debug(`COMPONENT:${component}`, message, data),
-  info: (component: string, message: string, data?: unknown) => logger.info(`COMPONENT:${component}`, message, data),
-  warn: (component: string, message: string, data?: unknown) => logger.warn(`COMPONENT:${component}`, message, data),
-  error: (component: string, message: string, error?: Error, data?: unknown) => logger.error(`COMPONENT:${component}`, message, error, data),
+  debug: (component: string, message: string, data?: unknown): void => logger.debug(`COMPONENT:${component}`, message, data),
+  info: (component: string, message: string, data?: unknown): void => logger.info(`COMPONENT:${component}`, message, data),
+  warn: (component: string, message: string, data?: unknown): void => logger.warn(`COMPONENT:${component}`, message, data),
+  error: (component: string, message: string, error?: Error, data?: unknown): void => logger.error(`COMPONENT:${component}`, message, error, data),
 };
 
 export const userLogger = {
-  debug: (message: string, data?: unknown) => logger.debug('USER', message, data),
-  info: (message: string, data?: unknown) => logger.info('USER', message, data),
-  warn: (message: string, data?: unknown) => logger.warn('USER', message, data),
-  error: (message: string, error?: Error, data?: unknown) => logger.error('USER', message, error, data),
+  debug: (message: string, data?: unknown): void => logger.debug('USER', message, data),
+  info: (message: string, data?: unknown): void => logger.info('USER', message, data),
+  warn: (message: string, data?: unknown): void => logger.warn('USER', message, data),
+  error: (message: string, error?: Error, data?: unknown): void => logger.error('USER', message, error, data),
 };
 
 export default logger;

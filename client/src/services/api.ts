@@ -99,7 +99,7 @@ export const reportsApi = {
     endDate: string
     className?: string
   }): Promise<Blob> => {
-    const response = await api.post('/reports', params, {
+    const response = await api.post<Blob>('/reports', params, {
       responseType: 'blob',
     });
     return response.data;
