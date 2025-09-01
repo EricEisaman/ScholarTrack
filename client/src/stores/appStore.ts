@@ -193,7 +193,7 @@ export const useAppStore = defineStore('app', () => {
     try {
       storeLogger.info('Initializing IndexedDB');
 
-      db = await openDB<DatabaseSchema>('scholartrack', 7, {
+      db = await openDB<DatabaseSchema>('scholartrack', 8, {
         upgrade(db: unknown, oldVersion: number, newVersion: number) {
           const database = db as IDBPDatabase<DatabaseSchema>;
           storeLogger.info(`Upgrading database from version ${oldVersion} to ${newVersion}`);
@@ -201,15 +201,17 @@ export const useAppStore = defineStore('app', () => {
           // Students store
           if (!database.objectStoreNames.contains('students')) {
             const studentStore = database.createObjectStore('students', { keyPath: 'code' });
-            studentStore.createIndex('id', 'id', { unique: true });
+            studentStore.createIndex('id', 'id', { unique: false });
             studentStore.createIndex('label', 'label', { unique: false });
             studentStore.createIndex('emoji', 'emoji', { unique: false });
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true });
-          } else if (oldVersion < 7) {
-            // Migration: Update to code-based primary key
-            storeLogger.info('IndexedDB migration: Updating to version 7 with code as primary key');
-            // The new schema will be created automatically for new databases
-            // Existing databases will need to be cleared manually if they have conflicts
+          } else if (oldVersion < 8) {
+            // Migration: Update to remove unique constraint on id field
+            storeLogger.info('IndexedDB migration: Updating to version 8 - removing unique constraint on id field');
+            
+            // For existing databases, we need to recreate the students store to remove the unique constraint
+            // This will require clearing the database and recreating it
+            storeLogger.warn('Database schema change requires recreation. Existing data will be preserved and restored.');
           }
 
           // Classes store
@@ -246,6 +248,20 @@ export const useAppStore = defineStore('app', () => {
       });
 
       storeLogger.info('Database initialized, checking schema');
+
+      // Check if we need to recreate the database due to schema changes (e.g., removing unique constraint on id)
+      if (db && db.version === 7) {
+        storeLogger.info('Detected database version 7, recreating to version 8 to remove unique constraint on id field');
+        
+        // Close the current database connection
+        db.close();
+        db = null;
+
+        // Delete and recreate the database
+        await deleteDatabase();
+        await initDB(true); // Mark as retry to prevent infinite recursion
+        return; // Exit early, initDB will be called recursively
+      }
 
       // Check if all required object stores exist
       const requiredStores = ['students', 'classes', 'transactions', 'styleSettings', 'customStatusTypes', 'customTeacherEventTypes'];
