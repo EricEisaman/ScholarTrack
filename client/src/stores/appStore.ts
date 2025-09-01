@@ -203,6 +203,7 @@ export const useAppStore = defineStore('app', () => {
             const studentStore = database.createObjectStore('students', { keyPath: 'code' });
             studentStore.createIndex('id', 'id', { unique: true });
             studentStore.createIndex('label', 'label', { unique: false });
+            studentStore.createIndex('emoji', 'emoji', { unique: false });
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true });
           } else if (oldVersion < 7) {
             // Migration: Update to code-based primary key
@@ -504,6 +505,8 @@ export const useAppStore = defineStore('app', () => {
     }
 
     try {
+
+
       // Convert classes array to JSON string for IndexedDB storage
       const dbStudent = {
         id: student.id,
