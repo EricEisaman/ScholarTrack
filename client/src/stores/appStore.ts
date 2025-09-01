@@ -1606,8 +1606,13 @@ export const useAppStore = defineStore('app', () => {
     styleSettings.value = defaultSettings;
     await db.add('styleSettings', defaultSettings);
 
-    // Sync to server
-    await syncToServer();
+    // Try to sync to server, but don't fail if server is offline
+    try {
+      await syncToServer();
+    } catch (error) {
+      storeLogger.warn('Failed to sync to server after clearing data - server may be offline', error instanceof Error ? error : new Error('Unknown error'));
+      // Don't throw error - clearing local data was successful
+    }
   };
 
   // Snapshot management functions

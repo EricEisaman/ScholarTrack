@@ -223,10 +223,12 @@
                     <v-btn
                       color="warning"
                       variant="outlined"
+                      :loading="isClearingData"
+                      :disabled="isClearingData"
                       prepend-icon="mdi-delete"
                       @click="clearLocalData"
                     >
-                      Clear Local Data
+                      {{ isClearingData ? 'Clearing...' : 'Clear Local Data' }}
                     </v-btn>
                     <p class="text-caption text-grey mt-2">
                       Warning: This will delete all local data and require a fresh sync
@@ -325,6 +327,7 @@ const store = useAppStore();
 const isUpSyncing = ref(false);
 const isDownSyncing = ref(false);
 const isFullSyncing = ref(false);
+const isClearingData = ref(false);
 const syncMessage = ref('');
 const syncMessageType = ref<'success' | 'error' | 'info'>('info');
 const serverStatus = ref<'online' | 'offline'>('offline');
@@ -407,16 +410,25 @@ const fullSync = async (): Promise<void> => {
   }
 };
 
-const clearLocalData = (): void => {
+const clearLocalData = async (): Promise<void> => {
   if (confirm('Are you sure you want to clear all local data? This action cannot be undone.')) {
+    isClearingData.value = true;
     try {
-      // Clear local data (this would need to be implemented in the store)
-      syncMessage.value = 'Local data cleared successfully';
+      syncMessage.value = 'Clearing local data...';
+      syncMessageType.value = 'info';
+      
+      // Call the store method to actually clear all local data
+      await store.clearAllData();
+      
+      syncMessage.value = 'Local data cleared successfully! All students, classes, and transactions have been removed.';
       syncMessageType.value = 'success';
+      lastSyncTime.value = 'Never';
     } catch (error: unknown) {
       componentLogger.error('NetworkSettingsMode', 'Failed to clear local data', error instanceof Error ? error : new Error('Unknown error'));
-      syncMessage.value = 'Failed to clear local data';
+      syncMessage.value = 'Failed to clear local data. Please try again.';
       syncMessageType.value = 'error';
+    } finally {
+      isClearingData.value = false;
     }
   }
 };
