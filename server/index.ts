@@ -169,12 +169,12 @@ const validatePWAIcons = async (): Promise<void> => {
 // Initialize database tables
 const initDatabase = (): void => {
   db.serialize(() => {
-    // Students table - CORRECTED: Unique constraint on label+emoji combination
+    // Students table - CORRECTED: Code is the primary identifier, label+emoji must be unique
     db.run(`
       CREATE TABLE IF NOT EXISTS students (
-        id TEXT PRIMARY KEY,
+        code TEXT PRIMARY KEY,
+        id TEXT NOT NULL,
         label TEXT NOT NULL,
-        code TEXT UNIQUE NOT NULL,
         emoji TEXT NOT NULL,
         classes TEXT NOT NULL,
         createdAt TEXT NOT NULL,
@@ -456,26 +456,51 @@ app.post('/api/students', (req, res) => {
     return;
   }
 
-  const student = {
-    id: uuidv4(),
-    label: label.toUpperCase(),
-    code,
-    emoji,
-    classes: JSON.stringify(classes),
-    createdAt: new Date().toISOString(),
-  };
+  // Check for code conflicts first
+  db.get('SELECT * FROM students WHERE code = ?', [code], (err, existingStudent: StudentRow | undefined) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+      return;
+    }
+    if (existingStudent) {
+      res.status(400).json({ error: `A student with code "${code}" already exists` });
+      return;
+    }
 
-  db.run(
-    'INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)',
-    [student.id, student.label, student.code, student.emoji, student.classes, student.createdAt],
-    function(err) {
+    // Check for label+emoji conflicts
+    db.get('SELECT * FROM students WHERE label = ? AND emoji = ?', [label.toUpperCase(), emoji], (err, labelEmojiConflict: StudentRow | undefined) => {
       if (err) {
         res.status(500).json({ error: err.message });
         return;
       }
-      res.json({ ...student, classes: JSON.parse(student.classes) });
-    },
-  );
+      if (labelEmojiConflict) {
+        res.status(400).json({ error: `A student with label "${label}" and emoji "${emoji}" already exists` });
+        return;
+      }
+
+      // All validations passed, proceed with insert
+      const student = {
+        id: uuidv4(),
+        label: label.toUpperCase(),
+        code,
+        emoji,
+        classes: JSON.stringify(classes),
+        createdAt: new Date().toISOString(),
+      };
+
+      db.run(
+        'INSERT INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)',
+        [student.id, student.label, student.code, student.emoji, student.classes, student.createdAt],
+        function(err) {
+          if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+          }
+          res.json({ ...student, classes: JSON.parse(student.classes) });
+        },
+      );
+    });
+  });
 });
 
 // Update student
@@ -484,7 +509,7 @@ app.put('/api/students/:id', (req, res) => {
   const { label, code, emoji, classes } = req.body;
 
   // First, check if the student exists
-  db.get('SELECT * FROM students WHERE id = ?', [id], (err, existingStudent) => {
+  db.get('SELECT * FROM students WHERE id = ?', [id], (err, existingStudent: StudentRow | undefined) => {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
@@ -494,63 +519,66 @@ app.put('/api/students/:id', (req, res) => {
       return;
     }
 
-    // Check for uniqueness conflicts with other students
-    console.log(`🔍 Checking for conflicts: label="${label.toUpperCase()}", emoji="${emoji}", currentId="${id}"`);
-    
-    db.get(
-      'SELECT * FROM students WHERE label = ? AND emoji = ? AND id != ?',
-      [label.toUpperCase(), emoji, id],
-      (err, conflictingStudent: StudentRow | undefined) => {
-        if (err) {
-          console.error('Error checking for conflicts:', err);
-          res.status(500).json({ error: err.message });
-          return;
-        }
-        if (conflictingStudent) {
-          console.log(`❌ Conflict found: existing student with id="${conflictingStudent.id}", label="${conflictingStudent.label}", emoji="${conflictingStudent.emoji}"`);
-          res.status(400).json({ 
-            error: `A student with label "${label.toUpperCase()}" and emoji="${emoji}" already exists` 
-          });
-          return;
-        }
-        console.log(`✅ No conflicts found for label="${label.toUpperCase()}" and emoji="${emoji}"`);
-
-        // Check for code conflicts with other students
+            // Check for code conflicts with other students (only code needs to be unique)
+        console.log(`🔍 Checking for code conflicts: code="${code}", currentCode="${existingStudent.code}"`);
+        
         db.get(
-          'SELECT * FROM students WHERE code = ? AND id != ?',
-          [code, id],
+          'SELECT * FROM students WHERE code = ? AND code != ?',
+          [code, existingStudent.code],
           (err, codeConflictStudent: StudentRow | undefined) => {
             if (err) {
               res.status(500).json({ error: err.message });
               return;
             }
             if (codeConflictStudent) {
+              console.log(`❌ Code conflict found: existing student with code="${codeConflictStudent.code}", label="${codeConflictStudent.label}"`);
               res.status(400).json({ 
                 error: `A student with code "${code}" already exists` 
               });
               return;
             }
+            console.log(`✅ No code conflicts found for code="${code}"`);
 
-            // All validations passed, proceed with update
-            db.run(
-              'UPDATE students SET label = ?, code = ?, emoji = ?, classes = ? WHERE id = ?',
-              [label.toUpperCase(), code, emoji, JSON.stringify(classes), id],
-              function(err) {
+            // Check for label+emoji conflicts with other students
+            console.log(`🔍 Checking for label+emoji conflicts: label="${label}", emoji="${emoji}"`);
+            
+            db.get(
+              'SELECT * FROM students WHERE label = ? AND emoji = ? AND code != ?',
+              [label.toUpperCase(), emoji, existingStudent.code],
+              (err, labelEmojiConflict: StudentRow | undefined) => {
                 if (err) {
                   res.status(500).json({ error: err.message });
                   return;
                 }
-                if (this.changes === 0) {
-                  res.status(404).json({ error: 'Student not found' });
+                if (labelEmojiConflict) {
+                  console.log(`❌ Label+emoji conflict found: existing student with code="${labelEmojiConflict.code}", label="${labelEmojiConflict.label}", emoji="${labelEmojiConflict.emoji}"`);
+                  res.status(400).json({ 
+                    error: `A student with label "${label}" and emoji "${emoji}" already exists` 
+                  });
                   return;
                 }
-                res.json({ message: 'Student updated successfully' });
-              },
+                console.log(`✅ No label+emoji conflicts found for label="${label}" and emoji="${emoji}"`);
+
+                // All validations passed, proceed with update
+                db.run(
+                  'UPDATE students SET id = ?, label = ?, emoji = ?, classes = ? WHERE code = ?',
+                  [id, label.toUpperCase(), emoji, JSON.stringify(classes), existingStudent.code],
+                  function(err) {
+                    if (err) {
+                      res.status(500).json({ error: err.message });
+                      return;
+                    }
+                    if (this.changes === 0) {
+                      res.status(404).json({ error: 'Student not found' });
+                      return;
+                    }
+                    res.json({ message: 'Student updated successfully' });
+                  },
+                );
+              }
             );
           }
         );
-      }
-    );
   });
 });
 

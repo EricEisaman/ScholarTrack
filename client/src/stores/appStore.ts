@@ -193,21 +193,20 @@ export const useAppStore = defineStore('app', () => {
     try {
       storeLogger.info('Initializing IndexedDB');
 
-      db = await openDB<DatabaseSchema>('scholartrack', 6, {
+      db = await openDB<DatabaseSchema>('scholartrack', 7, {
         upgrade(db: unknown, oldVersion: number, newVersion: number) {
           const database = db as IDBPDatabase<DatabaseSchema>;
           storeLogger.info(`Upgrading database from version ${oldVersion} to ${newVersion}`);
 
           // Students store
           if (!database.objectStoreNames.contains('students')) {
-            const studentStore = database.createObjectStore('students', { keyPath: 'id' });
+            const studentStore = database.createObjectStore('students', { keyPath: 'code' });
+            studentStore.createIndex('id', 'id', { unique: true });
             studentStore.createIndex('label', 'label', { unique: false });
-            studentStore.createIndex('code', 'code', { unique: true });
-            // Unique constraint: combination of label and emoji
             studentStore.createIndex('labelEmoji', ['label', 'emoji'], { unique: true });
-          } else if (oldVersion < 4) {
-            // Migration: Update to label+emoji unique constraint
-            storeLogger.info('IndexedDB migration: Updating to version 4 with label+emoji unique constraint');
+          } else if (oldVersion < 7) {
+            // Migration: Update to code-based primary key
+            storeLogger.info('IndexedDB migration: Updating to version 7 with code as primary key');
             // The new schema will be created automatically for new databases
             // Existing databases will need to be cleared manually if they have conflicts
           }
@@ -473,14 +472,10 @@ export const useAppStore = defineStore('app', () => {
       storeLogger.error('Error adding student', error instanceof Error ? error : new Error('Unknown error'));
       if (error instanceof Error && error.name === 'ConstraintError') {
         // Check what's actually causing the constraint error
-        const existingStudentWithLabel = students.value.find(s => s.label === student.label);
-        const existingStudentWithEmoji = students.value.find(s => s.emoji === student.emoji);
         const existingStudentWithCode = students.value.find(s => s.code === student.code);
         const existingStudentWithLabelAndEmoji = students.value.find(s => s.label === student.label && s.emoji === student.emoji);
 
         storeLogger.debug('Constraint error analysis', {
-          existingStudentWithLabel: existingStudentWithLabel ? { label: existingStudentWithLabel.label, emoji: existingStudentWithLabel.emoji } : null,
-          existingStudentWithEmoji: existingStudentWithEmoji ? { label: existingStudentWithEmoji.label, emoji: existingStudentWithEmoji.emoji } : null,
           existingStudentWithCode: existingStudentWithCode ? { label: existingStudentWithCode.label, code: existingStudentWithCode.code } : null,
           existingStudentWithLabelAndEmoji: existingStudentWithLabelAndEmoji ? { label: existingStudentWithLabelAndEmoji.label, emoji: existingStudentWithLabelAndEmoji.emoji } : null,
         });
@@ -490,8 +485,12 @@ export const useAppStore = defineStore('app', () => {
         } else if (existingStudentWithLabelAndEmoji) {
           throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
         } else {
-          // Fallback error message
-          throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
+          // Fallback error message - check which constraint failed
+          if (existingStudentWithCode) {
+            throw new Error(`A student with code "${student.code}" already exists`);
+          } else {
+            throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
+          }
         }
       }
       throw error;
@@ -559,8 +558,12 @@ export const useAppStore = defineStore('app', () => {
         } else if (existingStudentWithLabelAndEmoji) {
           throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
         } else {
-          // Fallback error message
-          throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
+          // Fallback error message - check which constraint failed
+          if (existingStudentWithCode) {
+            throw new Error(`A student with code "${student.code}" already exists`);
+          } else {
+            throw new Error(`A student with label "${student.label}" and emoji "${student.emoji}" already exists`);
+          }
         }
       }
       throw error;
