@@ -1506,47 +1506,62 @@ export const useAppStore = defineStore('app', () => {
     try {
       const backup = JSON.parse(backupData);
 
-      // Clear existing data
-      await db.clear('students');
-      await db.clear('classes');
-      await db.clear('transactions');
-      await db.clear('styleSettings');
-      await db.clear('customStatusTypes');
-      await db.clear('customTeacherEventTypes');
+      // Store the backup data temporarily
+      const backupDataToRestore = {
+        students: backup.students ?? [],
+        classes: backup.classes ?? [],
+        transactions: backup.transactions ?? [],
+        styleSettings: backup.styleSettings ?? null,
+        customStatusTypes: backup.customStatusTypes ?? [],
+        customTeacherEventTypes: backup.customTeacherEventTypes ?? [],
+      };
 
-      // Import data
-      for (const student of backup.students ?? []) {
-        await db.add('students', {
+      // Close the current database connection
+      db.close();
+      db = null;
+
+      // Delete and recreate the database to ensure new schema
+      await deleteDatabase();
+      await initDB();
+
+      // Now restore the backup data to the new database
+      for (const student of backupDataToRestore.students) {
+        await db!.add('students', {
           ...student,
           classes: typeof student.classes === 'string' ? JSON.parse(student.classes) : student.classes,
         });
       }
 
-      for (const classData of backup.classes ?? []) {
-        await db.add('classes', classData);
+      for (const classData of backupDataToRestore.classes) {
+        await db!.add('classes', classData);
       }
 
-      for (const transaction of backup.transactions ?? []) {
-        await db.add('transactions', transaction);
+      for (const transaction of backupDataToRestore.transactions) {
+        await db!.add('transactions', transaction);
       }
 
-      if (backup.styleSettings) {
-        await db.add('styleSettings', backup.styleSettings);
+      if (backupDataToRestore.styleSettings) {
+        await db!.add('styleSettings', backupDataToRestore.styleSettings);
       }
 
-      for (const statusType of backup.customStatusTypes ?? []) {
-        await db.add('customStatusTypes', statusType);
+      for (const statusType of backupDataToRestore.customStatusTypes) {
+        await db!.add('customStatusTypes', statusType);
       }
 
-      for (const eventType of backup.customTeacherEventTypes ?? []) {
-        await db.add('customTeacherEventTypes', eventType);
+      for (const eventType of backupDataToRestore.customTeacherEventTypes) {
+        await db!.add('customTeacherEventTypes', eventType);
       }
 
       // Reload data
       await loadData();
 
-      // Sync to server
-      await syncToServer();
+      // Try to sync to server, but don't fail if server is offline
+      try {
+        await syncToServer();
+      } catch (error) {
+        storeLogger.warn('Failed to sync to server after importing backup - server may be offline', error instanceof Error ? error : new Error('Unknown error'));
+        // Don't throw error - importing backup was successful
+      }
 
     } catch (error) {
       storeLogger.error('Failed to import backup', error instanceof Error ? error : new Error('Unknown error'));
