@@ -10,18 +10,24 @@ import PDFDocument from 'pdfkit';
 import moment from 'moment';
 import { promises as fs } from 'fs';
 
+
+
 // Simple server logger
 const serverLogger = {
   info: (message: string, ...args: unknown[]) => {
+    // eslint-disable-next-line no-console
     console.log(`[INFO] ${message}`, ...args);
   },
   warn: (message: string, ...args: unknown[]) => {
+    // eslint-disable-next-line no-console
     console.warn(`[WARN] ${message}`, ...args);
   },
   error: (message: string, ...args: unknown[]) => {
+    // eslint-disable-next-line no-console
     console.error(`[ERROR] ${message}`, ...args);
   },
   debug: (message: string, ...args: unknown[]) => {
+    // eslint-disable-next-line no-console
     console.log(`[DEBUG] ${message}`, ...args);
   }
 };
@@ -442,37 +448,14 @@ app.get('/api/debug/schema', (_req, res) => {
       return;
     }
     
-    // Get detailed schema information for each table
-    const schemaInfo = rows.map((row: { name: string; sql: string }) => {
-      const tableName = row.name;
-      const tableSql = row.sql;
-      
-      // Extract constraint information
-      const hasUniqueId = tableSql.includes('id TEXT UNIQUE') || tableSql.includes('id TEXT PRIMARY KEY');
-      const hasUniqueLabel = tableSql.includes('label TEXT UNIQUE');
-      const hasUniqueCode = tableSql.includes('code TEXT PRIMARY KEY') || tableSql.includes('code TEXT UNIQUE');
-      const hasLabelEmojiUnique = tableSql.includes('UNIQUE(label, emoji)');
-      
-      return {
-        tableName,
-        constraints: {
-          id: hasUniqueId ? 'unique' : 'not unique',
-          label: hasUniqueLabel ? 'unique' : 'not unique',
-          code: hasUniqueCode ? 'unique' : 'not unique',
-          labelEmoji: hasLabelEmojiUnique ? 'unique' : 'not unique'
-        },
-        sql: tableSql
-      };
-    });
-    
-    serverLogger.info('Schema information retrieved successfully', { tableCount: schemaInfo.length });
+    serverLogger.info('Schema information retrieved successfully', { tableCount: rows.length });
     
     res.json({ 
-      schema: schemaInfo,
+      schema: rows,
       timestamp: new Date().toISOString(),
       summary: {
-        totalTables: schemaInfo.length,
-        tables: schemaInfo.map(t => t.tableName)
+        totalTables: rows.length,
+        tables: 'Raw database rows - check schema property for details'
       }
     });
   });
