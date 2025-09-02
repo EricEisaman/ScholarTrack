@@ -10,6 +10,22 @@ import PDFDocument from 'pdfkit';
 import moment from 'moment';
 import { promises as fs } from 'fs';
 
+// Simple server logger
+const serverLogger = {
+  info: (message: string, ...args: unknown[]) => {
+    console.log(`[INFO] ${message}`, ...args);
+  },
+  warn: (message: string, ...args: unknown[]) => {
+    console.warn(`[WARN] ${message}`, ...args);
+  },
+  error: (message: string, ...args: unknown[]) => {
+    console.error(`[ERROR] ${message}`, ...args);
+  },
+  debug: (message: string, ...args: unknown[]) => {
+    console.log(`[DEBUG] ${message}`, ...args);
+  }
+};
+
 // Database row interfaces
 interface StyleSettingsRow {
   id: string
@@ -417,14 +433,47 @@ app.get('/api/debug/students/:label', (req, res) => {
 
 // Debug endpoint to check database schema
 app.get('/api/debug/schema', (_req, res) => {
-  db.all("SELECT sql FROM sqlite_master WHERE type='table' AND name='students'", (err, rows) => {
+  serverLogger.info('Schema endpoint called - checking database structure');
+  
+  db.all("SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name", (err, rows) => {
     if (err) {
+      serverLogger.error('Error fetching schema:', err.message);
       res.status(500).json({ error: err.message });
       return;
     }
+    
+    // Get detailed schema information for each table
+    const schemaInfo = rows.map((row: { name: string; sql: string }) => {
+      const tableName = row.name;
+      const tableSql = row.sql;
+      
+      // Extract constraint information
+      const hasUniqueId = tableSql.includes('id TEXT UNIQUE') || tableSql.includes('id TEXT PRIMARY KEY');
+      const hasUniqueLabel = tableSql.includes('label TEXT UNIQUE');
+      const hasUniqueCode = tableSql.includes('code TEXT PRIMARY KEY') || tableSql.includes('code TEXT UNIQUE');
+      const hasLabelEmojiUnique = tableSql.includes('UNIQUE(label, emoji)');
+      
+      return {
+        tableName,
+        constraints: {
+          id: hasUniqueId ? 'unique' : 'not unique',
+          label: hasUniqueLabel ? 'unique' : 'not unique',
+          code: hasUniqueCode ? 'unique' : 'not unique',
+          labelEmoji: hasLabelEmojiUnique ? 'unique' : 'not unique'
+        },
+        sql: tableSql
+      };
+    });
+    
+    serverLogger.info('Schema information retrieved successfully', { tableCount: schemaInfo.length });
+    
     res.json({ 
-      schema: rows,
-      timestamp: new Date().toISOString()
+      schema: schemaInfo,
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalTables: schemaInfo.length,
+        tables: schemaInfo.map(t => t.tableName)
+      }
     });
   });
 });
@@ -520,7 +569,7 @@ app.put('/api/students/:id', (req, res) => {
     }
 
             // Check for code conflicts with other students (only code needs to be unique)
-        console.log(`🔍 Checking for code conflicts: code="${code}", currentCode="${existingStudent.code}"`);
+        serverLogger.debug(`Checking for code conflicts: code="${code}", currentCode="${existingStudent.code}"`);
         
         db.get(
           'SELECT * FROM students WHERE code = ? AND code != ?',
@@ -531,16 +580,16 @@ app.put('/api/students/:id', (req, res) => {
               return;
             }
             if (codeConflictStudent) {
-              console.log(`❌ Code conflict found: existing student with code="${codeConflictStudent.code}", label="${codeConflictStudent.label}"`);
+              serverLogger.warn(`Code conflict found: existing student with code="${codeConflictStudent.code}", label="${codeConflictStudent.label}"`);
               res.status(400).json({ 
                 error: `A student with code "${code}" already exists` 
               });
               return;
             }
-            console.log(`✅ No code conflicts found for code="${code}"`);
+            serverLogger.debug(`No code conflicts found for code="${code}"`);
 
             // Check for label+emoji conflicts with other students
-            console.log(`🔍 Checking for label+emoji conflicts: label="${label}", emoji="${emoji}"`);
+            serverLogger.debug(`Checking for label+emoji conflicts: label="${label}", emoji="${emoji}"`);
             
             db.get(
               'SELECT * FROM students WHERE label = ? AND emoji = ? AND code != ?',
@@ -551,13 +600,13 @@ app.put('/api/students/:id', (req, res) => {
                   return;
                 }
                 if (labelEmojiConflict) {
-                  console.log(`❌ Label+emoji conflict found: existing student with code="${labelEmojiConflict.code}", label="${labelEmojiConflict.label}", emoji="${labelEmojiConflict.emoji}"`);
+                  serverLogger.warn(`Label+emoji conflict found: existing student with code="${labelEmojiConflict.code}", label="${labelEmojiConflict.label}", emoji="${labelEmojiConflict.emoji}"`);
                   res.status(400).json({ 
                     error: `A student with label "${label}" and emoji "${emoji}" already exists` 
                   });
                   return;
                 }
-                console.log(`✅ No label+emoji conflicts found for label="${label}" and emoji="${emoji}"`);
+                serverLogger.debug(`No label+emoji conflicts found for label="${label}" and emoji="${emoji}"`);
 
                 // All validations passed, proceed with update
                 db.run(
@@ -843,11 +892,11 @@ app.post('/api/sync/up', (req, res) => {
     return;
   }
 
-  console.log(`🔼 Up Sync: Received ${students.length} students, ${classes.length} classes, ${transactions.length} transactions`);
+  serverLogger.info(`Up Sync: Received ${students.length} students, ${classes.length} classes, ${transactions.length} transactions`);
   
   // Debug: Log all student data being synced
   students.forEach((student, index) => {
-    console.log(`📚 Student ${index + 1}: id="${student.id}", label="${student.label}", emoji="${student.emoji}", code="${student.code}"`);
+    serverLogger.debug(`Student ${index + 1}: id="${student.id}", label="${student.label}", emoji="${student.emoji}", code="${student.code}"`);
   });
 
   // Clear existing data and sync from client (same as current sync)
@@ -898,7 +947,7 @@ app.post('/api/sync/up', (req, res) => {
     const studentStmt = db.prepare('INSERT OR REPLACE INTO students (id, label, code, emoji, classes, createdAt) VALUES (?, ?, ?, ?, ?, ?)');
     students.forEach((student) => {
       const classesJson = JSON.stringify(student.classes);
-      console.log(`💾 Syncing student: id="${student.id}", label="${student.label}", emoji="${student.emoji}", code="${student.code}"`);
+      serverLogger.debug(`Syncing student: id="${student.id}", label="${student.label}", emoji="${student.emoji}", code="${student.code}"`);
       studentStmt.run([student.id, student.label, student.code, student.emoji, classesJson, student.createdAt]);
     });
     studentStmt.finalize();
@@ -961,7 +1010,7 @@ app.post('/api/sync/up', (req, res) => {
       const styleSettingsCount = styleSettings ? 1 : 0;
       const customStatusCount = customStatusTypes ? customStatusTypes.length : 0;
       const customEventCount = customTeacherEventTypes ? customTeacherEventTypes.length : 0;
-      console.log(`✅ Up Sync completed: ${students.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${styleSettingsCount}, custom status types: ${customStatusCount}, custom event types: ${customEventCount}`);
+      serverLogger.info(`Up Sync completed: ${students.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${styleSettingsCount}, custom status types: ${customStatusCount}, custom event types: ${customEventCount}`);
       res.json({
         message: 'Up sync completed successfully',
         timestamp: new Date().toISOString(),
@@ -978,7 +1027,7 @@ app.post('/api/sync/up', (req, res) => {
 
 // Down Sync: Download server data to local
 app.get('/api/sync/down', (_req, res) => {
-  console.log('🔽 Down Sync: Sending server data to client');
+  serverLogger.info('Down Sync: Sending server data to client');
 
   // Check if database is ready
   if (!db) {
@@ -1057,7 +1106,7 @@ app.get('/api/sync/down', (_req, res) => {
                     classes: JSON.parse(student.classes),
                   }));
 
-                  console.log(`✅ Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${completeStyleSettings ? 1 : 0}, custom status types: ${customStatusTypes.length}, custom event types: ${customTeacherEventTypes.length}`);
+                  serverLogger.info(`Down Sync completed: ${parsedStudents.length} students, ${classes.length} classes, ${transactions.length} transactions, style settings: ${completeStyleSettings ? 1 : 0}, custom status types: ${customStatusTypes.length}, custom event types: ${customTeacherEventTypes.length}`);
 
                   res.json({
                     message: 'Down sync completed successfully',
@@ -1109,7 +1158,7 @@ app.post('/api/sync/full', (req, res) => {
     return;
   }
 
-  console.log('🔄 Full Sync: Starting bidirectional synchronization');
+  serverLogger.info('Full Sync: Starting bidirectional synchronization');
 
   // First, perform up sync
   db.serialize(() => {
