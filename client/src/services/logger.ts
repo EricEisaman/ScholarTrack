@@ -243,4 +243,11 @@ export const userLogger = {
   error: (message: string, error?: Error, data?: unknown): void => logger.error('USER', message, error, data),
 };
 
+export const settingsLogger = {
+  debug: (message: string, data?: unknown): void => logger.debug('SETTINGS', message, data),
+  info: (message: string, data?: unknown): void => logger.info('SETTINGS', message, data),
+  warn: (message: string, data?: unknown): void => logger.warn('SETTINGS', message, data),
+  error: (message: string, error?: Error, data?: unknown): void => logger.error('SETTINGS', message, error, data),
+};
+
 export default logger;

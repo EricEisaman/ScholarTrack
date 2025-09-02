@@ -331,9 +331,7 @@ const isClearingData = ref(false);
 const syncMessage = ref('');
 const syncMessageType = ref<'success' | 'error' | 'info'>('info');
 const serverStatus = ref<'online' | 'offline'>('offline');
-const autoSync = ref(false);
-const syncOnStartup = ref(true);
-const lastSyncTime = ref('');
+const lastSyncTime = ref(store.getLastSyncTime() || '');
 
 // Backup and restore state
 const isDownloading = ref(false);
@@ -346,6 +344,17 @@ const localDataCount = computed(() => {
   return store.students.length + store.classes.length + store.transactions.length;
 });
 
+// Settings computed properties that sync with store
+const autoSync = computed({
+  get: () => store.getAutoSync(),
+  set: (value: boolean) => store.setAutoSync(value)
+});
+
+const syncOnStartup = computed({
+  get: () => store.getSyncOnStartup(),
+  set: (value: boolean) => store.setSyncOnStartup(value)
+});
+
 // Methods
 const upSync = async (): Promise<void> => {
   isUpSyncing.value = true;
@@ -356,7 +365,7 @@ const upSync = async (): Promise<void> => {
     await store.syncToServer();
     syncMessage.value = 'Up sync completed successfully!';
     syncMessageType.value = 'success';
-    lastSyncTime.value = new Date().toLocaleString();
+    lastSyncTime.value = store.getLastSyncTime() || new Date().toLocaleString();
     serverStatus.value = 'online';
   } catch (error: unknown) {
     componentLogger.error('NetworkSettingsMode', 'Up sync failed', error instanceof Error ? error : new Error('Unknown error'));
@@ -377,7 +386,7 @@ const downSync = async (): Promise<void> => {
     await store.loadFromServer();
     syncMessage.value = 'Down sync completed successfully!';
     syncMessageType.value = 'success';
-    lastSyncTime.value = new Date().toLocaleString();
+    lastSyncTime.value = store.getLastSyncTime() || new Date().toLocaleString();
     serverStatus.value = 'online';
   } catch (error: unknown) {
     componentLogger.error('NetworkSettingsMode', 'Down sync failed', error instanceof Error ? error : new Error('Unknown error'));
@@ -398,7 +407,7 @@ const fullSync = async (): Promise<void> => {
     await store.fullSync();
     syncMessage.value = 'Full sync completed successfully!';
     syncMessageType.value = 'success';
-    lastSyncTime.value = new Date().toLocaleString();
+    lastSyncTime.value = store.getLastSyncTime() || new Date().toLocaleString();
     serverStatus.value = 'online';
   } catch (error: unknown) {
     componentLogger.error('NetworkSettingsMode', 'Full sync failed', error instanceof Error ? error : new Error('Unknown error'));
@@ -423,6 +432,9 @@ const clearLocalData = async (): Promise<void> => {
       syncMessage.value = 'Local data cleared successfully! All students, classes, and transactions have been removed.';
       syncMessageType.value = 'success';
       lastSyncTime.value = 'Never';
+      
+      // Update the store's last sync time
+      store.setLastSyncTime('');
     } catch (error: unknown) {
       componentLogger.error('NetworkSettingsMode', 'Failed to clear local data', error instanceof Error ? error : new Error('Unknown error'));
       syncMessage.value = 'Failed to clear local data. Please try again.';

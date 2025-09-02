@@ -318,6 +318,18 @@ const showClassChangeModal = (className: string): void => {
 onMounted(async () => {
   try {
     await store.initDB();
+    
+    // Check if sync on startup is enabled
+    if (store.getSyncOnStartup()) {
+      try {
+        componentLogger.info('ScholarTrack', 'Sync on startup enabled, attempting to sync with server');
+        await store.loadFromServer();
+        componentLogger.info('ScholarTrack', 'Sync on startup completed successfully');
+      } catch (error: unknown) {
+        componentLogger.warn('ScholarTrack', 'Sync on startup failed, continuing with local data', error instanceof Error ? error : new Error('Unknown error'));
+        // Don't fail the app if sync on startup fails
+      }
+    }
   } catch (error: unknown) {
     componentLogger.error('ScholarTrack', 'Failed to initialize app', error instanceof Error ? error : new Error('Unknown error'));
     // App will still work with empty data

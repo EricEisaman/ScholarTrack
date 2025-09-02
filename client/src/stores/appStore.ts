@@ -31,6 +31,7 @@ import {
 } from '../utils/databaseSnapshot';
 import type { MigrationResult, DatabaseSnapshot } from '../types';
 import { storeLogger } from '../services/logger';
+import { settingsService, type AppSettings } from '../services/settings';
 
 interface DatabaseSchema {
   students: Student
@@ -483,6 +484,9 @@ export const useAppStore = defineStore('app', () => {
 
       // Sync to server
       await syncToServer();
+      
+      // Trigger auto-sync if enabled
+      await performAutoSync();
 
       storeLogger.info('Student added and synced successfully');
     } catch (error) {
@@ -558,6 +562,9 @@ export const useAppStore = defineStore('app', () => {
       await syncToServer();
 
       storeLogger.info('Student updated and synced successfully');
+      
+      // Trigger auto-sync if enabled
+      await performAutoSync();
     } catch (error) {
       storeLogger.error('Error updating student', error instanceof Error ? error : new Error('Unknown error'));
       if (error instanceof Error && error.name === 'ConstraintError') {
@@ -599,6 +606,9 @@ export const useAppStore = defineStore('app', () => {
 
     // Sync to server
     await syncToServer();
+    
+    // Trigger auto-sync if enabled
+    await performAutoSync();
   };
 
   const addClass = async (className: string): Promise<void> => {
@@ -625,6 +635,9 @@ export const useAppStore = defineStore('app', () => {
 
       // Sync to server
       await syncToServer();
+      
+      // Trigger auto-sync if enabled
+      await performAutoSync();
 
       storeLogger.info('Class added and synced successfully');
     } catch (error) {
@@ -646,6 +659,9 @@ export const useAppStore = defineStore('app', () => {
 
     // Sync to server
     await syncToServer();
+    
+    // Trigger auto-sync if enabled
+    await performAutoSync();
   };
 
   const removeClass = async (classId: string): Promise<void> => {
@@ -697,6 +713,9 @@ export const useAppStore = defineStore('app', () => {
       // Sync to server
       await syncToServer();
     }
+    
+    // Trigger auto-sync if enabled
+    await performAutoSync();
   };
 
   const addTransaction = async (transaction: Omit<Transaction, 'timestamp' | 'className' | 'studentIdentifier'> & { studentCode: string }): Promise<void> => {
@@ -722,6 +741,9 @@ export const useAppStore = defineStore('app', () => {
 
     // Sync to server
     await syncToServer();
+    
+    // Trigger auto-sync if enabled
+    await performAutoSync();
   };
 
   const changeMode = async (mode: AppMode): Promise<void> => {
@@ -904,6 +926,10 @@ export const useAppStore = defineStore('app', () => {
 
       const result = await response.json();
       storeLogger.info('Up sync completed', result);
+      
+      // Update last sync time
+      const syncTime = new Date().toISOString();
+      setLastSyncTime(syncTime);
     } catch (error) {
       storeLogger.error('Failed to up sync to server', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
@@ -986,6 +1012,22 @@ export const useAppStore = defineStore('app', () => {
     } catch (error) {
       storeLogger.error('Failed to full sync with server', error instanceof Error ? error : new Error('Unknown error'));
       throw error;
+    }
+  };
+
+  // Auto-sync functionality
+  const performAutoSync = async (): Promise<void> => {
+    if (!getAutoSync()) {
+      return; // Auto-sync is disabled
+    }
+
+    try {
+      storeLogger.debug('Auto-sync triggered');
+      await syncToServer();
+      storeLogger.debug('Auto-sync completed successfully');
+    } catch (error) {
+      storeLogger.warn('Auto-sync failed', error instanceof Error ? error : new Error('Unknown error'));
+      // Don't throw error for auto-sync failures
     }
   };
 
@@ -1630,6 +1672,39 @@ export const useAppStore = defineStore('app', () => {
     }
   };
 
+  // Settings management functions
+  const getAppSettings = (): AppSettings => {
+    return settingsService.getSettings();
+  };
+
+  const updateAppSettings = (updates: Partial<AppSettings>): void => {
+    settingsService.updateSettings(updates);
+  };
+
+  const getAutoSync = (): boolean => {
+    return settingsService.getAutoSync();
+  };
+
+  const setAutoSync = (enabled: boolean): void => {
+    settingsService.setAutoSync(enabled);
+  };
+
+  const getSyncOnStartup = (): boolean => {
+    return settingsService.getSyncOnStartup();
+  };
+
+  const setSyncOnStartup = (enabled: boolean): void => {
+    settingsService.setSyncOnStartup(enabled);
+  };
+
+  const getLastSyncTime = (): string | undefined => {
+    return settingsService.getLastSyncTime();
+  };
+
+  const setLastSyncTime = (time: string): void => {
+    settingsService.setLastSyncTime(time);
+  };
+
   // Snapshot management functions
   const createSnapshot = async (description: string): Promise<string> => {
     const snapshot = await createDatabaseSnapshot(
@@ -1813,5 +1888,18 @@ export const useAppStore = defineStore('app', () => {
 
     // Migration
     migrateEventTypeNames,
+
+    // Settings management
+    getAppSettings,
+    updateAppSettings,
+    getAutoSync,
+    setAutoSync,
+    getSyncOnStartup,
+    setSyncOnStartup,
+    getLastSyncTime,
+    setLastSyncTime,
+
+    // Auto-sync
+    performAutoSync,
   };
 });
